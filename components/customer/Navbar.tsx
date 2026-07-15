@@ -182,7 +182,7 @@ export function Navbar({ className = "w-full max-w-7xl mx-auto px-4 pt-4" }: Nav
               className="flex items-center gap-2 text-xs font-bold text-accent-orange"
             >
               <User className="h-4 w-4" />
-              Role Selection
+              Login
             </button>
           </div>
         </div>
