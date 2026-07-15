@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { Product } from "@/types";
 import { useCartStore } from "@/lib/stores/cart-store";
 import { toast } from "sonner";
@@ -14,18 +15,22 @@ export interface ProductCardProps {
 export function ProductCard({ product, aspectRatio = "aspect-square" }: ProductCardProps) {
   const addItem = useCartStore((state) => state.addItem);
 
-  const handleAddToCart = () => {
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     addItem(product);
     toast.success(`${product.name} added to cart!`);
   };
 
-  const handleBuyNow = () => {
+  const handleBuyNow = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     addItem(product);
     toast.success(`Processing purchase for ${product.name}!`);
   };
 
   return (
-    <div className="flex flex-col gap-2.5 sm:gap-3 group w-full">
+    <Link href={`/products/${product.id}`} className="flex flex-col gap-2.5 sm:gap-3 group w-full cursor-pointer">
       {/* Image container with rounded corners and category badge */}
       <div className={`relative w-full ${aspectRatio} rounded-[20px] sm:rounded-[32px] overflow-hidden bg-gray-100 shadow-sm border border-surface-light/40`}>
         {product.imageUrl ? (
@@ -85,7 +90,7 @@ export function ProductCard({ product, aspectRatio = "aspect-square" }: ProductC
           </button>
         </div>
       </div>
-    </div>
+    </Link>
   );
 }
 

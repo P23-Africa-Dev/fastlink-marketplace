@@ -26,13 +26,24 @@ export interface Product {
   name: string;
   description: string;
   price: number;
+  originalPrice?: number;
   imageUrl: string;
+  thumbnails?: string[];
   category: string;
   stock: number;
   vendorId: string;
   rating?: number;
+  sku?: string;
+  brand?: string;
+  colors?: { name: string; hex: string }[];
+  sizes?: string[];
+  memoryOptions?: string[];
+  storageOptions?: string[];
   createdAt: string;
   updatedAt: string;
+  features?: string[];
+  shippingInfo?: { label: string; value: string }[];
+  specification?: { label: string; value: string }[];
 }
 
 export interface Mall {
