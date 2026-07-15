@@ -6,6 +6,8 @@ import { usePathname } from "next/navigation";
 import { ShoppingCart, User, Search, Menu, X } from "lucide-react";
 import { useCartStore, selectTotalItems } from "@/lib/stores/cart-store";
 import { useUiStore } from "@/lib/stores/ui-store";
+import { LoginModal } from "@/components/customer/LoginModal";
+import { CartModal } from "@/components/customer/CartModal";
 
 interface NavbarProps {
   className?: string;
@@ -15,8 +17,11 @@ export function Navbar({ className = "w-full max-w-7xl mx-auto px-4 pt-4" }: Nav
   const pathname = usePathname();
   const totalItems = useCartStore(selectTotalItems);
   const toggleCart = useUiStore((state) => state.toggleCart);
+  const isCartOpen = useUiStore((state) => state.isCartOpen);
+  const setCartOpen = useUiStore((state) => state.setCartOpen);
 
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+  const [loginModalOpen, setLoginModalOpen] = React.useState(false);
 
   const navLinks = [
     { name: "Home", href: "/" },
@@ -106,13 +111,13 @@ export function Navbar({ className = "w-full max-w-7xl mx-auto px-4 pt-4" }: Nav
           </button>
 
           {/* Profile Icon */}
-          <Link
-            href="/role-selection"
+          <button
+            onClick={() => setLoginModalOpen(true)}
             aria-label="Profile dashboard"
             className="h-10 w-10 bg-accent-orange text-primary-dark rounded-full flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-sm"
           >
             <User className="h-5 w-5" />
-          </Link>
+          </button>
         </div>
 
         {/* Mobile menu trigger */}
@@ -169,17 +174,25 @@ export function Navbar({ className = "w-full max-w-7xl mx-auto px-4 pt-4" }: Nav
           </nav>
           <div className="border-t border-surface-light/10 pt-3 flex items-center justify-between">
             <span className="text-xs text-white/60">Account Dashboard</span>
-            <Link
-              href="/role-selection"
-              onClick={() => setMobileMenuOpen(false)}
+            <button
+              onClick={() => {
+                setMobileMenuOpen(false);
+                setLoginModalOpen(true);
+              }}
               className="flex items-center gap-2 text-xs font-bold text-accent-orange"
             >
               <User className="h-4 w-4" />
               Role Selection
-            </Link>
+            </button>
           </div>
         </div>
       )}
+
+      {/* Auth Modal Overlay */}
+      <LoginModal isOpen={loginModalOpen} onClose={() => setLoginModalOpen(false)} />
+
+      {/* Cart Modal Overlay */}
+      <CartModal isOpen={isCartOpen} onClose={() => setCartOpen(false)} />
     </header>
   );
 }
