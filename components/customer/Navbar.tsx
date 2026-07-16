@@ -28,7 +28,7 @@ export function Navbar({ className = "w-full max-w-7xl mx-auto px-4 pt-4" }: Nav
     { name: "Order tracking", href: "/order-tracking" },
     { name: "Blog", href: "/blog" },
     { name: "About", href: "/about" },
-    { name: "Contact", href: "/contact" },
+    { name: "Contact", href: "/contact-us" },
   ];
 
   return (
