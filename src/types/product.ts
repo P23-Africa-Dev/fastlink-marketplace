@@ -1,0 +1,59 @@
+export interface ProductImage {
+  id: string;
+  url: string;
+  alt: string;
+  isPrimary: boolean;
+}
+
+export interface ProductVariant {
+  id: string;
+  name: string;
+  value: string;
+  stock: number;
+  priceModifier: number;
+}
+
+export interface Product {
+  id: string;
+  slug: string;
+  name: string;
+  description: string;
+  longDescription?: string;
+  price: number;
+  compareAtPrice?: number;
+  images: ProductImage[];
+  category: string;
+  subcategory?: string;
+  tags: string[];
+  seller: {
+    id: string;
+    name: string;
+    avatar?: string;
+    rating: number;
+    totalSales: number;
+  };
+  rating: number;
+  reviewCount: number;
+  stock: number;
+  sku: string;
+  variants?: {
+    sizes?: ProductVariant[];
+    colors?: ProductVariant[];
+  };
+  isFeatured: boolean;
+  isNew: boolean;
+  isBestseller: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProductFilter {
+  category?: string;
+  subcategory?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  rating?: number;
+  tags?: string[];
+  sortBy?: "price_asc" | "price_desc" | "rating" | "newest" | "bestseller";
+  inStock?: boolean;
+}
