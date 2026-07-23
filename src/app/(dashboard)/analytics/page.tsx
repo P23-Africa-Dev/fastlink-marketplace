@@ -310,7 +310,7 @@ export default function AnalyticsPage() {
                     fontWeight: "bold",
                     color: "#1e293b",
                   }}
-                  formatter={(value: number | string) => [`₦${Number(value).toLocaleString()}`, "Revenue"]}
+                  formatter={(value: any) => [`₦${Number(value || 0).toLocaleString()}`, "Revenue"]}
                 />
                 <Area
                   type="monotone"
@@ -358,7 +358,7 @@ export default function AnalyticsPage() {
                     fontWeight: "bold",
                     color: "#1e293b",
                   }}
-                  formatter={(value: number | string) => [value, "Visitors"]}
+                  formatter={(value: any) => [value, "Visitors"]}
                 />
                 <Bar
                   dataKey="visitors"

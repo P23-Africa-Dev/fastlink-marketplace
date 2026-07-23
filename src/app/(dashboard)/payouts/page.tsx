@@ -283,7 +283,7 @@ export default function PayoutsPage() {
                     fontWeight: "bold",
                     color: "#1e293b",
                   }}
-                  formatter={(value: number | string) => [`₦${Number(value).toLocaleString()}`, "Settled"]}
+                  formatter={(value: any) => [`₦${Number(value || 0).toLocaleString()}`, "Settled"]}
                 />
                 <Bar
                   dataKey="amount"
