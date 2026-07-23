@@ -1,0 +1,39 @@
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+  avatar?: string;
+  role: "buyer" | "seller" | "admin";
+  createdAt: string;
+  addresses?: Address[];
+}
+
+export interface Address {
+  id: string;
+  label: string;
+  street: string;
+  city: string;
+  state: string;
+  postalCode: string;
+  country: string;
+  isDefault: boolean;
+}
+
+export interface AuthState {
+  user: User | null;
+  token: string | null;
+  isAuthenticated: boolean;
+}
+
+export interface LoginCredentials {
+  email: string;
+  password: string;
+}
+
+export interface RegisterCredentials {
+  name: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+  role?: "buyer" | "seller";
+}
