@@ -45,16 +45,13 @@ function useCountdown(target: Date): TimeLeft {
   return time;
 }
 
-// ── Timer bubble ───────────────────────────────────────────────
+// ── Timer number ───────────────────────────────────────────────
 
-function TimerBubble({ value, label }: { value: string; label: string }) {
+function TimerNumber({ value, label }: { value: string; label: string }) {
   return (
-    <div
-      className="flex h-20 w-20 flex-col items-center justify-center rounded-full text-white md:h-24 md:w-24"
-      style={{ background: "#834AB9" }}
-    >
-      <span className="text-2xl font-extrabold leading-none md:text-3xl">{value}</span>
-      <span className="mt-0.5 text-xs font-medium">{label}</span>
+    <div className="flex flex-col items-center">
+      <span className="text-3xl font-extrabold tracking-tight text-white md:text-[44px]">{value}</span>
+      <span className="mt-1 text-sm font-semibold text-white">{label}</span>
     </div>
   );
 }
@@ -66,65 +63,72 @@ export function HotDealBanner() {
   const { days, hours, mins, secs } = useCountdown(target);
 
   return (
-    <section className="w-full bg-[#D4BAF0]">
+    <section className="w-full bg-[#E3D1F6]">
+      <div className="container-wide relative py-12 md:py-20">
+        <div className="relative overflow-hidden rounded-[20px] bg-[#292929] px-8 py-12 shadow-xl md:px-16 md:py-16">
+          <div className="flex flex-col items-center justify-between gap-12 md:flex-row md:gap-8">
+            
+            {/* Left content */}
+            <div className="flex w-full flex-col gap-8 md:w-1/2 z-10">
+              <div className="space-y-4">
+                <h2 className="text-4xl font-extrabold uppercase tracking-tight text-white md:text-5xl lg:text-[54px] leading-[1.1]">
+                  HOT DEALS THIS<br />WEEK
+                </h2>
+                <p className="text-lg font-medium text-gray-300">
+                  New Products upto 50% Discount
+                </p>
+              </div>
 
-      {/* ── Hot Deal This Week ──────────────────────────────────── */}
-      <div className="container-wide relative py-12 md:py-16">
-        <div className="grid grid-cols-1 items-center gap-6 md:grid-cols-[1fr_auto_1fr]">
+              {/* Countdown */}
+              <div className="flex items-center gap-6 lg:gap-8">
+                <TimerNumber value={days} label="Days" />
+                <TimerNumber value={hours} label="Hours" />
+                <TimerNumber value={mins} label="Mins" />
+                <TimerNumber value={secs} label="Sec" />
+              </div>
 
-          {/* Left laptop */}
-          <div className="hidden justify-end md:flex">
-            <div className="relative h-56 w-72 drop-shadow-2xl lg:h-64 lg:w-80">
-              <Image
-                src={productLeft}
-                alt="Laptop deal"
-                fill
-                sizes="320px"
-                className="object-contain"
-                style={{ transform: "rotate(-8deg)" }}
-              />
+              {/* Buttons */}
+              <div className="mt-2 flex flex-wrap items-center gap-4">
+                <Link
+                  href="/products?deals=true"
+                  className="inline-flex items-center justify-center rounded-lg bg-white px-8 py-3.5 text-sm font-bold text-[#6D349F] shadow-sm transition-colors hover:bg-gray-100"
+                >
+                  Shop Now
+                </Link>
+                <Link
+                  href="/about"
+                  className="inline-flex items-center justify-center rounded-lg border border-gray-500 bg-transparent px-8 py-3.5 text-sm font-bold text-white transition-colors hover:bg-gray-800"
+                >
+                  Know more About Us
+                </Link>
+              </div>
             </div>
-          </div>
 
-          {/* Centre content */}
-          <div className="flex flex-col items-center gap-5 text-center">
-            {/* Countdown */}
-            <div className="flex items-center gap-3">
-              <TimerBubble value={days}  label="Days"  />
-              <TimerBubble value={hours} label="Hours" />
-              <TimerBubble value={mins}  label="Mins"  />
-              <TimerBubble value={secs}  label="Sec"   />
-            </div>
-
-            <div>
-              <h2 className="text-3xl font-extrabold tracking-tight text-neutral-900 md:text-4xl">
-                HOT DEAL THIS WEEK
-              </h2>
-              <p className="mt-2 text-base text-neutral-600">
-                New Products upto 50% Discount
-              </p>
-            </div>
-
-            <Link
-              href="/products?deals=true"
-              className="inline-flex items-center justify-center rounded-lg px-10 py-3 text-base font-bold text-white shadow-brand-md transition-all duration-200 hover:brightness-110 hover:-translate-y-px"
-              style={{ background: "#834AB9" }}
-            >
-              Shop Now
-            </Link>
-          </div>
-
-          {/* Right laptop */}
-          <div className="hidden justify-start md:flex">
-            <div className="relative h-56 w-72 drop-shadow-2xl lg:h-64 lg:w-80">
-              <Image
-                src={productRight}
-                alt="MacBook deal"
-                fill
-                sizes="320px"
-                className="object-contain"
-                style={{ transform: "rotate(6deg)" }}
-              />
+            {/* Right Images */}
+            <div className="relative flex w-full items-center justify-center md:w-1/2 md:justify-end">
+              <div className="relative h-64 w-full max-w-[450px] md:h-[350px]">
+                {/* Back / Dark Laptop */}
+                <div className="absolute left-0 top-0 z-10 w-[65%] drop-shadow-2xl">
+                  <Image
+                    src={productLeft}
+                    alt="Laptop Deal"
+                    width={400}
+                    height={300}
+                    className="h-auto w-full object-contain"
+                    style={{ transform: "rotate(-10deg)" }}
+                  />
+                </div>
+                {/* Front / Silver Laptop */}
+                <div className="absolute bottom-0 right-0 z-20 w-[75%] drop-shadow-2xl">
+                  <Image
+                    src={productRight}
+                    alt="MacBook Deal"
+                    width={400}
+                    height={300}
+                    className="h-auto w-full object-contain"
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </div>

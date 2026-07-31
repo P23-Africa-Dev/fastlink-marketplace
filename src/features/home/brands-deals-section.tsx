@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Bookmark, ChevronRight } from "lucide-react";
+import { ChevronRight, ShoppingCart } from "lucide-react";
 
 // ── Types ──────────────────────────────────────────────────────
 
@@ -33,9 +33,12 @@ interface EmergingVendor {
 interface DealProduct {
   id: string;
   name: string;
+  category: string;
   discount: number;
   image: string;
   href: string;
+  rating: number;
+  reviews: string;
 }
 
 // ── Mock data ──────────────────────────────────────────────────
@@ -74,14 +77,14 @@ const EMERGING_VENDORS: EmergingVendor[] = [
   {
     id: "ev-3",
     name: "NajaMart",
-    category: "Fashion Beakery",
+    category: "Fashion Bakery",
     image: "https://images.unsplash.com/photo-1607082349566-187342175e2f?w=500&auto=format&fit=crop",
     href: "/stores/najamart",
   },
   {
     id: "ev-4",
     name: "Urban Wear",
-    category: "Gasigns & Streetwear",
+    category: "Designs & Streetwear",
     image: "https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=500&auto=format&fit=crop",
     href: "/stores/urban-wear",
   },
@@ -90,38 +93,53 @@ const EMERGING_VENDORS: EmergingVendor[] = [
 const DEALS: DealProduct[] = [
   {
     id: "deal-1",
-    name: "Samsung 4K Smart TV",
+    name: "PlayStation 5 Console",
+    category: "Gaming",
     discount: 32,
-    image: "https://images.unsplash.com/photo-1593784991095-a205069470b6?w=500&auto=format&fit=crop",
-    href: "/products/samsung-4k-smart-tv",
+    image: "https://images.unsplash.com/photo-1606813907291-d86efa9b94db?w=500&auto=format&fit=crop",
+    href: "/products/playstation-5",
+    rating: 5.0,
+    reviews: "1.3k",
   },
   {
     id: "deal-2",
-    name: "Highlander Men's Chronograph",
+    name: "Amazon Echo Dot",
+    category: "Home & Wellness",
     discount: 32,
-    image: "https://images.unsplash.com/photo-1524592094714-0f0654e20314?w=500&auto=format&fit=crop",
-    href: "/products/highlander-chronograph",
+    image: "https://images.unsplash.com/photo-1543512214-318c7553f230?w=500&auto=format&fit=crop",
+    href: "/products/amazon-echo",
+    rating: 5.0,
+    reviews: "1.3k",
   },
   {
     id: "deal-3",
     name: "JBL Bluetooth Speaker",
+    category: "Audio",
     discount: 40,
     image: "https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=500&auto=format&fit=crop",
     href: "/products/jbl-bluetooth-speaker",
+    rating: 4.8,
+    reviews: "850",
   },
   {
     id: "deal-4",
     name: "Binatone Standing Fan",
+    category: "Appliances",
     discount: 25,
     image: "https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=500&auto=format&fit=crop",
     href: "/products/binatone-fan",
+    rating: 4.5,
+    reviews: "420",
   },
   {
     id: "deal-5",
-    name: "Binatone Standing",
+    name: "Binatone Tower Fan",
+    category: "Appliances",
     discount: 35,
     image: "https://images.unsplash.com/photo-1558618047-3c5de1be0b6e?w=500&auto=format&fit=crop",
     href: "/products/binatone-tower-fan",
+    rating: 4.6,
+    reviews: "315",
   },
 ];
 
@@ -135,14 +153,14 @@ function SectionHeader({
   seeMoreHref: string;
 }) {
   return (
-    <div className="mb-6 flex items-center justify-between">
-      <h2 className="flex items-center gap-2 text-xl font-bold text-[#6B3A99] md:text-2xl">
-        <Bookmark size={22} className="fill-[#834AB9] stroke-[#834AB9] shrink-0" />
+    <div className="mb-6 flex items-center gap-4">
+      <h2 className="shrink-0 text-xl font-bold text-[#6D349F] md:text-2xl">
         {title}
       </h2>
+      <div className="h-[1px] flex-1 bg-white/70"></div>
       <Link
         href={seeMoreHref}
-        className="flex items-center gap-1 text-sm font-semibold text-brand-700 transition-colors hover:text-brand-900"
+        className="shrink-0 flex items-center gap-1 text-sm font-semibold text-[#6D349F] transition-colors hover:text-[#5a2a83]"
       >
         See More <ChevronRight size={16} />
       </Link>
@@ -164,9 +182,9 @@ function BrandWordmark({ brand }: { brand: BrandPartner }) {
   if (brand.style === "orange") {
     return (
       <div className="flex items-center gap-2">
-        {/* Xiaomi "m" badge */}
-        <span className="flex h-6 w-6 items-center justify-center rounded-sm bg-orange-500 text-xs font-black text-white">
-          m
+        {/* Xiaomi "mi" badge */}
+        <span className="flex h-7 w-7 items-center justify-center rounded-md bg-[#FF6900] text-sm font-black text-white">
+          mi
         </span>
         <span className={`text-base ${cls}`}>{brand.name}</span>
       </div>
@@ -177,10 +195,10 @@ function BrandWordmark({ brand }: { brand: BrandPartner }) {
     return (
       <div className="flex items-center gap-2">
         {/* Unilever "U" badge */}
-        <span className="flex h-6 w-6 items-center justify-center rounded-sm border-2 border-blue-600 text-xs font-black text-blue-600">
+        <span className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-blue-800 text-sm font-black text-blue-800">
           U
         </span>
-        <span className={`text-base font-semibold text-neutral-700`}>{brand.name}</span>
+        <span className={`text-base font-semibold text-blue-800`}>{brand.name}</span>
       </div>
     );
   }
@@ -196,46 +214,12 @@ function BrandWordmark({ brand }: { brand: BrandPartner }) {
   return <span className={`text-base ${cls}`}>{brand.name}</span>;
 }
 
-// ── Deal Product Discount Badges Renderer ───────────────────────
-
-function renderDiscountBadges(deal: DealProduct) {
-  const badgeStyle = "absolute flex px-2 py-0.5 rounded-md text-[11px] font-bold text-white bg-brand-900/60 backdrop-blur-sm shadow-sm";
-  
-  if (deal.id === "deal-1") {
-    return (
-      <span className={`${badgeStyle} right-2 top-2`}>
-        {deal.discount}%
-      </span>
-    );
-  }
-  if (deal.id === "deal-2" || deal.id === "deal-4" || deal.id === "deal-5") {
-    return (
-      <span className={`${badgeStyle} left-2 top-2`}>
-        {deal.discount}%
-      </span>
-    );
-  }
-  if (deal.id === "deal-3") {
-    return (
-      <>
-        <span className={`${badgeStyle} left-2 top-2`}>
-          {deal.discount}%
-        </span>
-        <span className={`${badgeStyle} right-2 top-2`}>
-          {deal.discount}%
-        </span>
-      </>
-    );
-  }
-  return null;
-}
-
 // ── Main component ─────────────────────────────────────────────
 
 export function BrandsDealsSection() {
   return (
-    <div className="bg-brand-50 pb-2">
-      <div className="container-wide space-y-10 py-8">
+    <div className="bg-[#EADBF8] pb-12">
+      <div className="container-wide space-y-12 py-8">
 
         {/* ① Official Retail & Brand Partners ──────────────────── */}
         <div>
@@ -245,13 +229,13 @@ export function BrandsDealsSection() {
           />
 
           {/* Brand logos row */}
-          <div className="overflow-hidden rounded-xl border border-brand-200 bg-[#E7D2F4]">
-            <div className="flex items-center divide-x divide-brand-200/40 overflow-x-auto scrollbar-none">
+          <div className="overflow-hidden rounded-xl bg-[#F6EFFD] shadow-sm">
+            <div className="flex items-center divide-x divide-[#ECD7F8] overflow-x-auto scrollbar-none">
               {BRAND_PARTNERS.map((brand) => (
                 <Link
                   key={brand.id}
                   href={brand.href}
-                  className="flex min-w-[140px] flex-1 items-center justify-center px-6 py-5 transition-colors hover:bg-brand-100/50"
+                  className="flex min-w-[140px] flex-1 items-center justify-center px-6 py-5 transition-colors hover:bg-gray-50"
                 >
                   <BrandWordmark brand={brand} />
                 </Link>
@@ -267,30 +251,17 @@ export function BrandsDealsSection() {
             seeMoreHref="/stores?type=nationwide"
           />
 
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             {NATIONWIDE_BRANDS.map((brand) => (
               <Link
                 key={brand.id}
                 href={brand.href}
-                className={`group flex flex-col justify-between rounded-xl p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-brand-md ${
-                  brand.name === "Brand X"
-                    ? "border-2 border-blue-500 bg-[#E7D2F4]"
-                    : "border border-brand-100/60 bg-[#E7D2F4]"
-                }`}
+                className="group flex flex-col justify-center rounded-xl bg-[#F6EFFD] p-5 shadow-sm transition-transform hover:-translate-y-1"
               >
-                <div className="flex items-center gap-2">
-                  {brand.name === "Zara HOME" && (
-                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-[#834AB9]">
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-white">
-                        <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                      </svg>
-                    </span>
-                  )}
-                  <span className="text-xl font-extrabold text-brand-900 transition-colors group-hover:text-brand-700">
-                    {brand.name}
-                  </span>
-                </div>
-                <span className="mt-2 text-sm text-neutral-500">{brand.tagline}</span>
+                <span className="text-lg font-extrabold text-[#6D349F]">
+                  {brand.name}
+                </span>
+                <span className="mt-1 text-sm text-gray-500">{brand.tagline}</span>
               </Link>
             ))}
           </div>
@@ -303,15 +274,15 @@ export function BrandsDealsSection() {
             seeMoreHref="/stores?type=emerging"
           />
 
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             {EMERGING_VENDORS.map((vendor) => (
               <Link
                 key={vendor.id}
                 href={vendor.href}
-                className="group overflow-hidden rounded-xl border border-brand-100/60 bg-[#E7D2F4] shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-brand-md"
+                className="group overflow-hidden rounded-xl bg-[#F6EFFD] shadow-sm transition-transform hover:-translate-y-1"
               >
                 {/* Vendor image */}
-                <div className="relative aspect-[5/3] w-full overflow-hidden bg-brand-100">
+                <div className="relative aspect-[4/3] w-full overflow-hidden bg-gray-100">
                   <Image
                     src={vendor.image}
                     alt={vendor.name}
@@ -319,14 +290,11 @@ export function BrandsDealsSection() {
                     sizes="(max-width: 768px) 50vw, 25vw"
                     className="object-cover transition-transform duration-500 group-hover:scale-105"
                   />
-                  {/* Purple Overlay */}
-                  <div className="absolute inset-0 bg-brand-600/10 mix-blend-color pointer-events-none" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-brand-950/25 via-transparent to-transparent pointer-events-none" />
                 </div>
                 {/* Vendor info */}
-                <div className="px-3 py-3 border-t border-brand-100/40">
-                  <p className="font-bold text-brand-900 group-hover:text-brand-700 transition-colors">{vendor.name}</p>
-                  <p className="mt-0.5 text-xs text-neutral-500">{vendor.category}</p>
+                <div className="p-4">
+                  <p className="font-bold text-[#6D349F] truncate">{vendor.name}</p>
+                  <p className="mt-0.5 text-xs text-gray-500 truncate">{vendor.category}</p>
                 </div>
               </Link>
             ))}
@@ -340,15 +308,15 @@ export function BrandsDealsSection() {
             seeMoreHref="/products?deals=true"
           />
 
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-5">
             {DEALS.map((deal) => (
               <Link
                 key={deal.id}
                 href={deal.href}
-                className="group overflow-hidden rounded-xl border border-brand-100/60 bg-[#E7D2F4] shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-brand-md"
+                className="group flex flex-col overflow-hidden rounded-xl shadow-sm transition-transform hover:-translate-y-1"
               >
-                {/* Product image + discount badge */}
-                <div className="relative aspect-square w-full overflow-hidden bg-brand-100">
+                {/* Product image */}
+                <div className="relative aspect-square w-full overflow-hidden bg-gray-50">
                   <Image
                     src={deal.image}
                     alt={deal.name}
@@ -356,17 +324,45 @@ export function BrandsDealsSection() {
                     sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
                     className="object-cover transition-transform duration-500 group-hover:scale-105"
                   />
-                  {/* Purple Overlay */}
-                  <div className="absolute inset-0 bg-brand-600/10 mix-blend-color pointer-events-none" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-brand-950/25 via-transparent to-transparent pointer-events-none" />
-                  {/* Discount badge */}
-                  {renderDiscountBadges(deal)}
+                  {/* Top Right Pill */}
+                  <div className="absolute right-2 top-2 rounded-full bg-white/90 backdrop-blur px-2.5 py-1 text-[10px] font-bold text-[#6D349F] shadow-sm">
+                    {deal.category}
+                  </div>
                 </div>
-                {/* Product name */}
-                <div className="px-3 py-2.5 border-t border-brand-100/40">
-                  <p className="truncate text-sm font-bold text-brand-900 group-hover:text-brand-700 transition-colors">
+                
+                {/* Product info */}
+                <div className="flex flex-1 flex-col p-3">
+                  <p className="truncate text-sm font-bold text-[#6D349F]">
                     {deal.name}
                   </p>
+                  
+                  <div className="mt-1.5 flex items-center justify-between">
+                    <div className="flex items-center gap-1">
+                      <svg
+                        className="h-3.5 w-3.5 text-yellow-400"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                      </svg>
+                      <span className="text-[11px] font-semibold text-gray-700">{deal.rating}</span>
+                      <span className="text-[10px] text-gray-400">({deal.reviews} Reviews)</span>
+                    </div>
+                    <span className="text-xs font-bold text-[#6D349F]">
+                      {deal.discount}% Off
+                    </span>
+                  </div>
+
+                  {/* Buttons */}
+                  <div className="mt-3 flex gap-1.5">
+                    <button className="flex flex-1 items-center justify-center gap-1 rounded-full border border-[#6D349F] px-1 py-1.5 text-[9px] sm:text-[10px] font-bold text-[#6D349F] transition-colors hover:bg-purple-50">
+                      ADD TO CARD
+                      <ShoppingCart size={10} className="hidden sm:block" />
+                    </button>
+                    <button className="flex flex-1 items-center justify-center rounded-full bg-[#6D349F] px-1 py-1.5 text-[9px] sm:text-[10px] font-bold text-white transition-colors hover:bg-[#5a2a83]">
+                      VIEW NOW
+                    </button>
+                  </div>
                 </div>
               </Link>
             ))}
