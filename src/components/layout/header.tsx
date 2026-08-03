@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
+import logoSvg from "@/assets/logo.svg";
 import {
   Search,
   User,
@@ -8,8 +10,6 @@ import {
   X,
   Heart,
   ShoppingCart,
-  Phone,
-  Globe,
   ChevronDown,
   LayoutGrid,
   Store,
@@ -69,7 +69,6 @@ export function Header() {
     e.preventDefault();
     if (searchValue.trim()) {
       setSearchQuery(searchValue.trim());
-      // navigate or open search overlay
       openSearch();
     }
   }
@@ -77,15 +76,15 @@ export function Header() {
   return (
     <>
       {/* ── 1. Top strip ─────────────────────────────────────────── */}
-      <div className="w-full bg-brand-50 border-b border-brand-100">
+      <div className="w-full bg-[#F5F1FA] border-b border-[#E9E0F2]">
         <div className="container-wide flex h-9 items-center justify-between">
           {/* Left – page links */}
-          <nav className="hidden items-center gap-5 md:flex">
+          <nav className="hidden items-center gap-6 md:flex">
             {TOP_LINKS.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                className="text-xs text-neutral-500 transition-colors hover:text-brand-600"
+                className="text-xs font-bold text-[#6D349F] transition-colors hover:text-[#52237A]"
               >
                 {link.label}
               </Link>
@@ -94,19 +93,17 @@ export function Header() {
 
           {/* Right – phone + language */}
           <div className="flex items-center gap-4 ml-auto">
-            <div className="flex items-center gap-1.5 text-xs text-neutral-500">
-              <Phone size={12} className="shrink-0" />
+            <div className="flex items-center gap-1.5 text-xs text-[#7A6B8A]">
               <span>Need help? Call us:</span>
-              <a href="tel:+2349000000" className="font-medium text-neutral-700 hover:text-brand-600 transition-colors">
+              <a href="tel:+2349000000" className="font-bold text-[#6D349F] hover:text-[#52237A] transition-colors">
                 +2349000000
               </a>
             </div>
 
-            <div className="h-3.5 w-px bg-neutral-300 hidden md:block" />
+            <div className="h-3.5 w-px bg-[#D6CBE3] hidden md:block" />
 
-            <button className="hidden md:flex items-center gap-1 text-xs text-neutral-500 hover:text-brand-600 transition-colors">
-              <Globe size={13} />
-              <span className="font-medium">English</span>
+            <button className="hidden md:flex items-center gap-1 text-xs font-medium text-[#6D349F] hover:text-[#52237A] transition-colors">
+              <span>English</span>
               <ChevronDown size={12} />
             </button>
           </div>
@@ -120,31 +117,25 @@ export function Header() {
           isScrolled && "shadow-brand-md",
         )}
       >
-        <div className="bg-brand-600 w-full">
-          <div className="container-wide flex h-[68px] items-center gap-4 md:gap-8">
+        <div className="bg-[#7E37C9] w-full">
+          <div className="container-wide flex h-[72px] items-center gap-4 md:gap-8">
 
             {/* Logo */}
-            <Link href="/" className="flex shrink-0 flex-col leading-none select-none" aria-label="Fastlink Marketplace">
-              <div className="flex items-center gap-1.5">
-                {/* Stylised F-arrow icon */}
-                <svg width="26" height="22" viewBox="0 0 26 22" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                  <path d="M2 11L10 3L18 11L10 19" stroke="#5FD0C8" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M10 11H24" stroke="#5FD0C8" strokeWidth="2.5" strokeLinecap="round"/>
-                  <path d="M2 6H12" stroke="white" strokeWidth="2" strokeLinecap="round" opacity="0.7"/>
-                </svg>
-                <span className="text-xl font-extrabold tracking-wide text-white md:text-2xl">
-                  ASTLINK
-                </span>
-              </div>
-              <span className="ml-[34px] text-[9px] font-semibold tracking-[0.25em] text-brand-200">
-                MARKETPLACE
-              </span>
+            <Link href="/" className="flex shrink-0 items-center select-none" aria-label="Fastlink Marketplace">
+              <Image
+                src={logoSvg}
+                alt="Fastlink Marketplace"
+                width={190}
+                height={42}
+                className="h-10 w-auto object-contain"
+                priority
+              />
             </Link>
 
             {/* Search bar */}
             <form
               onSubmit={handleSearchSubmit}
-              className="flex flex-1 items-center overflow-hidden rounded-full bg-white shadow-brand"
+              className="flex flex-1 items-center overflow-hidden rounded-full bg-white p-1 pl-5 shadow-sm max-w-xl mx-auto"
             >
               <input
                 ref={searchInputRef}
@@ -152,20 +143,19 @@ export function Header() {
                 value={searchValue}
                 onChange={(e) => setSearchValue(e.target.value)}
                 placeholder="Search Products, Brand, Stores .."
-                className="min-w-0 flex-1 bg-transparent px-5 py-2.5 text-sm text-neutral-700 placeholder:text-neutral-400 outline-none"
+                className="min-w-0 flex-1 bg-transparent text-sm text-neutral-700 placeholder:text-neutral-400 outline-none"
                 aria-label="Search"
               />
               <button
                 type="submit"
-                className="m-1 flex items-center gap-2 rounded-full bg-white px-5 py-2 text-sm font-semibold text-neutral-700 shadow transition-all hover:bg-brand-50 hover:text-brand-600"
+                className="flex items-center justify-center rounded-full bg-[#7E37C9] px-6 py-2 text-sm font-semibold text-white transition-all hover:bg-[#6C2CB5]"
               >
-                <Search size={15} />
                 Search
               </button>
             </form>
 
             {/* Actions */}
-            <div className="flex items-center gap-5 shrink-0">
+            <div className="flex items-center gap-6 shrink-0 ml-auto md:ml-0">
               {/* Wishlist */}
               <Link
                 href="/wishlist"
@@ -174,14 +164,12 @@ export function Header() {
               >
                 <div className="relative">
                   <Heart
-                    size={26}
-                    className="fill-amber-400 stroke-amber-400 drop-shadow-sm transition-transform group-hover:scale-110"
+                    size={24}
+                    className="stroke-[#F59E0B] stroke-[2.2] fill-transparent transition-transform group-hover:scale-110"
                   />
-                  {wishlistCount > 0 && (
-                    <span className="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-amber-400 text-[9px] font-bold text-white">
-                      {wishlistCount > 9 ? "9+" : wishlistCount}
-                    </span>
-                  )}
+                  <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-[#F59E0B] text-[10px] font-bold text-white">
+                    {wishlistCount}
+                  </span>
                 </div>
                 <span className="text-sm font-bold text-white">Whistlist</span>
               </Link>
@@ -194,14 +182,12 @@ export function Header() {
               >
                 <div className="relative">
                   <ShoppingCart
-                    size={26}
-                    className="stroke-amber-400 transition-transform group-hover:scale-110"
+                    size={24}
+                    className="stroke-[#F59E0B] stroke-[2.2] transition-transform group-hover:scale-110"
                   />
-                  {itemCount > 0 && (
-                    <span className="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-amber-400 text-[9px] font-bold text-white">
-                      {itemCount > 9 ? "9+" : itemCount}
-                    </span>
-                  )}
+                  <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-[#F59E0B] text-[10px] font-bold text-white">
+                    {itemCount}
+                  </span>
                 </div>
                 <span className="hidden text-sm font-bold text-white md:inline">Cart</span>
               </button>
@@ -212,7 +198,7 @@ export function Header() {
                 className="group hidden items-center gap-2 md:flex"
                 aria-label="Account"
               >
-                <User size={24} className="stroke-white transition-transform group-hover:scale-110" />
+                <User size={24} className="stroke-[#F59E0B] stroke-[2.2] transition-transform group-hover:scale-110" />
                 <span className="text-sm font-bold text-white">Account</span>
               </Link>
 
@@ -229,29 +215,17 @@ export function Header() {
         </div>
 
         {/* ── 3. Category nav bar ──────────────────────────────────── */}
-        <nav className="w-full border-b border-brand-100 bg-brand-50" aria-label="Shop categories">
-          <div className="container-wide flex h-11 items-center gap-1 overflow-x-auto scrollbar-none">
+        <nav className="w-full border-b border-[#E9E0F2] bg-[#F5F1FA]" aria-label="Shop categories">
+          <div className="container-wide flex h-11 items-center gap-8 overflow-x-auto scrollbar-none">
             {CATEGORY_LINKS.map((cat) => {
               const Icon = cat.icon;
-              const isFirst = cat.label === "All Categories";
               return (
                 <Link
                   key={cat.href}
                   href={cat.href}
-                  className={cn(
-                    "flex shrink-0 items-center gap-2 rounded px-3 py-1.5 text-sm transition-colors",
-                    isFirst
-                      ? "font-bold text-brand-900"
-                      : "font-medium text-brand-700 hover:bg-brand-100 hover:text-brand-900",
-                  )}
+                  className="flex shrink-0 items-center gap-2 text-sm font-medium text-[#6E627C] hover:text-[#52237A] transition-colors"
                 >
-                  <Icon
-                    size={18}
-                    className={cn(
-                      "shrink-0",
-                      isFirst ? "text-brand-600" : "text-brand-500",
-                    )}
-                  />
+                  <Icon size={18} className="text-[#6E627C] shrink-0" />
                   {cat.label}
                 </Link>
               );
@@ -325,3 +299,4 @@ export function Header() {
     </>
   );
 }
+

@@ -13,6 +13,7 @@ const config: Config = {
       fontFamily: {
         sans: ["var(--font-inter)", "Outfit", "system-ui", "sans-serif"],
         display: ["var(--font-inter)", "Outfit", "system-ui", "sans-serif"],
+        montserrat: ["var(--font-montserrat)", "Montserrat", "sans-serif"],
       },
       colors: {
         background: "hsl(var(--background))",
