@@ -78,16 +78,16 @@ function Section({
 }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <div className="border-b border-[#e8d5fa]/50 py-3.5">
+    <div className="border-b border-[#e8d5fa]/50 py-3.5 font-montserrat">
       <button
         onClick={() => setOpen((o) => !o)}
         className="flex w-full items-center justify-between text-left py-1"
       >
-        <span className="text-[15px] font-medium text-[#827498]">{title}</span>
+        <span className="text-[15px] font-semibold text-[#6D349F]">{title}</span>
         {open ? (
-          <ChevronUp size={16} className="text-[#827498]" />
+          <ChevronUp size={16} className="text-[#6D349F]" />
         ) : (
-          <ChevronDown size={16} className="text-[#827498]" />
+          <ChevronDown size={16} className="text-[#6D349F]" />
         )}
       </button>
       {open && <div className="mt-3 space-y-2.5">{children}</div>}
@@ -115,8 +115,6 @@ export function ProductFilters({ filters, onFiltersChange, className }: ProductF
 
   const brands = BRANDS_BY_CATEGORY[filters.category ?? ""] ?? ["Nike", "Samsung", "Sony", "IKEA", "Zara"];
 
-  const activeCategory = MOCK_CATEGORIES.find((c) => c.name === filters.category);
-
   function toggleBrand(brand: string) {
     setSelectedBrands((prev) =>
       prev.includes(brand) ? prev.filter((b) => b !== brand) : [...prev, brand],
@@ -124,45 +122,45 @@ export function ProductFilters({ filters, onFiltersChange, className }: ProductF
   }
 
   return (
-    <aside className={cn("w-full font-sans pb-10", className)}>
+    <aside className={cn("w-full font-montserrat pb-10", className)}>
       {/* Active Category Header */}
       <div className="mb-2 flex items-center gap-3 pb-4 border-b border-[#e8d5fa]/50 px-1">
-        <div className="flex h-6 w-6 items-center justify-center rounded-md bg-[#7a3dbf] text-white">
-           <MonitorPlay size={14} />
+        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#6D349F] text-white shadow-xs">
+           <MonitorPlay size={15} />
         </div>
-        <span className="text-[17px] font-bold text-[#7a3dbf]">
+        <span className="text-[17px] font-bold text-[#6D349F]">
           {filters.category ?? "Electronics"}
         </span>
       </div>
 
       {/* Categories */}
       <Section title="Categories">
-        <div className="space-y-1.5">
+        <div className="space-y-2">
           <label className="flex cursor-pointer items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2.5">
               <input
                 type="radio"
                 name="category"
                 checked={!filters.category}
                 onChange={() => update({ category: undefined })}
-                className="accent-[#7a3dbf]"
+                className="accent-[#6D349F] h-4 w-4"
               />
-              <span className="text-xs text-slate-600">All Categories</span>
+              <span className="text-sm font-medium text-[#4A2574]">All Categories</span>
             </div>
           </label>
           {MOCK_CATEGORIES.map((cat) => (
             <label key={cat.id} className="flex cursor-pointer items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2.5">
                 <input
                   type="radio"
                   name="category"
                   checked={filters.category === cat.name}
                   onChange={() => update({ category: cat.name })}
-                  className="accent-[#7a3dbf]"
+                  className="accent-[#6D349F] h-4 w-4"
                 />
-                <span className="text-xs text-slate-600">{cat.name}</span>
+                <span className="text-sm font-medium text-[#4A2574]">{cat.name}</span>
               </div>
-              <span className="text-[10px] text-slate-400">{cat.count}</span>
+              <span className="text-xs font-semibold text-[#8A79A5]">{cat.count}</span>
             </label>
           ))}
         </div>
@@ -177,19 +175,19 @@ export function ProductFilters({ filters, onFiltersChange, className }: ProductF
             colorClass="bg-[#53a69a]" 
           />
           <div className="flex items-center gap-1.5">
-            <span className="text-[15px] font-bold text-[#827498]">Local</span>
-            <span className="text-[13px] text-[#bda4da]">(Same Day)</span>
+            <span className="text-sm font-semibold text-[#6D349F]">Local</span>
+            <span className="text-xs font-medium text-[#8A79A5]">(Same Day)</span>
           </div>
         </label>
         <label className="flex cursor-pointer items-center gap-3">
           <CustomCheckbox 
             checked={deliveryNationwide} 
             onChange={setDeliveryNationwide} 
-            colorClass="bg-[#7a3dbf]" 
+            colorClass="bg-[#6D349F]" 
           />
           <div className="flex items-center gap-1.5">
-            <span className="text-[15px] font-medium text-[#827498]">Nationwide</span>
-            <span className="text-[13px] text-[#bda4da]">(3-5Days)</span>
+            <span className="text-sm font-semibold text-[#6D349F]">Nationwide</span>
+            <span className="text-xs font-medium text-[#8A79A5]">(3-5 Days)</span>
           </div>
         </label>
       </Section>
@@ -203,7 +201,7 @@ export function ProductFilters({ filters, onFiltersChange, className }: ProductF
                 checked={selectedBrands.includes(brand)} 
                 onChange={() => toggleBrand(brand)} 
               />
-              <span className="text-[15px] text-[#827498]">{brand}</span>
+              <span className="text-sm font-medium text-[#4A2574]">{brand}</span>
             </label>
           ))}
         </div>
@@ -212,13 +210,13 @@ export function ProductFilters({ filters, onFiltersChange, className }: ProductF
       {/* Price */}
       <Section title="Price">
         <div className="space-y-4 mt-2">
-          <div className="flex w-full items-center justify-center rounded-md border border-[#e8d5fa] bg-[#fdfaff] py-2">
-            <span className="text-[14px] text-[#827498]">
-              N30,000 &mdash; N380,000
+          <div className="flex w-full items-center justify-center rounded-xl border border-[#e8d5fa] bg-[#fdfaff] py-2.5 shadow-2xs">
+            <span className="text-xs font-semibold text-[#6D349F]">
+              ₦30,000 &mdash; ₦380,000
             </span>
           </div>
-          <div className="relative h-1 w-[90%] mx-auto bg-[#e8d5fa] rounded-full overflow-hidden">
-             <div className="absolute left-[5%] right-[15%] top-0 bottom-0 bg-[#7a3dbf] rounded-full" />
+          <div className="relative h-1.5 w-[90%] mx-auto bg-[#e8d5fa] rounded-full overflow-hidden">
+             <div className="absolute left-[5%] right-[15%] top-0 bottom-0 bg-[#6D349F] rounded-full" />
           </div>
           <div className="flex justify-end pt-1">
             <button
@@ -226,7 +224,7 @@ export function ProductFilters({ filters, onFiltersChange, className }: ProductF
                 setPriceMax(PRICE_MAX);
                 update({ minPrice: undefined, maxPrice: undefined });
               }}
-              className="text-[11px] text-[#bda4da] hover:text-[#7a3dbf] transition-colors"
+              className="text-xs font-semibold text-[#8A79A5] hover:text-[#6D349F] transition-colors"
             >
               Reset
             </button>
@@ -246,46 +244,31 @@ export function ProductFilters({ filters, onFiltersChange, className }: ProductF
               <div className="flex items-center gap-1.5">
                 <div className="flex gap-0.5">
                   {Array.from({ length: 5 }).map((_, i) => (
-                    <span key={i} className={i < opt.value ? "text-[#fbb321] text-[15px]" : "text-slate-200 text-[15px]"}>★</span>
+                    <span key={i} className={i < opt.value ? "text-[#fbb321] text-[15px]" : "text-slate-300 text-[15px]"}>★</span>
                   ))}
                 </div>
-                <span className="text-[14px] text-[#827498]">&amp;Up</span>
+                <span className="text-xs font-semibold text-[#6D349F]">&amp; Up</span>
               </div>
             </label>
           ))}
-          <label className="flex cursor-pointer items-center gap-3">
-            <CustomCheckbox 
-              checked={false} 
-              onChange={() => {}} 
-            />
-            <div className="flex items-center gap-1">
-              <span className="text-[14px] text-[#bda4da]">Rating 4.0 Bays%</span>
-            </div>
-          </label>
         </div>
       </Section>
 
       {/* Reset All */}
-      <div className="pt-8 space-y-6">
-        <div className="relative">
-          <select
-            onChange={(e) => {
-              if (e.target.value === "reset") clearAll();
-            }}
-            className="w-full appearance-none rounded-md bg-[#eaddf7] px-4 py-2.5 text-[15px] font-medium text-[#827498] focus:outline-none"
-          >
-            <option value="">Reset</option>
-            <option value="reset">Clear All Filters</option>
-          </select>
-          <ChevronDown size={16} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#827498]" />
-        </div>
+      <div className="pt-8 space-y-4">
+        <button
+          onClick={clearAll}
+          className="w-full rounded-xl bg-[#eaddf7] px-4 py-2.5 text-xs font-bold text-[#6D349F] hover:bg-[#6D349F] hover:text-white transition-colors"
+        >
+          Clear All Filters
+        </button>
 
         <Link
           href="/products"
-          className="flex items-center gap-2.5 text-[15px] font-medium text-[#827498] hover:text-[#7a3dbf] transition-colors px-1"
+          className="flex items-center justify-center gap-2 text-xs font-bold text-[#6D349F] hover:text-[#52237A] transition-colors px-1"
         >
-          <Folder size={18} className="text-[#827498]" />
-          Continue Shopping
+          <Folder size={16} />
+          <span>Continue Shopping</span>
         </Link>
       </div>
     </aside>

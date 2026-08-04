@@ -141,17 +141,17 @@ function ProductsContent() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f0ebff] font-sans">
+    <div className="min-h-screen bg-[#EADBF8] font-montserrat">
 
       {/* ── Hero Banner ────────────────────────────────────────── */}
       <div className={cn("relative w-full overflow-hidden", hero.bg.startsWith("bg-") ? hero.bg : cn("bg-gradient-to-r", hero.bg))}>
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-10 md:px-10 md:py-14">
           {/* Left: text */}
           <div className="z-20 max-w-xs md:max-w-sm relative">
-            <h1 className="text-3xl font-bold leading-tight text-white md:text-[32px]">
+            <h1 className="text-3xl font-extrabold leading-tight text-white md:text-[32px]">
               {hero.title}
             </h1>
-            <p className="mt-2 text-[15px] text-white/80">{hero.subtitle}</p>
+            <p className="mt-2 text-[15px] font-medium text-white/90">{hero.subtitle}</p>
             
             {hero.buttons ? (
               <div className="mt-8 flex items-center bg-[#f3eafb] rounded-[10px] w-fit shadow-sm">
@@ -232,12 +232,12 @@ function ProductsContent() {
       </div>
 
       {/* ── Main Layout ────────────────────────────────────────── */}
-      <div className="mx-auto max-w-7xl px-4 py-6 md:px-8">
+      <div className="mx-auto max-w-7xl px-4 py-6 md:px-8 font-montserrat">
         <div className="flex gap-6 items-start">
 
           {/* Sidebar — desktop */}
           <aside className="hidden w-60 flex-shrink-0 lg:block">
-            <div className="rounded-3x bg-[#fdfbfd] p-4 shadow-sm border border-[#E8D7F9]">
+            <div className="rounded-2xl bg-[#F6EFFD] p-4 shadow-xs border border-white/80">
               <ProductFilters filters={filters} onFiltersChange={handleFiltersChange} />
             </div>
           </aside>
@@ -246,13 +246,13 @@ function ProductsContent() {
           <div className="flex-1 min-w-0">
 
             {/* Content header */}
-            <div className="mb-4 flex items-center justify-between rounded-xl bg-white/60 backdrop-blur-sm px-5 py-3 shadow-sm border border-transparent">
+            <div className="mb-4 flex items-center justify-between rounded-2xl bg-[#F6EFFD] px-5 py-3.5 shadow-xs border border-white/80">
               <div className="flex items-center gap-2">
-                <span className="text-lg font-medium text-slate-700">
+                <span className="text-base sm:text-lg font-extrabold text-[#6D349F]">
                   {filters.category ?? "All Products"}
                 </span>
-                <span className="text-sm text-slate-400">
-                  -Local &amp; Nationwide
+                <span className="text-xs sm:text-sm font-semibold text-[#8A79A5]">
+                  - Local &amp; Nationwide
                 </span>
               </div>
 
@@ -260,7 +260,7 @@ function ProductsContent() {
                 {/* Mobile filter toggle */}
                 <button
                   onClick={openFilters}
-                  className="flex items-center gap-1.5 rounded-lg border border-[#e8d5fa] px-3 py-1.5 text-xs font-semibold text-slate-600 hover:border-[#7a3dbf] hover:text-[#7a3dbf] transition-colors lg:hidden"
+                  className="flex items-center gap-1.5 rounded-xl border border-purple-200 bg-white px-3 py-1.5 text-xs font-bold text-[#6D349F] hover:bg-[#6D349F] hover:text-white transition-colors lg:hidden"
                 >
                   <SlidersHorizontal size={13} />
                   Filters
@@ -268,7 +268,7 @@ function ProductsContent() {
 
                 {/* Sort dropdown */}
                 <div className="relative flex items-center gap-2">
-                  <span className="text-xs text-slate-400 font-medium hidden sm:block">Sort by:</span>
+                  <span className="text-xs text-[#8A79A5] font-semibold hidden sm:block">Sort by:</span>
                   <div className="relative">
                     <select
                       value={filters.sortBy ?? ""}
@@ -278,7 +278,7 @@ function ProductsContent() {
                           sortBy: (e.target.value as ProductFilter["sortBy"]) || undefined,
                         })
                       }
-                      className="appearance-none rounded-lg bg-[#f3eafb] border-none py-1.5 pl-3 pr-8 text-xs font-medium text-[#7a3dbf] focus:outline-none focus:ring-1 focus:ring-[#7a3dbf] cursor-pointer"
+                      className="appearance-none rounded-xl bg-white border border-purple-200 py-1.5 pl-3 pr-8 text-xs font-bold text-[#6D349F] focus:outline-none focus:ring-2 focus:ring-[#6D349F]/30 cursor-pointer shadow-2xs"
                     >
                       {SORT_OPTIONS.map((opt) => (
                         <option key={opt.value} value={opt.value}>
@@ -286,11 +286,9 @@ function ProductsContent() {
                         </option>
                       ))}
                     </select>
-                    <ChevronDown size={12} className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[#7a3dbf]" />
+                    <ChevronDown size={12} className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[#6D349F]" />
                   </div>
                 </div>
-
-                {/* View toggle removed in mock */}
               </div>
             </div>
 
