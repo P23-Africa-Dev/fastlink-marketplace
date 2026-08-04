@@ -11,6 +11,7 @@ import {
   Calendar,
   MessageCircle,
   ArrowRight,
+  ArrowLeft,
 } from "lucide-react";
 
 // Mock Categories
@@ -108,6 +109,7 @@ export default function BlogPage() {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("Most Popular");
+  const [currentPage, setCurrentPage] = useState(1);
 
   // Filter posts
   const filteredPosts = blogPosts.filter((post) => {
@@ -327,11 +329,49 @@ export default function BlogPage() {
               ))}
             </div>
 
-            {filteredPosts.length === 0 && (
-              <div className="rounded-2xl bg-white p-12 text-center text-slate-500 shadow-2xs">
-                No blog posts found matching your search.
-              </div>
-            )}
+            {/* Pagination Controls (Matching Design Screenshot) */}
+            <div className="flex items-center justify-center gap-2 sm:gap-3 pt-6 pb-4">
+              
+              {/* Previous Page Circle Button */}
+              <button
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className="h-10 w-10 sm:h-12 sm:w-12 rounded-full border-2 border-[#FA8232] text-[#FA8232] hover:bg-[#FA8232] hover:text-white disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-[#FA8232] flex items-center justify-center transition-all cursor-pointer shadow-2xs"
+                aria-label="Previous Page"
+              >
+                <ArrowLeft size={18} strokeWidth={2.5} />
+              </button>
+
+              {/* Page Numbers 01 to 06 */}
+              {[1, 2, 3, 4, 5, 6].map((page) => {
+                const isActive = currentPage === page;
+                const pageLabel = String(page).padStart(2, "0");
+                return (
+                  <button
+                    key={page}
+                    onClick={() => setCurrentPage(page)}
+                    className={`h-10 w-10 sm:h-12 sm:w-12 rounded-full text-xs sm:text-sm font-semibold flex items-center justify-center transition-all cursor-pointer ${
+                      isActive
+                        ? "bg-[#FA8232] text-white font-bold shadow-xs scale-105"
+                        : "bg-white border border-slate-200/90 text-[#191C1F] hover:border-[#FA8232] hover:text-[#FA8232] shadow-2xs"
+                    }`}
+                  >
+                    {pageLabel}
+                  </button>
+                );
+              })}
+
+              {/* Next Page Circle Button */}
+              <button
+                onClick={() => setCurrentPage((prev) => Math.min(prev + 1, 6))}
+                disabled={currentPage === 6}
+                className="h-10 w-10 sm:h-12 sm:w-12 rounded-full border-2 border-[#FA8232] text-[#FA8232] hover:bg-[#FA8232] hover:text-white disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-[#FA8232] flex items-center justify-center transition-all cursor-pointer shadow-2xs"
+                aria-label="Next Page"
+              >
+                <ArrowRight size={18} strokeWidth={2.5} />
+              </button>
+
+            </div>
 
           </div>
 
