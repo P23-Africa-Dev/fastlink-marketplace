@@ -3,26 +3,167 @@
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useState, Suspense } from "react";
-import { Menu, X, LogOut } from "lucide-react";
+import {
+  LayoutDashboard,
+  ShoppingBag,
+  Package,
+  Users,
+  MessageSquare,
+  CreditCard,
+  Wallet,
+  BarChart3,
+  Megaphone,
+  Star,
+  Settings,
+  HelpCircle,
+  LogOut,
+  Menu,
+  X,
+  type LucideIcon,
+} from "lucide-react";
 
 import { useAuthStore } from "@/store/auth-store";
 import { cn } from "@/lib/utils";
 import { useMessagesStore } from "@/store/messages-store";
 
-const NAV_ITEMS = [
-  { href: "/dashboard", label: "Dashboard" },
-  { href: "/orders", label: "Order" },
-  { href: "/all-products", label: "Products" },
-  { href: "/customers", label: "Customers" },
-  { href: "/messages", label: "Messages" },
-  { href: "/payments", label: "Payments ⭐️" },
-  { href: "/payouts", label: "Payouts" },
-  { href: "/analytics", label: "Analytics" },
-  { href: "/marketing", label: "Marketing" },
-  { href: "/reviews", label: "Reviews" },
-  { href: "/settings", label: "Settings" },
-  { href: "/support", label: "Support" },
+interface NavItem {
+  href: string;
+  label: string;
+  icon: LucideIcon;
+  showStar?: boolean;
+  hasUnread?: boolean;
+}
+
+interface NavSection {
+  title: string;
+  items: NavItem[];
+}
+
+const NAV_SECTIONS: NavSection[] = [
+  {
+    title: "OVERVIEW",
+    items: [
+      { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+      { href: "/orders", label: "Order", icon: ShoppingBag },
+      { href: "/all-products", label: "Products", icon: Package },
+      { href: "/customers", label: "Customers", icon: Users },
+      { href: "/messages", label: "Messages", icon: MessageSquare, hasUnread: true },
+    ],
+  },
+  {
+    title: "FINANCE & GROWTH",
+    items: [
+      { href: "/payments", label: "Payments", icon: CreditCard, showStar: true },
+      { href: "/payouts", label: "Payouts", icon: Wallet },
+      { href: "/analytics", label: "Analytics", icon: BarChart3 },
+      { href: "/marketing", label: "Marketing", icon: Megaphone },
+      { href: "/reviews", label: "Reviews", icon: Star },
+    ],
+  },
+  {
+    title: "SYSTEM",
+    items: [
+      { href: "/settings", label: "Settings", icon: Settings },
+      { href: "/support", label: "Support", icon: HelpCircle },
+    ],
+  },
 ];
+
+interface SidebarNavProps {
+  pathname: string;
+  onItemClick?: () => void;
+  onLogoutClick: () => void;
+}
+
+function SidebarNav({ pathname, onItemClick, onLogoutClick }: SidebarNavProps) {
+  const conversations = useMessagesStore((state) => state.conversations);
+  const unreadCount = conversations.filter((c) => c.status === "New").length;
+
+  const checkIsActive = (href: string) => {
+    if (href === "/dashboard") {
+      return pathname === "/dashboard";
+    }
+    if (href === "/all-products") {
+      return pathname === "/all-products" || pathname.startsWith("/products");
+    }
+    return pathname === href || pathname.startsWith(href);
+  };
+
+  return (
+    <div className="flex flex-col h-full select-none justify-between">
+      <nav className="flex-1 overflow-y-auto pr-1 space-y-5">
+        {NAV_SECTIONS.map((section) => (
+          <div key={section.title} className="space-y-1.5">
+            <h3 className="px-3.5 text-[10px] font-black uppercase tracking-wider text-purple-900/50">
+              {section.title}
+            </h3>
+            <ul className="space-y-1">
+              {section.items.map(({ href, label, icon: Icon, showStar, hasUnread }) => {
+                const isActive = checkIsActive(href);
+                return (
+                  <li key={href}>
+                    <Link
+                      href={href}
+                      onClick={onItemClick}
+                      className={cn(
+                        "group flex items-center justify-between px-3.5 py-2.5 text-sm font-bold transition-all duration-200 rounded-xl",
+                        isActive
+                          ? "bg-[#7a3dbf] text-white shadow-md shadow-purple-600/20 translate-x-0.5"
+                          : "text-slate-700 hover:bg-[#ebd7fa]/80 hover:text-purple-950 hover:translate-x-0.5"
+                      )}
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <Icon
+                          size={19}
+                          className={cn(
+                            "transition-colors duration-200 shrink-0",
+                            isActive
+                              ? "text-white"
+                              : "text-purple-700/80 group-hover:text-[#7a3dbf]"
+                          )}
+                        />
+                        <span className="truncate">{label}</span>
+                      </div>
+
+                      {hasUnread && unreadCount > 0 && (
+                        <span
+                          className={cn(
+                            "ml-2 shrink-0 px-2 py-0.5 text-[11px] font-extrabold rounded-full transition-colors",
+                            isActive
+                              ? "bg-white text-[#7a3dbf]"
+                              : "bg-[#7a3dbf] text-white"
+                          )}
+                        >
+                          {unreadCount}
+                        </span>
+                      )}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        ))}
+      </nav>
+
+      {/* Footer / Logout */}
+      <div className="pt-4 mt-4 border-t border-[#ebd7fa]">
+        <button
+          onClick={onLogoutClick}
+          className="group flex w-full items-center justify-between px-3.5 py-2.5 text-sm font-bold text-slate-700 hover:text-red-600 hover:bg-red-50/80 rounded-xl transition-all duration-200 text-left"
+        >
+          <div className="flex items-center gap-3">
+            <LogOut
+              size={19}
+              className="text-purple-700/80 group-hover:text-red-600 transition-colors duration-200 shrink-0"
+            />
+            <span>Logout</span>
+          </div>
+        </button>
+      </div>
+    </div>
+  );
+}
 
 function HeaderTitleContent() {
   const pathname = usePathname();
@@ -298,37 +439,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <div className="flex flex-1 flex-row relative overflow-hidden">
         {/* Sidebar Container */}
         {/* Desktop Sidebar */}
-        <aside className="hidden lg:flex w-60 flex-col bg-[#f4ebfc] border-r border-[#ebd7fa] py-6 px-4">
-          <nav className="flex-1">
-            <ul className="space-y-1">
-              {NAV_ITEMS.map(({ href, label }) => {
-                const isActive = pathname === href || (href !== "/dashboard" && pathname.startsWith(href));
-                return (
-                  <li key={href}>
-                    <Link
-                      href={href}
-                      className={cn(
-                        "flex items-center px-4 py-2 text-base font-bold transition-all rounded-xl",
-                        isActive
-                          ? "bg-[#7a3dbf] text-white shadow-md shadow-purple-500/10"
-                          : "text-slate-800 hover:bg-[#ebd7fa]"
-                      )}
-                    >
-                      {label}
-                    </Link>
-                  </li>
-                );
-              })}
-              <li>
-                <button
-                  onClick={() => setShowLogoutConfirm(true)}
-                  className="flex w-full items-center px-4 py-2 text-base font-bold text-slate-800 hover:bg-[#ebd7fa] rounded-xl transition-all text-left"
-                >
-                  Logout
-                </button>
-              </li>
-            </ul>
-          </nav>
+        <aside className="hidden lg:flex w-64 flex-col bg-[#f5ebfc] border-r border-[#ebd7fa] py-5 px-3.5 shrink-0">
+          <SidebarNav
+            pathname={pathname}
+            onLogoutClick={() => setShowLogoutConfirm(true)}
+          />
         </aside>
 
         {/* Mobile Sidebar overlay & sidebar */}
@@ -346,54 +461,30 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           {/* Sidebar Drawer */}
           <aside
             className={cn(
-              "absolute inset-y-0 left-0 w-60 bg-[#f4ebfc] flex flex-col p-6 shadow-2xl transition-transform duration-300",
+              "absolute inset-y-0 left-0 w-64 bg-[#f5ebfc] flex flex-col p-5 shadow-2xl transition-transform duration-300 z-50",
               sidebarOpen ? "translate-x-0" : "-translate-x-full"
             )}
           >
-            <div className="flex items-center justify-between mb-6">
-              <span className="font-bold text-purple-900 text-lg">Menu</span>
+            <div className="flex items-center justify-between mb-4 pb-2 border-b border-[#ebd7fa]/60">
+              <span className="font-extrabold text-purple-900 text-base">Dashboard Menu</span>
               <button
                 onClick={() => setSidebarOpen(false)}
-                className="text-slate-800 p-1 focus:outline-none"
+                className="text-slate-700 hover:text-purple-900 p-1 focus:outline-none rounded-lg hover:bg-[#ebd7fa]"
               >
                 <X size={20} />
               </button>
             </div>
             
-            <nav className="flex-1 overflow-y-auto">
-              <ul className="space-y-1">
-                {NAV_ITEMS.map(({ href, label }) => {
-                  const isActive = pathname === href || (href !== "/dashboard" && pathname.startsWith(href));
-                  return (
-                    <li key={href}>
-                      <Link
-                        href={href}
-                        onClick={() => setSidebarOpen(false)}
-                        className={cn(
-                          "flex items-center px-4 py-2.5 text-base font-bold transition-all rounded-xl",
-                          isActive
-                            ? "bg-[#7a3dbf] text-white shadow-md"
-                            : "text-slate-800 hover:bg-[#ebd7fa]"
-                        )}
-                      >
-                        {label}
-                      </Link>
-                    </li>
-                  );
-                })}
-                <li>
-                  <button
-                    onClick={() => {
-                      setSidebarOpen(false);
-                      setShowLogoutConfirm(true);
-                    }}
-                    className="flex w-full items-center px-4 py-2.5 text-base font-bold text-slate-800 hover:bg-[#ebd7fa] rounded-xl transition-all text-left"
-                  >
-                    Logout
-                  </button>
-                </li>
-              </ul>
-            </nav>
+            <div className="flex-1 overflow-hidden">
+              <SidebarNav
+                pathname={pathname}
+                onItemClick={() => setSidebarOpen(false)}
+                onLogoutClick={() => {
+                  setSidebarOpen(false);
+                  setShowLogoutConfirm(true);
+                }}
+              />
+            </div>
           </aside>
         </div>
 
