@@ -106,29 +106,31 @@ export default function OrderTrackingDetailsPage() {
             </Link>
           </div>
 
-          {/* Main Card Container (Matching Design Screenshot 2) */}
-          <div className="rounded-lg bg-white border border-slate-200/90 shadow-2xs overflow-hidden">
+          {/* Main Card Container (Matching Design Screenshot) */}
+          <div className="rounded-md bg-white border border-slate-200/90 shadow-2xs overflow-hidden">
             
-            {/* Top Yellow Banner */}
-            <div className="bg-[#FFFDF0] border-b border-[#FFE8A3] p-6 sm:p-7 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <h1 className="text-xl sm:text-2xl font-bold text-[#191C1F]">
-                  {displayOrderId}
-                </h1>
-                <p className="text-xs sm:text-sm text-[#5F6C72] mt-1 font-normal">
-                  4 Products · Order Placed in 17 Jan, 2021 at 7:32 PM
-                </p>
-              </div>
+            {/* Top Yellow Banner Box */}
+            <div className="p-6 pb-2">
+              <div className="bg-[#FFFDF0] border border-[#FFE8A3] p-6 rounded-md flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h1 className="text-xl sm:text-2xl font-bold text-[#191C1F]">
+                    {displayOrderId}
+                  </h1>
+                  <p className="text-xs sm:text-sm text-[#5F6C72] mt-1 font-normal">
+                    4 Products · Order Placed in 17 Jan, 2021 at 7:32 PM
+                  </p>
+                </div>
 
-              <div className="text-left sm:text-right">
-                <span className="text-2xl sm:text-3xl font-extrabold text-[#2DA5F3]">
-                  $1199.00
-                </span>
+                <div className="text-left sm:text-right">
+                  <span className="text-2xl sm:text-3xl font-extrabold text-[#2DA5F3]">
+                    $1199.00
+                  </span>
+                </div>
               </div>
             </div>
 
             {/* Stepper Progress Bar */}
-            <div className="p-6 sm:p-10 border-b border-slate-100">
+            <div className="px-6 sm:px-10 py-6 border-b border-slate-100">
               <p className="text-xs sm:text-sm text-[#5F6C72] font-normal mb-8">
                 Order expected arrival <span className="font-bold text-[#191C1F]">23 Jan, 2021</span>
               </p>
@@ -137,8 +139,8 @@ export default function OrderTrackingDetailsPage() {
               <div className="relative mb-6 px-4 sm:px-12">
                 
                 {/* Background Connecting Lines */}
-                <div className="absolute top-3 left-10 right-10 h-1 bg-[#FFE0D3] rounded-full -z-0" />
-                <div className="absolute top-3 left-10 w-1/3 h-1 bg-[#FA541C] rounded-full -z-0" />
+                <div className="absolute top-2.5 left-10 right-10 h-1.5 bg-[#FFE3D8] rounded-full -z-0" />
+                <div className="absolute top-2.5 left-10 w-1/3 h-1.5 bg-[#FA541C] rounded-full -z-0" />
 
                 {/* 4 Steps */}
                 <div className="relative z-10 flex items-center justify-between">
@@ -149,7 +151,7 @@ export default function OrderTrackingDetailsPage() {
                       <Check size={14} strokeWidth={3} />
                     </div>
                     <div className="flex flex-col items-center gap-1.5 mt-1">
-                      <FileText size={22} className="text-[#FA541C]" />
+                      <FileText size={24} className="text-[#2DB224]" />
                       <span className="text-xs sm:text-sm font-bold text-[#191C1F]">Order Placed</span>
                     </div>
                   </div>
@@ -160,29 +162,29 @@ export default function OrderTrackingDetailsPage() {
                       <div className="h-2 w-2 rounded-full bg-white" />
                     </div>
                     <div className="flex flex-col items-center gap-1.5 mt-1">
-                      <Package size={22} className="text-[#FA541C]" />
+                      <Package size={24} className="text-[#FA541C]" />
                       <span className="text-xs sm:text-sm font-bold text-[#191C1F]">Packaging</span>
                     </div>
                   </div>
 
                   {/* Step 3: On The Road */}
                   <div className="flex flex-col items-center gap-3 text-center min-w-[80px]">
-                    <div className="h-6 w-6 rounded-full bg-white border-2 border-[#FA541C] text-[#FA541C] flex items-center justify-center">
-                      <div className="h-1.5 w-1.5 rounded-full bg-[#FA541C]" />
+                    <div className="h-6 w-6 rounded-full bg-white border-2 border-[#FA541C] flex items-center justify-center">
+                      <div className="h-1.5 w-1.5 rounded-full bg-transparent" />
                     </div>
                     <div className="flex flex-col items-center gap-1.5 mt-1">
-                      <Truck size={22} className="text-[#FA541C]/50" />
+                      <Truck size={24} className="text-[#FF9F7D]" />
                       <span className="text-xs sm:text-sm font-medium text-[#716388]">On The Road</span>
                     </div>
                   </div>
 
                   {/* Step 4: Delivered */}
                   <div className="flex flex-col items-center gap-3 text-center min-w-[80px]">
-                    <div className="h-6 w-6 rounded-full bg-white border-2 border-[#FFE0D3] flex items-center justify-center">
-                      <div className="h-1.5 w-1.5 rounded-full bg-[#FFE0D3]" />
+                    <div className="h-6 w-6 rounded-full bg-white border-2 border-[#FA541C] flex items-center justify-center">
+                      <div className="h-1.5 w-1.5 rounded-full bg-transparent" />
                     </div>
                     <div className="flex flex-col items-center gap-1.5 mt-1">
-                      <Handshake size={22} className="text-[#FA541C]/40" />
+                      <Handshake size={24} className="text-[#FF9F7D]" />
                       <span className="text-xs sm:text-sm font-medium text-[#716388]">Delivered</span>
                     </div>
                   </div>
