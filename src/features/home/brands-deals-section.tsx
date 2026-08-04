@@ -1,16 +1,17 @@
+"use client";
+
+import { useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ChevronRight, ShoppingCart } from "lucide-react";
+import { ChevronRight, ChevronLeft, ShoppingCart } from "lucide-react";
 
 // ── Types ──────────────────────────────────────────────────────
 
 interface BrandPartner {
   id: string;
   name: string;
-  /** optional logo url; falls back to styled text */
   logo?: string;
   href: string;
-  /** text styling variant */
   style?: "blue-bold" | "black" | "orange" | "default";
 }
 
@@ -141,6 +142,26 @@ const DEALS: DealProduct[] = [
     rating: 4.6,
     reviews: "315",
   },
+  {
+    id: "deal-6",
+    name: "Samsung 4K Smart TV",
+    category: "Electronics",
+    discount: 20,
+    image: "https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?w=500&auto=format&fit=crop",
+    href: "/products/samsung-smart-tv",
+    rating: 4.9,
+    reviews: "950",
+  },
+  {
+    id: "deal-7",
+    name: "Apple iPad Air",
+    category: "Electronics",
+    discount: 15,
+    image: "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=500&auto=format&fit=crop",
+    href: "/products/ipad-air",
+    rating: 4.8,
+    reviews: "1.1k",
+  },
 ];
 
 // ── Shared: section header ─────────────────────────────────────
@@ -148,22 +169,46 @@ const DEALS: DealProduct[] = [
 function SectionHeader({
   title,
   seeMoreHref,
+  onPrev,
+  onNext,
 }: {
   title: string;
   seeMoreHref: string;
+  onPrev?: () => void;
+  onNext?: () => void;
 }) {
   return (
-    <div className="mb-6 flex items-center gap-4">
-      <h2 className="shrink-0 text-xl font-bold text-[#6D349F] md:text-2xl">
+    <div className="mb-6 flex items-center justify-between gap-4">
+      <h2 className="shrink-0 text-xl font-bold text-[#6D349F] md:text-2xl font-montserrat">
         {title}
       </h2>
-      <div className="h-[1px] flex-1 bg-white/70"></div>
-      <Link
-        href={seeMoreHref}
-        className="shrink-0 flex items-center gap-1 text-sm font-semibold text-[#6D349F] transition-colors hover:text-[#5a2a83]"
-      >
-        See More <ChevronRight size={16} />
-      </Link>
+      <div className="h-[1px] flex-1 bg-[#D8C2EF]"></div>
+      <div className="flex items-center gap-3 shrink-0">
+        {onPrev && onNext && (
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={onPrev}
+              aria-label="Scroll left"
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-white/80 border border-purple-200 text-[#6D349F] transition-all hover:bg-[#6D349F] hover:text-white shadow-xs"
+            >
+              <ChevronLeft size={18} />
+            </button>
+            <button
+              onClick={onNext}
+              aria-label="Scroll right"
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-white/80 border border-purple-200 text-[#6D349F] transition-all hover:bg-[#6D349F] hover:text-white shadow-xs"
+            >
+              <ChevronRight size={18} />
+            </button>
+          </div>
+        )}
+        <Link
+          href={seeMoreHref}
+          className="flex items-center gap-1 text-sm font-semibold text-[#6D349F] transition-colors hover:text-[#5a2a83]"
+        >
+          See More <ChevronRight size={16} />
+        </Link>
+      </div>
     </div>
   );
 }
@@ -182,7 +227,6 @@ function BrandWordmark({ brand }: { brand: BrandPartner }) {
   if (brand.style === "orange") {
     return (
       <div className="flex items-center gap-2">
-        {/* Xiaomi "mi" badge */}
         <span className="flex h-7 w-7 items-center justify-center rounded-md bg-[#FF6900] text-sm font-black text-white">
           mi
         </span>
@@ -194,7 +238,6 @@ function BrandWordmark({ brand }: { brand: BrandPartner }) {
   if (brand.name === "Unilever") {
     return (
       <div className="flex items-center gap-2">
-        {/* Unilever "U" badge */}
         <span className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-blue-800 text-sm font-black text-blue-800">
           U
         </span>
@@ -217,6 +260,15 @@ function BrandWordmark({ brand }: { brand: BrandPartner }) {
 // ── Main component ─────────────────────────────────────────────
 
 export function BrandsDealsSection() {
+  const dealsSliderRef = useRef<HTMLDivElement>(null);
+
+  const scrollDeals = (direction: "left" | "right") => {
+    if (dealsSliderRef.current) {
+      const scrollAmount = direction === "left" ? -300 : 300;
+      dealsSliderRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
+    }
+  };
+
   return (
     <div className="bg-[#EADBF8] pb-12">
       <div className="container-wide space-y-12 py-8">
@@ -228,14 +280,13 @@ export function BrandsDealsSection() {
             seeMoreHref="/brands"
           />
 
-          {/* Brand logos row */}
-          <div className="overflow-hidden rounded-xl bg-[#F6EFFD] shadow-sm">
+          <div className="overflow-hidden rounded-xl bg-[#F6EFFD] shadow-sm border border-purple-100/80">
             <div className="flex items-center divide-x divide-[#ECD7F8] overflow-x-auto scrollbar-none">
               {BRAND_PARTNERS.map((brand) => (
                 <Link
                   key={brand.id}
                   href={brand.href}
-                  className="flex min-w-[140px] flex-1 items-center justify-center px-6 py-5 transition-colors hover:bg-gray-50"
+                  className="flex min-w-[140px] flex-1 items-center justify-center px-6 py-5 transition-colors hover:bg-white/60"
                 >
                   <BrandWordmark brand={brand} />
                 </Link>
@@ -256,12 +307,12 @@ export function BrandsDealsSection() {
               <Link
                 key={brand.id}
                 href={brand.href}
-                className="group flex flex-col justify-center rounded-xl bg-[#F6EFFD] p-5 shadow-sm transition-transform hover:-translate-y-1"
+                className="group flex flex-col justify-center rounded-2xl bg-[#F6EFFD] p-5 shadow-sm border border-white/60 transition-transform hover:-translate-y-1"
               >
                 <span className="text-lg font-extrabold text-[#6D349F]">
                   {brand.name}
                 </span>
-                <span className="mt-1 text-sm text-gray-500">{brand.tagline}</span>
+                <span className="mt-1 text-sm text-[#8A79A5]">{brand.tagline}</span>
               </Link>
             ))}
           </div>
@@ -279,9 +330,8 @@ export function BrandsDealsSection() {
               <Link
                 key={vendor.id}
                 href={vendor.href}
-                className="group overflow-hidden rounded-xl bg-[#F6EFFD] shadow-sm transition-transform hover:-translate-y-1"
+                className="group overflow-hidden rounded-2xl bg-[#F6EFFD] shadow-sm border border-white/60 transition-transform hover:-translate-y-1"
               >
-                {/* Vendor image */}
                 <div className="relative aspect-[4/3] w-full overflow-hidden bg-gray-100">
                   <Image
                     src={vendor.image}
@@ -291,84 +341,94 @@ export function BrandsDealsSection() {
                     className="object-cover transition-transform duration-500 group-hover:scale-105"
                   />
                 </div>
-                {/* Vendor info */}
                 <div className="p-4">
                   <p className="font-bold text-[#6D349F] truncate">{vendor.name}</p>
-                  <p className="mt-0.5 text-xs text-gray-500 truncate">{vendor.category}</p>
+                  <p className="mt-0.5 text-xs text-[#8A79A5] truncate">{vendor.category}</p>
                 </div>
               </Link>
             ))}
           </div>
         </div>
 
-        {/* ④ Deals of the Day ──────────────────────────────────── */}
-        <div>
+      </div>
+
+      {/* ④ Deals of the Day — Full Width Bleeding Right Slider ─────────── */}
+      <div className="w-full bg-[#EADBF8] pt-4 overflow-hidden">
+        <div className="container-wide">
           <SectionHeader
             title="Deals of the Day"
             seeMoreHref="/products?deals=true"
+            onPrev={() => scrollDeals("left")}
+            onNext={() => scrollDeals("right")}
           />
+        </div>
 
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-5">
+        {/* Bleeds all the way to the right edge of screen */}
+        <div className="w-full">
+          <div
+            ref={dealsSliderRef}
+            className="flex items-stretch gap-4 overflow-x-auto scroll-smooth scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden py-3 w-full pl-4 sm:pl-6 lg:pl-[calc(max(1rem,(100vw-80rem)/2+2rem))] pr-4 sm:pr-8 md:pr-12"
+          >
             {DEALS.map((deal) => (
               <Link
                 key={deal.id}
                 href={deal.href}
-                className="group flex flex-col overflow-hidden rounded-xl shadow-sm transition-transform hover:-translate-y-1"
+                className="group flex flex-col justify-between overflow-hidden rounded-2xl bg-[#F6EFFD] shadow-sm border border-white/60 w-[240px] sm:w-[265px] md:w-[285px] shrink-0 transition-transform duration-300 hover:-translate-y-1 hover:shadow-md"
               >
-                {/* Product image */}
-                <div className="relative aspect-square w-full overflow-hidden bg-gray-50">
-                  <Image
-                    src={deal.image}
-                    alt={deal.name}
-                    fill
-                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
-                    className="object-cover transition-transform duration-500 group-hover:scale-105"
-                  />
-                  {/* Top Right Pill */}
-                  <div className="absolute right-2 top-2 rounded-full bg-white/90 backdrop-blur px-2.5 py-1 text-[10px] font-bold text-[#6D349F] shadow-sm">
-                    {deal.category}
-                  </div>
-                </div>
-                
-                {/* Product info */}
-                <div className="flex flex-1 flex-col p-3">
-                  <p className="truncate text-sm font-bold text-[#6D349F]">
-                    {deal.name}
-                  </p>
-                  
-                  <div className="mt-1.5 flex items-center justify-between">
-                    <div className="flex items-center gap-1">
-                      <svg
-                        className="h-3.5 w-3.5 text-yellow-400"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                      >
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                      <span className="text-[11px] font-semibold text-gray-700">{deal.rating}</span>
-                      <span className="text-[10px] text-gray-400">({deal.reviews} Reviews)</span>
+                <div>
+                  {/* Product image */}
+                  <div className="relative aspect-square w-full overflow-hidden bg-purple-100">
+                    <Image
+                      src={deal.image}
+                      alt={deal.name}
+                      fill
+                      sizes="(max-width: 640px) 240px, 285px"
+                      className="object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                    {/* Top Right Pill Tag */}
+                    <div className="absolute right-2.5 top-2.5 rounded-full bg-white/90 backdrop-blur px-3 py-1 text-[10px] font-bold text-[#6D349F] shadow-sm">
+                      {deal.category}
                     </div>
-                    <span className="text-xs font-bold text-[#6D349F]">
-                      {deal.discount}% Off
-                    </span>
                   </div>
 
-                  {/* Buttons */}
-                  <div className="mt-3 flex gap-1.5">
-                    <button className="flex flex-1 items-center justify-center gap-1 rounded-full border border-[#6D349F] px-1 py-1.5 text-[9px] sm:text-[10px] font-bold text-[#6D349F] transition-colors hover:bg-purple-50">
-                      ADD TO CARD
-                      <ShoppingCart size={10} className="hidden sm:block" />
-                    </button>
-                    <button className="flex flex-1 items-center justify-center rounded-full bg-[#6D349F] px-1 py-1.5 text-[9px] sm:text-[10px] font-bold text-white transition-colors hover:bg-[#5a2a83]">
-                      VIEW NOW
-                    </button>
+                  {/* Product info */}
+                  <div className="p-3.5 space-y-1.5">
+                    <p className="truncate text-sm font-bold text-[#6D349F] font-montserrat">
+                      {deal.name}
+                    </p>
+
+                    <div className="flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-1">
+                        <svg
+                          className="h-3.5 w-3.5 text-amber-400 fill-amber-400"
+                          viewBox="0 0 20 20"
+                        >
+                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                        </svg>
+                        <span className="font-bold text-[#6D349F]">{deal.rating}</span>
+                        <span className="text-[10px] text-[#8A79A5]">({deal.reviews} Reviews)</span>
+                      </div>
+                      <span className="font-bold text-[#6D349F]">
+                        {deal.discount}% Off
+                      </span>
+                    </div>
                   </div>
+                </div>
+
+                {/* Buttons */}
+                <div className="p-3.5 pt-0 grid grid-cols-2 gap-2">
+                  <button className="flex items-center justify-center gap-1 rounded-full border border-[#6D349F] py-2 px-1 text-[10px] sm:text-[11px] font-bold text-[#6D349F] transition-colors hover:bg-purple-100/50">
+                    <span>ADD TO CARD</span>
+                    <ShoppingCart size={11} className="hidden sm:inline" />
+                  </button>
+                  <button className="flex items-center justify-center rounded-full bg-[#6D349F] py-2 px-1 text-[10px] sm:text-[11px] font-bold text-white transition-colors hover:bg-[#5a2a83]">
+                    VIEW NOW
+                  </button>
                 </div>
               </Link>
             ))}
           </div>
         </div>
-
       </div>
     </div>
   );

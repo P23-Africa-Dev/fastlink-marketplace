@@ -148,7 +148,7 @@ export function LocalStoresSection() {
           <SectionHeader
             icon={<StoreIcon size={22} className="text-[#6D349F] shrink-0" />}
             title="Local Stores & Malls in Kano"
-            seeMoreHref="/products?type=local-stores"
+            seeMoreHref="/local-stores"
           />
 
           <div className="grid grid-cols-2 gap-3.5 md:grid-cols-4">
@@ -191,7 +191,7 @@ export function LocalStoresSection() {
           <SectionHeader
             icon={<LayoutGrid size={22} className="text-[#6D349F] shrink-0" />}
             title="Shop By Catagory"
-            seeMoreHref="/products"
+            seeMoreHref="/categories"
           />
 
           <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-3 md:grid-cols-5">
