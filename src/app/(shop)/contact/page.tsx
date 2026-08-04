@@ -36,7 +36,7 @@ export default function ContactPage() {
             Home
           </Link>
           <ChevronRight size={13} />
-          <span className="text-[#6D349F] font-bold">Contact</span>
+          <span className="text-[#6D349F] font-semibold">Contact</span>
         </div>
       </div>
 
@@ -49,13 +49,13 @@ export default function ContactPage() {
             
             {/* Help Center Yellow Badge */}
             <div>
-              <span className="inline-block rounded-md bg-[#EFD33D] px-3.5 py-1.5 text-xs font-extrabold text-[#191C1F] uppercase tracking-wider shadow-2xs">
+              <span className="inline-block rounded-md bg-[#EFD33D] px-3.5 py-1.5 text-[14px] font-semibold text-[#191C1F] leading-[20px] tracking-normal font-montserrat uppercase">
                 HELP CENTER
               </span>
             </div>
 
             {/* Main Headline */}
-            <h1 className="text-3xl sm:text-4xl md:text-[42px] font-bold text-[#191C1F] tracking-tight leading-tight font-montserrat">
+            <h1 className="text-[32px] font-semibold text-[#191C1F] leading-[40px] tracking-normal font-montserrat">
               How we can help you!
             </h1>
 
@@ -75,7 +75,7 @@ export default function ContactPage() {
                 />
                 <button
                   type="submit"
-                  className="rounded-md bg-[#FA541C] hover:bg-[#E04713] text-white font-extrabold text-xs sm:text-sm px-7 py-3 uppercase tracking-wider shadow-sm transition-all shrink-0 cursor-pointer active:scale-95"
+                  className="rounded-md bg-[#FA8232] hover:bg-[#E06D20] text-white font-semibold text-[14px] leading-[48px] tracking-[0.012em] uppercase px-8 h-[48px] flex items-center justify-center font-montserrat shadow-sm transition-all shrink-0 cursor-pointer active:scale-95"
                 >
                   SEND
                 </button>
@@ -118,7 +118,7 @@ export default function ContactPage() {
               </span>
             </div>
 
-            <h2 className="text-2xl sm:text-3xl md:text-[34px] font-bold text-[#191C1F] tracking-tight leading-snug font-montserrat">
+            <h2 className="text-2xl sm:text-3xl md:text-[34px] font-semibold text-[#191C1F] tracking-tight leading-snug font-montserrat">
               Don&apos;t find your answer.<br />Contact with us
             </h2>
           </div>
@@ -127,67 +127,71 @@ export default function ContactPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 text-left">
             
             {/* Card 1: Call Us Now */}
-            <div className="rounded-2xl bg-white p-6 sm:p-8 shadow-sm border border-purple-100/40 flex flex-col justify-between gap-6 hover:shadow-md transition-all">
-              <div className="space-y-5">
-                <div className="flex items-start gap-4">
-                  <div className="h-14 w-14 shrink-0 rounded-xl bg-[#E6F4FF] text-[#2DA5F3] flex items-center justify-center shadow-2xs">
-                    <Phone size={26} />
+            <div className="rounded-3xl bg-white p-6 sm:p-8 shadow-sm border border-purple-100/40 flex flex-col justify-between gap-6 hover:shadow-md transition-all">
+              <div className="space-y-4">
+                <div className="flex items-start gap-5">
+                  <div className="h-20 w-20 shrink-0 rounded-2xl bg-[#EAF6FE] text-[#2DA5F3] flex items-center justify-center shadow-2xs">
+                    <Phone size={32} />
                   </div>
-                  <div className="space-y-1">
-                    <h3 className="text-base sm:text-lg font-bold text-[#191C1F]">
+                  <div className="space-y-1.5 pt-1">
+                    <h3 className="text-[18px] font-semibold text-[#191C1F] leading-[24px] tracking-normal font-montserrat">
                       Call us now
                     </h3>
-                    <p className="text-xs text-[#77878F] leading-snug font-normal">
+                    <p className="text-[14px] font-normal text-[#77878F] leading-[20px] tracking-normal font-montserrat max-w-[280px]">
                       we are available online from 9:00 AM to 5:00 PM (GMT95:45) Talk with use now
                     </p>
                   </div>
                 </div>
 
-                <p className="text-xl sm:text-[22px] font-bold text-[#191C1F] pt-1">
-                  +1-202-555-0126
-                </p>
+                <div className="sm:pl-[100px]">
+                  <p className="text-[24px] font-normal text-[#191C1F] leading-[32px] tracking-normal font-montserrat">
+                    +1-202-555-0126
+                  </p>
+                </div>
               </div>
 
-              <div>
+              <div className="sm:pl-[100px]">
                 <a
                   href="tel:+12025550126"
-                  className="inline-flex items-center gap-2 rounded-md bg-[#2DA5F3] hover:bg-[#1C90DC] text-white font-extrabold text-xs px-6 py-3 uppercase tracking-wider shadow-2xs transition-all cursor-pointer active:scale-95"
+                  className="inline-flex items-center gap-2 rounded-full bg-[#2DA5F3] hover:bg-[#1C90DC] text-white font-bold text-[14px] leading-[48px] tracking-[0.012em] uppercase px-8 h-[48px] shadow-2xs transition-all cursor-pointer active:scale-95 font-montserrat"
                 >
                   <span>CALL NOW</span>
-                  <ArrowRight size={15} />
+                  <ArrowRight size={16} />
                 </a>
               </div>
             </div>
 
             {/* Card 2: Chat With Us */}
-            <div className="rounded-2xl bg-white p-6 sm:p-8 shadow-sm border border-purple-100/40 flex flex-col justify-between gap-6 hover:shadow-md transition-all">
-              <div className="space-y-5">
-                <div className="flex items-start gap-4">
-                  <div className="h-14 w-14 shrink-0 rounded-xl bg-[#E8F7EE] text-[#2DB224] flex items-center justify-center shadow-2xs">
-                    <MessageCircle size={26} />
+            <div className="rounded-3xl bg-white p-6 sm:p-8 shadow-sm border border-purple-100/40 flex flex-col justify-between gap-6 hover:shadow-md transition-all">
+              <div className="space-y-4">
+                <div className="flex items-start gap-5">
+                  <div className="h-20 w-20 shrink-0 rounded-2xl bg-[#EAF8E6] text-[#2DB224] flex items-center justify-center shadow-2xs">
+                    <MessageCircle size={32} />
                   </div>
-                  <div className="space-y-1">
-                    <h3 className="text-base sm:text-lg font-bold text-[#191C1F]">
+                  <div className="space-y-1.5 pt-1">
+                    <h3 className="text-[18px] font-semibold text-[#191C1F] leading-[24px] tracking-normal font-montserrat">
                       Chat with us
                     </h3>
-                    <p className="text-xs text-[#77878F] leading-snug font-normal">
+                    <p className="text-[14px] font-normal text-[#77878F] leading-[20px] tracking-normal font-montserrat max-w-[280px]">
                       we are available online from 9:00 AM to 5:00 PM (GMT95:45) Talk with use now
                     </p>
                   </div>
                 </div>
 
-                <p className="text-xl sm:text-[22px] font-bold text-[#191C1F] pt-1 truncate">
-                  Support@clicon.com
-                </p>
+                <div className="sm:pl-[100px]">
+                  <p className="text-[24px] font-normal text-[#191C1F] leading-[32px] tracking-normal font-montserrat truncate">
+                    Support@clicon.com
+                  </p>
+                </div>
               </div>
 
-              <div>
+              <div className="sm:pl-[100px]">
                 <a
                   href="mailto:Support@clicon.com"
-                  className="inline-flex items-center gap-2 rounded-md bg-[#2DB224] hover:bg-[#239B1B] text-white font-extrabold text-xs px-6 py-3 uppercase tracking-wider shadow-2xs transition-all cursor-pointer active:scale-95"
+                  className="inline-flex items-center gap-2 rounded-full bg-[#2DB224] hover:bg-[#239B1B] text-white font-bold text-[14px] leading-[48px] tracking-[0.012em] uppercase px-8 h-[48px] shadow-2xs transition-all cursor-pointer active:scale-95 font-montserrat"
                 >
                   <span>CONTACT US</span>
-                  <ArrowRight size={15} />
+                  <ArrowRight size={16} />
                 </a>
               </div>
             </div>
