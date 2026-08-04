@@ -37,7 +37,7 @@ export default function WishlistPage() {
             Your Wishlist is Empty
           </h1>
           <p className="mb-8 text-sm text-[#8A79A5] font-medium max-w-md mx-auto">
-            Save your favorite items here so you can easily find them later and add them to your shopping bag.
+            Save your favorite items here so you can easily find them later and add them to your shopping cart.
           </p>
           <Link
             href="/products"
@@ -141,7 +141,7 @@ export default function WishlistPage() {
                   </div>
                 </div>
 
-                {/* Move to Bag Action */}
+                {/* Move to Cart Action */}
                 <div className="pt-4 mt-3 border-t border-[#E4D1F7]/60">
                   <button
                     onClick={() => handleMoveToCart(product)}
@@ -157,12 +157,12 @@ export default function WishlistPage() {
                     {isAdded ? (
                       <>
                         <Check size={15} strokeWidth={3} />
-                        <span>Added to Bag</span>
+                        <span>Added to Cart</span>
                       </>
                     ) : (
                       <>
                         <ShoppingBag size={15} />
-                        <span>{product.stock === 0 ? "Out of Stock" : "Add to Bag"}</span>
+                        <span>{product.stock === 0 ? "Out of Stock" : "Add to Cart"}</span>
                       </>
                     )}
                   </button>

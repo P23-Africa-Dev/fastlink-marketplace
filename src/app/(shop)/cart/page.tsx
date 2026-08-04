@@ -25,7 +25,7 @@ export default function CartPage() {
             <ShoppingBag size={32} className="text-[#6D349F]" />
           </div>
           <h1 className="text-3xl sm:text-4xl font-extrabold text-[#6D349F] mb-3 font-montserrat">
-            Your Bag is Empty
+            Your Cart is Empty
           </h1>
           <p className="mb-8 text-sm text-[#8A79A5] font-medium max-w-md mx-auto">
             Discover quality goods from local stores, top malls, and verified brands in Kano.
@@ -69,7 +69,7 @@ export default function CartPage() {
               <span>Continue Shopping</span>
             </Link>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-[#6D349F] font-montserrat flex items-center gap-3">
-              <span>Your Shopping Bag</span>
+              <span>Your Shopping Cart</span>
               <span className="rounded-full bg-[#E4D1F7] px-3 py-1 text-xs font-bold text-[#6D349F]">
                 {items.length} {items.length === 1 ? "item" : "items"}
               </span>
