@@ -1,310 +1,263 @@
-import type { Metadata } from "next";
+"use client";
+
+import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ChevronRight, MapPin, Clock, Building2 } from "lucide-react";
-
-import { ContactForm } from "@/features/contact/contact-form";
-
-export const metadata: Metadata = {
-  title: "Contact Us",
-  description:
-    "Reach out to our dedicated FastLink support team. We're here to help you with any questions or concerns.",
-};
-
-// ── Data ───────────────────────────────────────────────────────
-
-const SUPPORT_CHANNELS = [
-  {
-    id: "email",
-    title: "Email Support",
-    description: (
-      <>
-        Email us at{" "}
-        <a href="mailto:support@fastlink.com.ng" className="font-semibold text-brand-700 hover:underline">
-          support@fastlink.com.ng
-        </a>{" "}
-        for general inquiries.
-      </>
-    ),
-    icon: () => (
-      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#380469" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
-      </svg>
-    ),
-  },
-  {
-    id: "livechat",
-    title: "Live Chat",
-    description: "Chat with a support agent instantly on our website.",
-    icon: () => (
-      <div className="relative">
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#380469" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-          <circle cx="9" cy="10" r="1" fill="#380469"/><circle cx="12" cy="10" r="1" fill="#380469"/><circle cx="15" cy="10" r="1" fill="#380469"/>
-        </svg>
-        {/* "Live" badge */}
-        <span className="absolute -right-2 -top-2 rounded-full bg-brand-600 px-1.5 py-0.5 text-[9px] font-bold text-white leading-none">
-          Live
-        </span>
-      </div>
-    ),
-  },
-  {
-    id: "phone",
-    title: "Phone Support",
-    description: (
-      <>
-        Call our customer service hotline:{" "}
-        <a href="tel:+2348003278546" className="font-semibold text-brand-700 hover:underline">
-          +234 800-FASTLINK.
-        </a>
-      </>
-    ),
-    icon: () => (
-      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#380469" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.27h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.91a16 16 0 0 0 6 6l.91-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
-      </svg>
-    ),
-  },
-  {
-    id: "technical",
-    title: "Technical Support",
-    description: (
-      <>
-        For technical and account issues:{" "}
-        <a href="mailto:tech.support@fastlink.com.ng" className="font-semibold text-brand-700 hover:underline">
-          tech.support@fastlink.com.ng
-        </a>
-      </>
-    ),
-    icon: () => (
-      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#380469" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
-      </svg>
-    ),
-  },
-  {
-    id: "social",
-    title: "Social Media",
-    description: "Connect with us on social media for quick updates and help.",
-    icon: () => (
-      <div className="flex items-center gap-1">
-        {/* Facebook */}
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="#380469"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
-        {/* X/Twitter */}
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="#380469"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-        {/* Instagram */}
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#380469" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
-        </svg>
-      </div>
-    ),
-  },
-];
-
-// ── Page ───────────────────────────────────────────────────────
+import {
+  ChevronRight,
+  Search,
+  Phone,
+  MessageCircle,
+  ArrowRight,
+  Store,
+  Bike,
+  CheckCircle,
+} from "lucide-react";
 
 export default function ContactPage() {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchSubmitted, setSearchSubmitted] = useState(false);
+
+  function handleSearchSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      setSearchSubmitted(true);
+    }
+  }
+
   return (
-    <div className="bg-brand-50 min-h-screen">
-
-      {/* ── Hero ──────────────────────────────────────────────── */}
-      <section className="py-6">
-        <div className="container-wide">
-          <div className="relative h-[340px] w-full overflow-hidden rounded-2xl sm:h-[380px] md:h-[420px]">
-            <Image
-              src="https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=1400&auto=format&fit=crop&q=80"
-              alt="FastLink customer support team"
-              fill
-              sizes="100vw"
-              className="object-cover object-center"
-              priority
-            />
-            <div
-              className="absolute inset-0"
-              style={{
-                background:
-                  "linear-gradient(to right, rgba(238,224,250,0.96) 0%, rgba(238,224,250,0.85) 30%, rgba(238,224,250,0.45) 55%, transparent 75%)",
-              }}
-              aria-hidden="true"
-            />
-            <div className="absolute inset-0 flex flex-col justify-center px-8 md:px-12">
-              <nav className="mb-5 flex items-center gap-1.5 text-xs text-neutral-500">
-                <Link href="/" className="hover:text-brand-600 transition-colors">Home</Link>
-                <ChevronRight size={13} className="text-neutral-400" />
-                <span className="font-semibold text-neutral-700">Contact Us</span>
-              </nav>
-              <h1 className="mb-3 text-3xl font-extrabold leading-tight text-neutral-900 sm:text-4xl md:text-5xl">
-                We&apos;re Here to Help.
-              </h1>
-              <p className="mb-7 max-w-xs text-sm font-semibold leading-relaxed text-neutral-700 sm:text-base">
-                Reach out to our dedicated FastLink support
-                <br className="hidden sm:block" />
-                team. Contact Us Now.
-              </p>
-              <div className="flex flex-wrap gap-3">
-                <a
-                  href="#contact-form"
-                  className="inline-flex items-center justify-center rounded-lg px-6 py-2.5 text-sm font-bold text-white transition-all duration-200 hover:brightness-110"
-                  style={{ background: "#380469" }}
-                >
-                  Get in Touch
-                </a>
-                <a
-                  href="#live-chat"
-                  className="inline-flex items-center justify-center rounded-lg border-2 border-white bg-white px-6 py-2.5 text-sm font-bold text-neutral-800 transition-all duration-200 hover:bg-brand-50"
-                >
-                  Live Chat
-                </a>
-              </div>
-            </div>
-          </div>
+    <div className="min-h-screen bg-white font-montserrat text-[#1E1E2F]">
+      
+      {/* Breadcrumb Navigation */}
+      <div className="bg-[#FAF8FC] border-b border-purple-100/60 py-3.5 px-4 md:px-10 lg:px-16">
+        <div className="mx-auto max-w-5xl flex items-center gap-2 text-xs font-semibold text-[#8A79A5]">
+          <Link href="/" className="hover:text-[#6D349F] transition-colors flex items-center gap-1">
+            Home
+          </Link>
+          <ChevronRight size={13} />
+          <span className="text-[#6D349F] font-bold">Contact</span>
         </div>
-      </section>
+      </div>
 
-      {/* ── Contact Us heading ────────────────────────────────── */}
-      <section className="pt-10 pb-2">
-        <div className="container-wide flex items-center justify-center gap-4">
-          <div className="h-px flex-1 max-w-[80px] rounded-full" style={{ background: "#834AB9" }} />
-          <h2 className="text-2xl font-extrabold text-brand-900 md:text-3xl">Contact Us</h2>
-          <div className="h-px flex-1 max-w-[80px] rounded-full" style={{ background: "#834AB9" }} />
-        </div>
-      </section>
+      {/* Hero Help Center Section (Matching Top Half of Design) */}
+      <div className="bg-white py-12 md:py-16 px-4 md:px-10 lg:px-16 border-b border-purple-50">
+        <div className="mx-auto max-w-5xl grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
+          
+          {/* Left Column: Heading & Search Box (7 cols) */}
+          <div className="md:col-span-7 space-y-6">
+            
+            {/* Help Center Yellow Badge */}
+            <span className="inline-block rounded-md bg-[#F7C631] px-3.5 py-1.5 text-xs font-extrabold text-[#191C1F] uppercase tracking-wider shadow-2xs">
+              HELP CENTER
+            </span>
 
-      {/* ── What We Offer ─────────────────────────────────────── */}
-      <section className="py-6">
-        <div className="container-wide">
-          <div
-            className="rounded-2xl bg-white px-8 pb-10 pt-8"
-            style={{ border: "1px solid rgba(131,74,185,0.18)" }}
-          >
-            {/* Sub-heading */}
-            <div className="mb-7 flex items-center justify-center gap-4">
-              <div className="h-px w-8 rounded-full" style={{ background: "#834AB9" }} />
-              <h3 className="text-xl font-bold text-brand-900">What We Offer</h3>
-              <div className="h-px w-8 rounded-full" style={{ background: "#834AB9" }} />
-            </div>
+            {/* Main Headline */}
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-[#191C1F] tracking-tight leading-tight font-montserrat">
+              How we can help you!
+            </h1>
 
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-              {SUPPORT_CHANNELS.map((ch) => {
-                const Icon = ch.icon;
-                return (
-                  <div
-                    key={ch.id}
-                    className="flex flex-col items-center gap-4 rounded-xl px-4 py-6 text-center"
-                    style={{ border: "1px solid rgba(131,74,185,0.14)" }}
-                  >
-                    {/* Circle icon */}
-                    <div
-                      className="flex h-20 w-20 items-center justify-center rounded-full"
-                      style={{ background: "rgba(131,74,185,0.10)" }}
-                    >
-                      <Icon />
-                    </div>
-                    <h4 className="text-sm font-bold text-neutral-900">{ch.title}</h4>
-                    <p className="text-xs leading-relaxed text-neutral-500 text-center">
-                      {ch.description}
-                    </p>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Contact Form + Map ────────────────────────────────── */}
-      <section id="contact-form" className="py-6 pb-16">
-        <div className="container-wide">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-
-            {/* Left — Contact Form */}
-            <div
-              className="rounded-2xl p-7"
-              style={{ background: "#380469" }}
-            >
-              <h3 className="mb-5 text-xl font-bold text-white">Contact Form</h3>
-              <ContactForm />
-            </div>
-
-            {/* Right — Map + Info */}
-            <div className="grid grid-cols-2 border rounded-2xl p-4" style={{ borderColor: "rgba(131,74,185,0.14)" }}>
-              {/* Embedded map */}
-              <div className="relative overflow-hidden rounded-2xl">
-                <iframe
-                  title="FastLink HQ location"
-                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d126093.0198!2d3.3280027!3d6.5243793!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x103b8b2ae68280c1%3A0xdc9e87a367c3d9cb!2sLagos%2C%20Nigeria!5e0!3m2!1sen!2sng"
-                  width="100%"
-                  height="100%"
-                  style={{ border: 0 }}
-                  allowFullScreen
-                  loading="lazy"
-                  referrerPolicy="no-referrer-when-downgrade"
-                  className="absolute inset-0 h-full w-full"
+            {/* Help Search Form */}
+            <form onSubmit={handleSearchSubmit} className="pt-2">
+              <div className="relative flex items-center rounded-xl border border-slate-200 bg-white p-2 shadow-2xs focus-within:border-[#411266] focus-within:ring-1 focus-within:ring-[#411266] transition-all max-w-lg">
+                <Search size={20} className="text-slate-400 ml-3 shrink-0" />
+                <input
+                  type="text"
+                  placeholder="Enter your question or keyword"
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setSearchSubmitted(false);
+                  }}
+                  className="w-full bg-transparent px-3 py-2 text-xs sm:text-sm text-[#191C1F] placeholder-slate-400 focus:outline-none"
                 />
+                <button
+                  type="submit"
+                  className="rounded-lg bg-[#FA541C] hover:bg-[#E04713] text-white font-extrabold text-xs sm:text-sm px-6 py-3 uppercase tracking-wider shadow-md transition-all shrink-0 cursor-pointer active:scale-95"
+                >
+                  SEND
+                </button>
               </div>
 
-              {/* Info card */}
-              <div
-                className="flex-1 rounded-2xl px-6"
-              >
-                <div className="flex flex-col gap-5">
-                  {/* Address */}
-                  <div className="flex items-start gap-3">
-                    <span
-                      className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
-                      style={{ background: "rgba(131,74,185,0.10)" }}
-                    >
-                      <MapPin size={16} style={{ color: "#834AB9" }} />
-                    </span>
-                    <div>
-                      <p className="text-sm font-bold text-neutral-900">Address</p>
-                      <p className="text-xs leading-relaxed text-neutral-500">
-                        123 FastLink Plaza,<br />Lagos, Nigeria
-                      </p>
-                    </div>
-                  </div>
+              {searchSubmitted && (
+                <div className="mt-3 flex items-center gap-2 text-xs text-emerald-600 font-semibold">
+                  <CheckCircle size={15} />
+                  <span>Searching help articles for &quot;{searchQuery}&quot;...</span>
+                </div>
+              )}
+            </form>
 
-                  {/* Hours */}
-                  <div className="flex items-start gap-3">
-                    <span
-                      className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
-                      style={{ background: "rgba(131,74,185,0.10)" }}
-                    >
-                      <Clock size={16} style={{ color: "#834AB9" }} />
-                    </span>
-                    <div>
-                      <p className="text-sm font-bold text-neutral-900">Hours</p>
-                      <p className="text-xs leading-relaxed text-neutral-500">
-                        Mon–Fri 8am–8pm<br />Sat 9am–5pm
-                      </p>
-                    </div>
-                  </div>
+          </div>
 
-                  {/* Office */}
-                  <div className="flex items-start gap-3">
-                    <span
-                      className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
-                      style={{ background: "rgba(131,74,185,0.10)" }}
-                    >
-                      <Building2 size={16} style={{ color: "#834AB9" }} />
-                    </span>
+          {/* Right Column: Representative Illustration/Photo (5 cols) */}
+          <div className="md:col-span-5 flex justify-center md:justify-end">
+            <div className="relative w-full max-w-[360px] aspect-[4/3] sm:aspect-square flex items-center justify-center">
+              {/* High Quality Support Representative Illustration */}
+              <div className="relative w-full h-full rounded-2xl overflow-hidden bg-gradient-to-br from-purple-50 via-purple-100/50 to-amber-50 p-4 border border-purple-100 flex items-center justify-center shadow-2xs">
+                <Image
+                  src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=800"
+                  alt="Customer Support Representative"
+                  fill
+                  priority
+                  className="object-cover rounded-xl"
+                  sizes="(max-width: 768px) 100vw, 400px"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent pointer-events-none rounded-xl" />
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      {/* Middle Contact Section (Soft Lavender Background `bg-[#F8F0FF]`) */}
+      <div className="bg-[#F8F0FF] py-14 md:py-20 px-4 md:px-10 lg:px-16">
+        <div className="mx-auto max-w-5xl space-y-12 text-center">
+          
+          {/* Section Header */}
+          <div className="space-y-3">
+            <span className="inline-block rounded-md bg-[#2DA5F3] px-3.5 py-1.5 text-xs font-extrabold text-white uppercase tracking-wider shadow-2xs">
+              CONTACT US
+            </span>
+
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-[#191C1F] tracking-tight leading-tight">
+              Don&apos;t find your answer.<br />Contact with us
+            </h2>
+          </div>
+
+          {/* 2-Column Contact Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 text-left">
+            
+            {/* Card 1: Call Us Now */}
+            <div className="rounded-2xl bg-white p-6 sm:p-8 shadow-sm border border-purple-100/60 flex flex-col justify-between gap-6 hover:shadow-md transition-all">
+              <div className="flex items-start gap-4">
+                <div className="h-14 w-14 shrink-0 rounded-2xl bg-[#E6F4FF] text-[#2DA5F3] flex items-center justify-center shadow-2xs">
+                  <Phone size={24} />
+                </div>
+                <div className="space-y-1">
+                  <h3 className="text-lg font-bold text-[#191C1F]">
+                    Call us now
+                  </h3>
+                  <p className="text-xs text-[#716388] leading-relaxed">
+                    we are available online from 9:00 AM to 5:00 PM (GMT+5:45) Talk with us now
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-2xl sm:text-3xl font-extrabold text-[#191C1F] mb-6">
+                  +1-202-555-0126
+                </p>
+
+                <a
+                  href="tel:+12025550126"
+                  className="inline-flex items-center gap-2 rounded-xl bg-[#2DA5F3] hover:bg-[#1C90DC] text-white font-extrabold text-xs sm:text-sm px-7 py-3.5 uppercase tracking-wider shadow-md transition-all cursor-pointer active:scale-95"
+                >
+                  <span>CALL NOW</span>
+                  <ArrowRight size={16} />
+                </a>
+              </div>
+            </div>
+
+            {/* Card 2: Chat With Us */}
+            <div className="rounded-2xl bg-white p-6 sm:p-8 shadow-sm border border-purple-100/60 flex flex-col justify-between gap-6 hover:shadow-md transition-all">
+              <div className="flex items-start gap-4">
+                <div className="h-14 w-14 shrink-0 rounded-2xl bg-[#E8F7EE] text-[#2DB224] flex items-center justify-center shadow-2xs">
+                  <MessageCircle size={24} />
+                </div>
+                <div className="space-y-1">
+                  <h3 className="text-lg font-bold text-[#191C1F]">
+                    Chat with us
+                  </h3>
+                  <p className="text-xs text-[#716388] leading-relaxed">
+                    we are available online from 9:00 AM to 5:00 PM (GMT+5:45) Talk with us now
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-2xl sm:text-3xl font-extrabold text-[#191C1F] mb-6 truncate">
+                  Support@fastlink.com
+                </p>
+
+                <a
+                  href="mailto:Support@fastlink.com"
+                  className="inline-flex items-center gap-2 rounded-xl bg-[#2DB224] hover:bg-[#239B1B] text-white font-extrabold text-xs sm:text-sm px-7 py-3.5 uppercase tracking-wider shadow-md transition-all cursor-pointer active:scale-95"
+                >
+                  <span>CONTACT US</span>
+                  <ArrowRight size={16} />
+                </a>
+              </div>
+            </div>
+
+          </div>
+
+          {/* Bottom CTA Card: Become a Vendor or Rider (Matching Design) */}
+          <div className="rounded-3xl bg-[#1E1E22] p-8 sm:p-12 text-white text-left shadow-xl max-w-5xl mx-auto mt-12">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+              
+              {/* Left Info Column (7 cols) */}
+              <div className="lg:col-span-7 space-y-4">
+                <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight leading-tight">
+                  Become a Vendor or Rider
+                </h2>
+                <p className="text-xs sm:text-sm text-slate-300 leading-relaxed max-w-lg">
+                  Join thousands of vendors selling on Fastlink, or sign up as a delivery rider and earn on your own schedule.
+                </p>
+
+                <div className="flex flex-wrap items-center gap-3 pt-2">
+                  <Link
+                    href="/vendor/register"
+                    className="rounded-xl bg-white text-[#1E1E22] hover:bg-slate-100 font-extrabold text-xs sm:text-sm px-6 py-3.5 transition-all shadow-md active:scale-95 inline-flex items-center gap-2"
+                  >
+                    <Store size={16} />
+                    <span>Sell on Fastlink</span>
+                  </Link>
+
+                  <Link
+                    href="/rider/register"
+                    className="rounded-xl border border-slate-600 bg-transparent text-white hover:bg-white/10 font-extrabold text-xs sm:text-sm px-6 py-3.5 transition-all active:scale-95 inline-flex items-center gap-2"
+                  >
+                    <Bike size={16} />
+                    <span>Ride with Us</span>
+                  </Link>
+                </div>
+              </div>
+
+              {/* Right Graphic Banner (5 cols) */}
+              <div className="lg:col-span-5">
+                <div className="rounded-2xl bg-[#28282D] p-6 sm:p-8 border border-white/5 flex flex-col items-center justify-center text-center shadow-inner">
+                  <div className="text-5xl mb-4">
+                    🏍️
+                  </div>
+                  <div className="flex items-center justify-center gap-8 w-full pt-2">
                     <div>
-                      <p className="text-sm font-bold text-neutral-900">Office</p>
-                      <p className="text-xs leading-relaxed text-neutral-500">
-                        Departments<br />
-                        Summary Lines<br />
-                        Services &amp; Connections
-                      </p>
+                      <span className="text-2xl sm:text-3xl font-black text-[#F7B928] block">
+                        2.5K+
+                      </span>
+                      <span className="text-xs text-slate-400 font-medium">
+                        Active Riders
+                      </span>
+                    </div>
+
+                    <div className="h-8 w-[1px] bg-slate-700" />
+
+                    <div>
+                      <span className="text-2xl sm:text-3xl font-black text-[#F7B928] block">
+                        800+
+                      </span>
+                      <span className="text-xs text-slate-400 font-medium">
+                        Vendors
+                      </span>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
 
+            </div>
           </div>
+
         </div>
-      </section>
+      </div>
 
     </div>
   );
