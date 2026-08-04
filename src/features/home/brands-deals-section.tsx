@@ -299,7 +299,7 @@ export function BrandsDealsSection() {
         <div>
           <SectionHeader
             title="Nationwide Brand Stores"
-            seeMoreHref="/stores?type=nationwide"
+            seeMoreHref="/nationwide-stores"
           />
 
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
@@ -322,7 +322,7 @@ export function BrandsDealsSection() {
         <div>
           <SectionHeader
             title="Verified Emerging Vendors"
-            seeMoreHref="/stores?type=emerging"
+            seeMoreHref="/emerging-vendors"
           />
 
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
@@ -357,7 +357,7 @@ export function BrandsDealsSection() {
         <div className="container-wide">
           <SectionHeader
             title="Deals of the Day"
-            seeMoreHref="/products?deals=true"
+            seeMoreHref="/deals"
             onPrev={() => scrollDeals("left")}
             onNext={() => scrollDeals("right")}
           />
