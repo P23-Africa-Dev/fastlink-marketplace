@@ -21,6 +21,8 @@ export interface Product {
   longDescription?: string;
   price: number;
   compareAtPrice?: number;
+  discountPercentage?: number;
+  brand?: string;
   images: ProductImage[];
   category: string;
   subcategory?: string;
@@ -39,6 +41,8 @@ export interface Product {
   variants?: {
     sizes?: ProductVariant[];
     colors?: ProductVariant[];
+    memory?: ProductVariant[];
+    storage?: ProductVariant[];
   };
   isFeatured: boolean;
   isNew: boolean;
