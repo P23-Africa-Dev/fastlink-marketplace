@@ -7,7 +7,7 @@ import { useState } from "react";
 
 import type { Product } from "@/types/product";
 import { useCartStore } from "@/store/cart-store";
-import { cn } from "@/lib/utils";
+import { cn, formatPrice } from "@/lib/utils";
 
 interface ShopProductCardProps {
   product: Product;
@@ -60,27 +60,29 @@ export function ShopProductCard({ product, priority = false }: ShopProductCardPr
           />
         )}
 
-        {/* Delivery badge — top left */}
-        <span
-          className={cn(
-            "absolute left-2.5 top-2.5 rounded-lg px-2.5 py-1 text-[10px] font-bold text-white shadow-xs",
-            deliveryType === "local" ? "bg-[#2a9d8f]" : "bg-[#7E37C9]",
-          )}
-        >
-          {deliveryType === "local" ? "Local Delivery" : "Ships Nationwide"}
-        </span>
-
-        {/* Seller badge — top right */}
-        <span className="absolute right-2.5 top-2.5 flex items-center gap-1 rounded-lg bg-[#3B1C5A]/80 backdrop-blur-md px-2 py-1 shadow-xs max-w-[100px]">
-          <Store size={10} className="text-purple-200 shrink-0" />
-          <span className="text-[9px] font-bold text-white leading-none truncate">
-            {product.seller.name}
+        {/* Badges container — stacked vertically on top-left */}
+        <div className="absolute left-2.5 top-2.5 flex flex-col items-start gap-1.5 z-10">
+          <span
+            className={cn(
+              "rounded-lg px-2.5 py-1 text-[10px] font-bold text-white shadow-xs",
+              deliveryType === "local" ? "bg-[#2a9d8f]" : "bg-[#7E37C9]",
+            )}
+          >
+            {deliveryType === "local" ? "Local Delivery" : "Ships Nationwide"}
           </span>
-        </span>
+
+         
+        </div>
       </Link>
 
       {/* Product Info */}
       <div className="flex flex-1 flex-col justify-between gap-2.5 p-4">
+         <span className="flex items-center gap-1 rounded-lg bg-[#3B1C5A]/80 backdrop-blur-md px-2 py-1 shadow-xs max-w-[130px]">
+            <Store size={10} className="text-purple-200 shrink-0" />
+            <span className="text-[9px] font-bold text-white leading-none truncate">
+              {product.seller.name}
+            </span>
+          </span>
         <div className="space-y-1.5">
           <Link
             href={`/products/${product.slug}`}
@@ -99,7 +101,7 @@ export function ShopProductCard({ product, priority = false }: ShopProductCardPr
         {/* Price & Add to Cart */}
         <div className="space-y-2.5 pt-1">
           <p className="text-base font-extrabold text-[#6D349F] font-montserrat">
-            {formatNaira(product.price)}
+            {formatPrice(product.price)}
           </p>
 
           <button

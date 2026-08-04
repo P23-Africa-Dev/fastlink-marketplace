@@ -44,7 +44,7 @@ export default function CartPage() {
                 Recommended For You
               </h2>
             </div>
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
               {SUGGESTED.map((p) => (
                 <ShopProductCard key={p.id} product={p} />
               ))}

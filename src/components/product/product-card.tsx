@@ -56,8 +56,8 @@ export function ProductCard({ product, className, priority = false }: ProductCar
           />
         )}
 
-        {/* Badges */}
-        <div className="absolute left-2.5 top-2.5 flex flex-col gap-1">
+        {/* Badges container — stacked vertically on top-left */}
+        <div className="absolute left-2.5 top-2.5 flex flex-col items-start gap-1 z-10">
           {product.isNew && (
             <span className="rounded-lg bg-[#6D349F] px-2.5 py-0.5 text-[10px] font-bold text-white shadow-xs">
               New
@@ -73,15 +73,13 @@ export function ProductCard({ product, className, priority = false }: ProductCar
               -{discount}%
             </span>
           )}
-        </div>
-
-        {/* Seller badge — top right */}
-        <span className="absolute right-2.5 top-2.5 flex items-center gap-1 rounded-lg bg-[#3B1C5A]/80 backdrop-blur-md px-2 py-1 shadow-xs max-w-[100px]">
-          <Store size={10} className="text-purple-200 shrink-0" />
-          <span className="text-[9px] font-bold text-white leading-none truncate">
-            {product.seller.name}
+          <span className="flex items-center gap-1 rounded-lg bg-[#3B1C5A]/80 backdrop-blur-md px-2 py-1 shadow-xs max-w-[130px]">
+            <Store size={10} className="text-purple-200 shrink-0" />
+            <span className="text-[9px] font-bold text-white leading-none truncate">
+              {product.seller.name}
+            </span>
           </span>
-        </span>
+        </div>
 
         {/* Wishlist */}
         <button
