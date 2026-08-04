@@ -134,17 +134,17 @@ export default function ContactPage() {
                     <Phone size={32} />
                   </div>
                   <div className="space-y-1.5 pt-1">
-                    <h3 className="text-lg sm:text-xl font-semibold text-[#191C1F]">
+                    <h3 className="text-[18px] font-semibold text-[#191C1F] leading-[24px] tracking-normal font-montserrat">
                       Call us now
                     </h3>
-                    <p className="text-xs text-[#77878F] leading-relaxed font-normal max-w-[260px]">
+                    <p className="text-[14px] font-normal text-[#77878F] leading-[20px] tracking-normal font-montserrat max-w-[280px]">
                       we are available online from 9:00 AM to 5:00 PM (GMT95:45) Talk with use now
                     </p>
                   </div>
                 </div>
 
                 <div className="sm:pl-[100px]">
-                  <p className="text-xl sm:text-2xl font-semibold text-[#191C1F]">
+                  <p className="text-[24px] font-normal text-[#191C1F] leading-[32px] tracking-normal font-montserrat">
                     +1-202-555-0126
                   </p>
                 </div>
@@ -153,7 +153,7 @@ export default function ContactPage() {
               <div className="sm:pl-[100px]">
                 <a
                   href="tel:+12025550126"
-                  className="inline-flex items-center gap-2 rounded-full bg-[#2DA5F3] hover:bg-[#1C90DC] text-white font-extrabold text-xs px-7 py-3.5 uppercase tracking-wider shadow-2xs transition-all cursor-pointer active:scale-95"
+                  className="inline-flex items-center gap-2 rounded-full bg-[#2DA5F3] hover:bg-[#1C90DC] text-white font-bold text-[14px] leading-[48px] tracking-[0.012em] uppercase px-8 h-[48px] shadow-2xs transition-all cursor-pointer active:scale-95 font-montserrat"
                 >
                   <span>CALL NOW</span>
                   <ArrowRight size={16} />
@@ -169,17 +169,17 @@ export default function ContactPage() {
                     <MessageCircle size={32} />
                   </div>
                   <div className="space-y-1.5 pt-1">
-                    <h3 className="text-lg sm:text-xl font-semibold text-[#191C1F]">
+                    <h3 className="text-[18px] font-semibold text-[#191C1F] leading-[24px] tracking-normal font-montserrat">
                       Chat with us
                     </h3>
-                    <p className="text-xs text-[#77878F] leading-relaxed font-normal max-w-[260px]">
+                    <p className="text-[14px] font-normal text-[#77878F] leading-[20px] tracking-normal font-montserrat max-w-[280px]">
                       we are available online from 9:00 AM to 5:00 PM (GMT95:45) Talk with use now
                     </p>
                   </div>
                 </div>
 
                 <div className="sm:pl-[100px]">
-                  <p className="text-xl sm:text-2xl font-semibold text-[#191C1F] truncate">
+                  <p className="text-[24px] font-normal text-[#191C1F] leading-[32px] tracking-normal font-montserrat truncate">
                     Support@clicon.com
                   </p>
                 </div>
@@ -188,7 +188,7 @@ export default function ContactPage() {
               <div className="sm:pl-[100px]">
                 <a
                   href="mailto:Support@clicon.com"
-                  className="inline-flex items-center gap-2 rounded-full bg-[#2DB224] hover:bg-[#239B1B] text-white font-extrabold text-xs px-7 py-3.5 uppercase tracking-wider shadow-2xs transition-all cursor-pointer active:scale-95"
+                  className="inline-flex items-center gap-2 rounded-full bg-[#2DB224] hover:bg-[#239B1B] text-white font-bold text-[14px] leading-[48px] tracking-[0.012em] uppercase px-8 h-[48px] shadow-2xs transition-all cursor-pointer active:scale-95 font-montserrat"
                 >
                   <span>CONTACT US</span>
                   <ArrowRight size={16} />
