@@ -106,7 +106,7 @@ function SidebarNav({ pathname, onItemClick, onLogoutClick }: SidebarNavProps) {
                       href={href}
                       onClick={onItemClick}
                       className={cn(
-                        "group flex items-center justify-between px-3.5 py-2.5 text-sm font-bold transition-all duration-200 rounded-xl",
+                        "group flex items-center justify-between px-3.5 py-2.5 text-sm font-semibold transition-all duration-200 rounded-xl",
                         isActive
                           ? "bg-[#7a3dbf] text-white shadow-md shadow-purple-600/20 translate-x-0.5"
                           : "text-slate-700 hover:bg-[#ebd7fa]/80 hover:text-purple-950 hover:translate-x-0.5"

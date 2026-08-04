@@ -412,9 +412,11 @@ export default function BlogPage() {
                       </div>
 
                       {/* Post Title */}
-                      <h2 className="text-lg font-bold text-[#191C1F] group-hover:text-[#FA8232] transition-colors leading-snug cursor-pointer">
-                        {post.title}
-                      </h2>
+                      <Link href={`/blog/${post.id}`} className="block">
+                        <h2 className="text-lg font-bold text-[#191C1F] group-hover:text-[#FA8232] transition-colors leading-snug cursor-pointer">
+                          {post.title}
+                        </h2>
+                      </Link>
 
                       {/* Post Excerpt */}
                       <p className="text-xs sm:text-sm text-[#77878F] leading-relaxed line-clamp-3">
@@ -424,12 +426,13 @@ export default function BlogPage() {
 
                     {/* Read More CTA Button */}
                     <div>
-                      <button
+                      <Link
+                        href={`/blog/${post.id}`}
                         className="inline-flex items-center gap-2 rounded-md border border-[#FFE7D6] bg-white hover:bg-[#FA8232] text-[#FA8232] hover:text-white font-extrabold text-xs px-5 py-2.5 uppercase tracking-wider transition-all cursor-pointer shadow-2xs"
                       >
                         <span>READ MORE</span>
                         <ArrowRight size={14} />
-                      </button>
+                      </Link>
                     </div>
                   </div>
                 ))}
