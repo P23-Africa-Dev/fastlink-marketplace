@@ -36,7 +36,7 @@ export function CartDrawer() {
               <ShoppingBag size={18} />
             </div>
             <h2 className="text-xl font-extrabold text-[#6D349F] font-montserrat flex items-center gap-2">
-              <span>Your Shopping Bag</span>
+              <span>Your Shopping Cart</span>
               {items.length > 0 && (
                 <span className="rounded-full bg-[#E4D1F7] px-2.5 py-0.5 text-xs font-bold text-[#6D349F]">
                   ({items.length})
@@ -62,7 +62,7 @@ export function CartDrawer() {
                 <ShoppingBag size={26} className="text-[#6D349F]" />
               </div>
               <div>
-                <p className="text-lg font-bold text-[#6D349F] font-montserrat">Your bag is empty</p>
+                <p className="text-lg font-bold text-[#6D349F] font-montserrat">Your cart is empty</p>
                 <p className="mt-1 text-xs text-[#8A79A5] font-medium max-w-xs mx-auto">
                   Explore products from Kano local stores, top malls, and national brands.
                 </p>
