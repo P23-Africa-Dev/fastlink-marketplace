@@ -2,11 +2,12 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { ShoppingCart, CheckCircle, Store } from "lucide-react";
+import { ShoppingCart, CheckCircle, Store, Heart } from "lucide-react";
 import { useState } from "react";
 
 import type { Product } from "@/types/product";
 import { useCartStore } from "@/store/cart-store";
+import { useWishlistStore } from "@/store/wishlist-store";
 import { cn, formatPrice } from "@/lib/utils";
 
 interface ShopProductCardProps {
@@ -33,6 +34,7 @@ function formatNaira(price: number): string {
 export function ShopProductCard({ product, priority = false }: ShopProductCardProps) {
   const [imageLoaded, setImageLoaded] = useState(false);
   const { addItem } = useCartStore();
+  const { toggleWishlist, isInWishlist } = useWishlistStore();
 
   const primaryImage = product.images.find((img) => img.isPrimary) ?? product.images[0];
   const deliveryType = getDeliveryType(product);
@@ -70,9 +72,21 @@ export function ShopProductCard({ product, priority = false }: ShopProductCardPr
           >
             {deliveryType === "local" ? "Local Delivery" : "Ships Nationwide"}
           </span>
-
-         
         </div>
+
+        {/* Wishlist toggle button — top-right */}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            toggleWishlist(product);
+          }}
+          className="absolute right-2.5 top-2.5 z-20 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 text-[#6D349F] hover:bg-white shadow-xs transition-transform active:scale-90"
+          title="Save to wishlist"
+        >
+          <Heart size={14} fill={isInWishlist(product.id) ? "#6D349F" : "none"} />
+        </button>
       </Link>
 
       {/* Product Info */}

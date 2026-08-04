@@ -22,6 +22,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 
 import { useCartStore } from "@/store/cart-store";
+import { useWishlistStore } from "@/store/wishlist-store";
 import { useAuthStore } from "@/store/auth-store";
 import { useUIStore } from "@/store/ui-store";
 import { cn } from "@/lib/utils";
@@ -51,15 +52,13 @@ const CATEGORY_LINKS = [
 export function Header() {
   const router = useRouter();
   const { itemCount, openCart } = useCartStore();
+  const { itemCount: wishlistCount } = useWishlistStore();
   const { isAuthenticated } = useAuthStore();
   const { openMobileMenu, closeMobileMenu, isMobileMenuOpen, setSearchQuery } = useUIStore();
 
   const [isScrolled, setIsScrolled] = useState(false);
   const [searchValue, setSearchValue] = useState("");
   const searchInputRef = useRef<HTMLInputElement>(null);
-
-  // Stub wishlist count – replace with useWishlistStore once available
-  const wishlistCount = 0;
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 4);
