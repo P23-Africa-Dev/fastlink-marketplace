@@ -211,33 +211,33 @@ function SectionHeader({
   onNext?: () => void;
 }) {
   return (
-    <div className="mb-6 flex items-center justify-between gap-4">
-      <h2 className="shrink-0 text-xl font-bold text-[#6D349F] md:text-2xl font-montserrat">
+    <div className="mb-6 flex items-center justify-between gap-2 sm:gap-4 overflow-hidden w-full">
+      <h2 className="text-base sm:text-xl md:text-2xl font-extrabold text-[#6D349F] font-montserrat truncate min-w-0">
         {title}
       </h2>
-      <div className="h-[1px] flex-1 bg-[#D8C2EF]"></div>
-      <div className="flex items-center gap-3 shrink-0">
+      <div className="hidden md:block h-[1px] flex-1 bg-[#D8C2EF]"></div>
+      <div className="flex items-center gap-2 sm:gap-3 shrink-0">
         {onPrev && onNext && (
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1 sm:gap-1.5">
             <button
               onClick={onPrev}
               aria-label="Scroll left"
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-white/80 border border-purple-200 text-[#6D349F] transition-all hover:bg-[#6D349F] hover:text-white shadow-xs"
+              className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-white/80 border border-purple-200 text-[#6D349F] transition-all hover:bg-[#6D349F] hover:text-white shadow-xs"
             >
-              <ChevronLeft size={18} />
+              <ChevronLeft size={16} />
             </button>
             <button
               onClick={onNext}
               aria-label="Scroll right"
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-white/80 border border-purple-200 text-[#6D349F] transition-all hover:bg-[#6D349F] hover:text-white shadow-xs"
+              className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-white/80 border border-purple-200 text-[#6D349F] transition-all hover:bg-[#6D349F] hover:text-white shadow-xs"
             >
-              <ChevronRight size={18} />
+              <ChevronRight size={16} />
             </button>
           </div>
         )}
         <Link
           href={seeMoreHref}
-          className="flex items-center gap-1 text-sm font-semibold text-[#6D349F] transition-colors hover:text-[#5a2a83]"
+          className="flex items-center gap-0.5 sm:gap-1 text-xs sm:text-sm font-bold text-[#6D349F] transition-colors hover:text-[#5a2a83] shrink-0"
         >
           See More <ChevronRight size={16} />
         </Link>
