@@ -93,7 +93,7 @@ export default function ContactPage() {
 
           {/* Right Column: Clean Representative Image (5 cols) */}
           <div className="md:col-span-5 flex justify-center md:justify-end">
-            <div className="relative w-full max-w-[420px] h-[300px] sm:h-[360px] flex items-center justify-end">
+            <div className="relative w-full max-w-[480px] h-[320px] sm:h-[380px] flex items-center justify-end">
               <Image
                 src={contactHero}
                 alt="Customer Support Representative with Headset and Laptop"
