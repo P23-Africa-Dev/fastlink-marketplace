@@ -75,6 +75,8 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
     "description" | "additional" | "specification" | "review"
   >("description");
 
+  const thumbnailContainerRef = useRef<HTMLDivElement>(null);
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#EADBF8] py-10 font-montserrat">
@@ -162,8 +164,6 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
     { title: "FEATURED PRODUCTS", products: featuredProducts },
   ];
 
-  const thumbnailContainerRef = useRef<HTMLDivElement>(null);
-
   function handleAddToCart() {
     addItem(product, quantity, {
       size: selectedSize ?? undefined,
@@ -210,13 +210,13 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-[#EADBF8] pt-8 md:pt-12 font-montserrat text-[#4A2574]">
+    <div className="min-h-screen bg-[#EADBF8] pt-6 md:pt-12 font-montserrat text-[#4A2574]">
       
       {/* Product Main Container */}
-      <div className="mx-auto max-w-[1600px] px-4 md:px-10 lg:px-16 pb-10">
+      <div className="mx-auto max-w-[1600px] px-3 sm:px-6 md:px-10 lg:px-16 pb-10">
         
         {/* Breadcrumb */}
-        <nav className="mb-6 flex items-center gap-2 text-xs font-semibold text-[#8A79A5] flex-wrap">
+        <nav className="mb-4 sm:mb-6 flex items-center gap-1.5 sm:gap-2 text-xs font-semibold text-[#8A79A5] flex-wrap">
           <Link href="/" className="hover:text-[#6D349F] transition-colors">
             Home
           </Link>
@@ -232,73 +232,73 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
             {product.category}
           </Link>
           <ChevronRight size={12} className="text-[#8A79A5]" />
-          <span className="text-[#6D349F] font-bold truncate max-w-[200px]">{product.name}</span>
+          <span className="text-[#6D349F] font-bold truncate max-w-[160px] sm:max-w-[240px]">{product.name}</span>
         </nav>
 
         {/* Product Card Container */}
-        <div className="rounded-3xl bg-white p-6 md:p-10 shadow-sm border border-slate-200/80">
-          <div className="grid gap-8 lg:grid-cols-12 lg:gap-12 items-start">
+        <div className="rounded-2xl sm:rounded-3xl bg-white p-4 sm:p-6 md:p-10 shadow-sm border border-slate-200/80 overflow-hidden">
+          <div className="grid gap-6 md:gap-8 lg:grid-cols-12 lg:gap-12 items-start">
             
             {/* Gallery Slider (6 cols) */}
-            <div className="lg:col-span-6 space-y-4">
-              <div className="relative aspect-[4/3] sm:aspect-square w-full overflow-hidden rounded-2xl bg-white border border-slate-100 shadow-2xs flex items-center justify-center p-6 sm:p-10">
+            <div className="lg:col-span-6 space-y-4 w-full min-w-0">
+              <div className="relative aspect-[4/3] sm:aspect-square w-full overflow-hidden rounded-2xl bg-white border border-slate-100 shadow-2xs flex items-center justify-center p-4 sm:p-8 md:p-10">
                 <Image
                   src={product.images[selectedImage]?.url ?? ""}
                   alt={product.images[selectedImage]?.alt ?? product.name}
                   fill
                   priority
-                  className="object-contain p-4 transition-opacity duration-300"
+                  className="object-contain p-2 sm:p-4 transition-opacity duration-300"
                   sizes="(max-width: 1024px) 100vw, 50vw"
                 />
                 {product.isNew && (
-                  <span className="absolute left-4 top-4 rounded-full bg-[#6D349F] px-3.5 py-1 text-[11px] font-extrabold uppercase tracking-wider text-white shadow-md">
+                  <span className="absolute left-3 top-3 sm:left-4 sm:top-4 rounded-full bg-[#6D349F] px-3 py-0.5 sm:px-3.5 sm:py-1 text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-white shadow-md">
                     New Arrival
                   </span>
                 )}
               </div>
 
-              {/* Thumbnails Carousel with Overlay Arrows (Matching Screenshot 1) */}
-              <div className="relative flex items-center px-2 pt-1">
+              {/* Thumbnails Carousel with Responsive Inset Arrows */}
+              <div className="relative flex items-center w-full px-7 sm:px-9">
                 <button
                   onClick={handlePrevImage}
-                  className="absolute left-0 z-20 -translate-x-1/2 h-11 w-11 shrink-0 rounded-full bg-[#411266] hover:bg-[#320c50] text-white flex items-center justify-center shadow-lg cursor-pointer transition-all active:scale-95 border-2 border-white"
+                  className="absolute left-0 z-10 h-8 w-8 sm:h-10 sm:w-10 shrink-0 rounded-full bg-[#411266] hover:bg-[#320c50] text-white flex items-center justify-center shadow-md cursor-pointer transition-all active:scale-95 border border-white"
                   aria-label="Previous Image"
                 >
-                  <ArrowLeft size={18} />
+                  <ArrowLeft size={16} />
                 </button>
 
                 <div
                   ref={thumbnailContainerRef}
-                  className="flex gap-3 overflow-x-auto py-2 px-3 flex-1 scroll-smooth scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+                  className="flex gap-2.5 sm:gap-3 overflow-x-auto py-2 flex-1 scroll-smooth scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden min-w-0"
                 >
                   {product.images.map((img, i) => (
                     <button
                       key={img.id}
                       onClick={() => setSelectedImage(i)}
                       className={cn(
-                        "relative h-18 w-18 sm:h-22 sm:w-22 shrink-0 overflow-hidden rounded-2xl bg-white border-2 p-1.5 transition-all cursor-pointer",
+                        "relative h-16 w-16 sm:h-20 sm:w-20 md:h-24 md:w-24 shrink-0 overflow-hidden rounded-xl sm:rounded-2xl bg-white border-2 p-1 sm:p-1.5 transition-all cursor-pointer",
                         selectedImage === i
                           ? "border-[#411266] shadow-xs"
                           : "border-slate-200/90 opacity-70 hover:opacity-100",
                       )}
                     >
-                      <Image src={img.url} alt={img.alt} fill className="object-contain p-1" />
+                      <Image src={img.url} alt={img.alt} fill className="object-contain p-0.5 sm:p-1" />
                     </button>
                   ))}
                 </div>
 
                 <button
                   onClick={handleNextImage}
-                  className="absolute right-0 z-20 translate-x-1/2 h-11 w-11 shrink-0 rounded-full bg-[#411266] hover:bg-[#320c50] text-white flex items-center justify-center shadow-lg cursor-pointer transition-all active:scale-95 border-2 border-white"
+                  className="absolute right-0 z-10 h-8 w-8 sm:h-10 sm:w-10 shrink-0 rounded-full bg-[#411266] hover:bg-[#320c50] text-white flex items-center justify-center shadow-md cursor-pointer transition-all active:scale-95 border border-white"
                   aria-label="Next Image"
                 >
-                  <ArrowRight size={18} />
+                  <ArrowRight size={16} />
                 </button>
               </div>
             </div>
 
             {/* Product Metadata & Purchasing Controls (6 cols) */}
-            <div className="lg:col-span-6 flex flex-col gap-4">
+            <div className="lg:col-span-6 flex flex-col gap-4 w-full min-w-0">
               
               {/* Rating & User feedback */}
               <div className="flex items-center gap-2 flex-wrap">
@@ -306,7 +306,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
                   {Array.from({ length: 5 }).map((_, i) => (
                     <Star
                       key={i}
-                      size={16}
+                      size={15}
                       className={cn(
                         i < Math.floor(product.rating)
                           ? "fill-[#411266] text-[#411266]"
@@ -324,7 +324,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
               </div>
 
               {/* Title */}
-              <h1 className="text-xl sm:text-2xl font-bold leading-tight text-[#1E1E2F]">
+              <h1 className="text-lg sm:text-2xl font-bold leading-tight text-[#1E1E2F]">
                 {product.name}
               </h1>
 
@@ -351,17 +351,17 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
               </div>
 
               {/* Price Block */}
-              <div className="flex items-baseline gap-3 pt-1">
-                <span className="text-3xl sm:text-4xl font-extrabold text-[#00A8FF]">
+              <div className="flex flex-wrap items-baseline gap-2.5 sm:gap-3 pt-1">
+                <span className="text-2xl sm:text-4xl font-extrabold text-[#00A8FF]">
                   {formatPrice(product.price)}
                 </span>
                 {product.compareAtPrice && (
-                  <span className="text-lg font-medium text-slate-400 line-through">
+                  <span className="text-base sm:text-lg font-medium text-slate-400 line-through">
                     {formatPrice(product.compareAtPrice)}
                   </span>
                 )}
                 {product.discountPercentage && (
-                  <span className="bg-[#FF9800] text-white font-bold text-xs px-2.5 py-1 rounded-sm uppercase tracking-wider">
+                  <span className="bg-[#FF9800] text-white font-bold text-[10px] sm:text-xs px-2.5 py-1 rounded-sm uppercase tracking-wider">
                     {product.discountPercentage}% OFF
                   </span>
                 )}
@@ -416,7 +416,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
                   <select
                     value={selectedSize || product.variants?.sizes?.[0]?.value || ""}
                     onChange={(e) => setSelectedSize(e.target.value)}
-                    className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-xs sm:text-sm font-medium text-[#1E1E2F] shadow-2xs focus:border-[#411266] focus:outline-none"
+                    className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-xs sm:text-sm font-medium text-[#1E1E2F] shadow-2xs focus:border-[#411266] focus:outline-none truncate"
                   >
                     {(product.variants?.sizes || [
                       { id: "s-default", name: "size", value: "14-inch Liquid Retina XDR display", stock: 10, priceModifier: 0 }
@@ -473,62 +473,64 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
               </div>
 
               {/* Quantity Counter & CTA Buttons Row */}
-              <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 mt-4">
-                {/* Quantity Counter */}
-                <div className="flex items-center justify-between rounded-xl border border-slate-300 bg-white px-3 py-2.5 w-32 shrink-0 shadow-2xs">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mt-4">
+                <div className="flex items-center gap-3 w-full sm:w-auto">
+                  {/* Quantity Counter */}
+                  <div className="flex items-center justify-between rounded-xl border border-slate-300 bg-white px-3 py-2.5 w-28 sm:w-32 shrink-0 shadow-2xs">
+                    <button
+                      onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                      className="text-slate-600 hover:text-slate-900 font-bold p-1 cursor-pointer"
+                      aria-label="Decrease quantity"
+                    >
+                      <Minus size={14} />
+                    </button>
+                    <span className="text-sm font-bold text-[#1E1E2F]">
+                      {quantity < 10 ? `0${quantity}` : quantity}
+                    </span>
+                    <button
+                      onClick={() => setQuantity(quantity + 1)}
+                      className="text-slate-600 hover:text-slate-900 font-bold p-1 cursor-pointer"
+                      aria-label="Increase quantity"
+                    >
+                      <Plus size={14} />
+                    </button>
+                  </div>
+
+                  {/* ADD TO CART */}
                   <button
-                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    className="text-slate-600 hover:text-slate-900 font-bold p-1 cursor-pointer"
-                    aria-label="Decrease quantity"
+                    onClick={handleAddToCart}
+                    disabled={product.stock === 0}
+                    className={cn(
+                      "flex-1 flex items-center justify-center gap-2 rounded-xl bg-[#411266] hover:bg-[#320c50] text-white py-3.5 px-4 sm:px-6 text-xs sm:text-sm font-extrabold shadow-md transition-all cursor-pointer active:scale-[0.99]",
+                      addedToCart && "bg-emerald-600 hover:bg-emerald-600",
+                    )}
                   >
-                    <Minus size={14} />
-                  </button>
-                  <span className="text-sm font-bold text-[#1E1E2F]">
-                    {quantity < 10 ? `0${quantity}` : quantity}
-                  </span>
-                  <button
-                    onClick={() => setQuantity(quantity + 1)}
-                    className="text-slate-600 hover:text-slate-900 font-bold p-1 cursor-pointer"
-                    aria-label="Increase quantity"
-                  >
-                    <Plus size={14} />
+                    {addedToCart ? (
+                      <>
+                        <Check size={16} strokeWidth={3} />
+                        <span>ADDED</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>ADD TO CART</span>
+                        <ShoppingBag size={16} />
+                      </>
+                    )}
                   </button>
                 </div>
-
-                {/* ADD TO CART */}
-                <button
-                  onClick={handleAddToCart}
-                  disabled={product.stock === 0}
-                  className={cn(
-                    "flex-1 flex items-center justify-center gap-2.5 rounded-xl bg-[#411266] hover:bg-[#320c50] text-white py-3.5 px-6 text-xs sm:text-sm font-extrabold shadow-md transition-all cursor-pointer active:scale-[0.99]",
-                    addedToCart && "bg-emerald-600 hover:bg-emerald-600",
-                  )}
-                >
-                  {addedToCart ? (
-                    <>
-                      <Check size={16} strokeWidth={3} />
-                      <span>ADDED TO CART</span>
-                    </>
-                  ) : (
-                    <>
-                      <span>ADD TO CART</span>
-                      <ShoppingBag size={16} />
-                    </>
-                  )}
-                </button>
 
                 {/* BUY NOW */}
                 <button
                   onClick={handleBuyNow}
                   disabled={product.stock === 0}
-                  className="flex-1 min-w-[120px] flex items-center justify-center rounded-xl border-2 border-[#411266] text-[#411266] hover:bg-purple-50 py-3.5 px-6 text-xs sm:text-sm font-extrabold transition-all cursor-pointer active:scale-[0.99]"
+                  className="w-full sm:w-auto flex-1 min-w-[120px] flex items-center justify-center rounded-xl border-2 border-[#411266] text-[#411266] hover:bg-purple-50 py-3.5 px-6 text-xs sm:text-sm font-extrabold transition-all cursor-pointer active:scale-[0.99]"
                 >
                   <span>BUY NOW</span>
                 </button>
               </div>
 
               {/* Actions Row (Wishlist, Compare, Share) */}
-              <div className="flex flex-wrap items-center justify-between gap-4 mt-2 text-xs sm:text-sm pt-2">
+              <div className="flex flex-wrap items-center justify-between gap-3 sm:gap-4 mt-2 text-xs sm:text-sm pt-2">
                 <button
                   onClick={() => toggleWishlist(product)}
                   className="flex items-center gap-1.5 text-[#594970] hover:text-[#411266] font-semibold transition-colors cursor-pointer"
@@ -559,56 +561,56 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
                 </div>
               </div>
 
-              {/* 100% Guarantee Safe Checkout Box (Matching Screenshot 2) */}
-              <div className="rounded-xl border border-slate-200/80 bg-white p-4.5 mt-2 space-y-3 shadow-2xs">
-                <span className="text-xs sm:text-sm font-semibold text-[#222222] block">
+              {/* 100% Guarantee Safe Checkout Box (With Proper Padding) */}
+              <div className="rounded-2xl border border-slate-200/90 bg-white p-4 sm:p-6 mt-4 space-y-3.5 shadow-2xs">
+                <span className="text-xs sm:text-sm font-semibold text-[#1E1E2F] block">
                   100% Guarantee Safe Checkout
                 </span>
-                <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3 pt-1">
                   {/* VISA */}
-                  <div className="h-6 px-2 rounded bg-white border border-slate-200 flex items-center justify-center shadow-2xs">
+                  <div className="h-7 px-2.5 rounded bg-white border border-slate-200 flex items-center justify-center shadow-2xs">
                     <span className="font-black italic text-[11px] text-[#1A1F71]">VISA</span>
                   </div>
 
                   {/* Mastercard */}
-                  <div className="h-6 px-2 rounded bg-white border border-slate-200 flex items-center justify-center gap-0.5 shadow-2xs">
-                    <span className="h-3 w-3 rounded-full bg-[#EB001B] inline-block -mr-1 opacity-90" />
-                    <span className="h-3 w-3 rounded-full bg-[#F79E1B] inline-block opacity-90" />
+                  <div className="h-7 px-2.5 rounded bg-white border border-slate-200 flex items-center justify-center gap-0.5 shadow-2xs">
+                    <span className="h-3.5 w-3.5 rounded-full bg-[#EB001B] inline-block -mr-1.5 opacity-95" />
+                    <span className="h-3.5 w-3.5 rounded-full bg-[#F79E1B] inline-block opacity-95" />
                   </div>
 
                   {/* PayPal */}
-                  <div className="h-6 px-2 rounded bg-[#FFF9F2] border border-[#FFE8CD] flex items-center justify-center shadow-2xs">
+                  <div className="h-7 px-2.5 rounded bg-[#FFF9F2] border border-[#FFE7CD] flex items-center justify-center shadow-2xs">
                     <span className="font-black italic text-[10px] text-[#003087]">Pay<span className="text-[#009CDE]">Pal</span></span>
                   </div>
 
                   {/* American Express */}
-                  <div className="h-6 px-1.5 rounded bg-[#016FD0] flex items-center justify-center shadow-2xs">
-                    <span className="font-extrabold text-[8px] text-white uppercase tracking-tighter">AMEX</span>
+                  <div className="h-7 px-2 rounded bg-[#016FD0] flex items-center justify-center shadow-2xs">
+                    <span className="font-extrabold text-[9px] text-white uppercase tracking-tighter">AMEX</span>
                   </div>
 
                   {/* Visa Electron */}
-                  <div className="h-6 px-1.5 rounded bg-[#1A1F71] flex items-center justify-center shadow-2xs">
-                    <span className="font-bold text-[8px] text-white">VISA <span className="text-sky-300 font-normal">Electron</span></span>
+                  <div className="h-7 px-2 rounded bg-[#1A1F71] flex items-center justify-center shadow-2xs">
+                    <span className="font-bold text-[9px] text-white">VISA <span className="text-sky-300 font-normal">Electron</span></span>
                   </div>
 
                   {/* Laser */}
-                  <div className="h-6 px-2 rounded bg-gradient-to-r from-purple-600 to-pink-500 flex items-center justify-center shadow-2xs">
+                  <div className="h-7 px-2.5 rounded bg-gradient-to-r from-purple-600 to-pink-500 flex items-center justify-center shadow-2xs">
                     <span className="font-extrabold text-[9px] text-white italic">LASER</span>
                   </div>
 
                   {/* Maestro */}
-                  <div className="h-6 px-2 rounded bg-white border border-slate-200 flex items-center justify-center gap-0.5 shadow-2xs">
-                    <span className="h-3 w-3 rounded-full bg-[#0064E0] inline-block -mr-1 opacity-90" />
-                    <span className="h-3 w-3 rounded-full bg-[#EB001B] inline-block opacity-90" />
+                  <div className="h-7 px-2.5 rounded bg-white border border-slate-200 flex items-center justify-center gap-0.5 shadow-2xs">
+                    <span className="h-3.5 w-3.5 rounded-full bg-[#0064E0] inline-block -mr-1.5 opacity-95" />
+                    <span className="h-3.5 w-3.5 rounded-full bg-[#EB001B] inline-block opacity-95" />
                   </div>
 
                   {/* Delta */}
-                  <div className="h-6 px-2 rounded bg-[#004B87] flex items-center justify-center shadow-2xs">
+                  <div className="h-7 px-2.5 rounded bg-[#004B87] flex items-center justify-center shadow-2xs">
                     <span className="font-black italic text-[9px] text-amber-400">DELTA</span>
                   </div>
 
                   {/* Solo */}
-                  <div className="h-6 px-2 rounded bg-[#682382] flex items-center justify-center shadow-2xs">
+                  <div className="h-7 px-2.5 rounded bg-[#682382] flex items-center justify-center shadow-2xs">
                     <span className="font-extrabold text-[9px] text-white italic">SOLO</span>
                   </div>
                 </div>
@@ -623,10 +625,10 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
 
       {/* Full-Width Product Details Tabs Container */}
       <div className="w-full bg-[#EFEBFA] border-t border-b border-purple-200/50 shadow-2xs mt-6">
-        <div className="mx-auto max-w-[1600px] px-4 md:px-10 lg:px-16">
+        <div className="mx-auto max-w-[1600px] px-3 sm:px-6 md:px-10 lg:px-16">
           
-          {/* Tab Navigation (Matching Screenshot 3) */}
-          <div className="flex flex-wrap items-center border-b border-purple-200/40 pt-4 gap-1">
+          {/* Tab Navigation */}
+          <div className="flex overflow-x-auto no-scrollbar scrollbar-none items-center border-b border-purple-200/40 pt-4 gap-1">
             {[
               { id: "description", label: "DESCRIPTION" },
               { id: "additional", label: "ADDITIONAL INFORMATION" },
@@ -637,7 +639,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
                 className={cn(
-                  "px-6 py-4 text-xs sm:text-sm font-bold uppercase tracking-wider transition-all cursor-pointer relative",
+                  "px-4 sm:px-6 py-3.5 sm:py-4 text-xs sm:text-sm font-bold uppercase tracking-wider transition-all cursor-pointer shrink-0 relative whitespace-nowrap",
                   activeTab === tab.id
                     ? "bg-white text-[#222222] border-b-[3px] border-[#FA541C] shadow-2xs"
                     : "text-[#716388] hover:text-[#222222] bg-transparent font-semibold"
