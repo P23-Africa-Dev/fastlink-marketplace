@@ -204,11 +204,13 @@ function SectionHeader({
   seeMoreHref,
   onPrev,
   onNext,
+  hideSeeMore = false,
 }: {
   title: string;
-  seeMoreHref: string;
+  seeMoreHref?: string;
   onPrev?: () => void;
   onNext?: () => void;
+  hideSeeMore?: boolean;
 }) {
   return (
     <div className="mb-6 flex items-center justify-between gap-2 sm:gap-4 overflow-hidden w-full">
@@ -235,12 +237,15 @@ function SectionHeader({
             </button>
           </div>
         )}
-        <Link
-          href={seeMoreHref}
-          className="flex items-center gap-0.5 sm:gap-1 text-xs sm:text-sm font-bold text-[#6D349F] transition-colors hover:text-[#5a2a83] shrink-0"
-        >
-          See More <ChevronRight size={16} />
-        </Link>
+        {!hideSeeMore && seeMoreHref && (
+          <Link
+            href={seeMoreHref}
+            className="flex items-center gap-0.5 sm:gap-1 text-xs sm:text-sm font-bold text-[#6D349F] transition-colors hover:text-[#5a2a83] shrink-0"
+          >
+            <span>See More</span>
+            <ChevronRight size={14} />
+          </Link>
+        )}
       </div>
     </div>
   );
@@ -342,9 +347,9 @@ export function BrandsDealsSection() {
         <div>
           <SectionHeader
             title="Official Retail & Brand Partners"
-            seeMoreHref="/brands"
             onPrev={() => scrollBrands("left")}
             onNext={() => scrollBrands("right")}
+            hideSeeMore
           />
 
           <div className="overflow-hidden rounded-xl bg-[#F6EFFD] shadow-sm border border-purple-100/80">
@@ -369,7 +374,7 @@ export function BrandsDealsSection() {
         <div>
           <SectionHeader
             title="Nationwide Brand Stores"
-            seeMoreHref="/nationwide-stores"
+            hideSeeMore
           />
 
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">

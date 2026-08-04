@@ -33,7 +33,7 @@ export function HeroBanner() {
         <div className="grid w-full grid-cols-1 items-center gap-8 md:grid-cols-2">
 
           {/* Left — copy */}
-          <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-6 animate-slide-in-left">
             <h1
               className="font-montserrat font-bold text-3xl sm:text-5xl lg:text-[50px] leading-tight lg:leading-[68.58px] text-white tracking-normal align-middle"
               style={{ verticalAlign: "middle" }}
@@ -55,14 +55,14 @@ export function HeroBanner() {
             <div className="flex flex-wrap gap-4 pt-2">
               <Link
                 href="/products?type=local-stores"
-                className="inline-flex items-center justify-center h-[50px] px-7 rounded-lg bg-[#F59E0B] hover:bg-[#E59100] text-base font-bold text-white shadow-md transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+                className="inline-flex items-center justify-center h-[50px] px-7 rounded-lg bg-[#F59E0B] hover:bg-[#E59100] text-base font-bold text-white shadow-md transition-all duration-300 hover:scale-105 hover:shadow-lg active:scale-95"
               >
                 Explore Stores Near You
               </Link>
 
               <Link
                 href="/products?type=nationwide"
-                className="inline-flex items-center justify-center h-[50px] px-7 rounded-lg border border-white/80 bg-purple-900/30 hover:bg-white/10 text-base font-bold text-white backdrop-blur-xs transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+                className="inline-flex items-center justify-center h-[50px] px-7 rounded-lg border border-white/80 bg-purple-900/30 hover:bg-white/20 text-base font-bold text-white backdrop-blur-xs transition-all duration-300 hover:scale-105 hover:shadow-md active:scale-95"
               >
                 Shop Nationwide Brands
               </Link>
