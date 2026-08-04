@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import contactHero from "@/assets/contact-hero.png";
 import {
   ChevronRight,
   Search,
@@ -40,26 +41,28 @@ export default function ContactPage() {
       </div>
 
       {/* Hero Help Center Section (Matching Top Half of Design) */}
-      <div className="bg-white py-12 md:py-16 px-4 md:px-10 lg:px-16 border-b border-purple-50">
+      <div className="bg-white py-10 md:py-14 px-4 md:px-10 lg:px-16">
         <div className="mx-auto max-w-5xl grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
           
           {/* Left Column: Heading & Search Box (7 cols) */}
           <div className="md:col-span-7 space-y-6">
             
             {/* Help Center Yellow Badge */}
-            <span className="inline-block rounded-md bg-[#F7C631] px-3.5 py-1.5 text-xs font-extrabold text-[#191C1F] uppercase tracking-wider shadow-2xs">
-              HELP CENTER
-            </span>
+            <div>
+              <span className="inline-block rounded-md bg-[#EFD33D] px-3.5 py-1.5 text-xs font-extrabold text-[#191C1F] uppercase tracking-wider shadow-2xs">
+                HELP CENTER
+              </span>
+            </div>
 
             {/* Main Headline */}
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-[#191C1F] tracking-tight leading-tight font-montserrat">
+            <h1 className="text-3xl sm:text-4xl md:text-[42px] font-bold text-[#191C1F] tracking-tight leading-tight font-montserrat">
               How we can help you!
             </h1>
 
             {/* Help Search Form */}
-            <form onSubmit={handleSearchSubmit} className="pt-2">
-              <div className="relative flex items-center rounded-xl border border-slate-200 bg-white p-2 shadow-2xs focus-within:border-[#411266] focus-within:ring-1 focus-within:ring-[#411266] transition-all max-w-lg">
-                <Search size={20} className="text-slate-400 ml-3 shrink-0" />
+            <form onSubmit={handleSearchSubmit} className="pt-1">
+              <div className="relative flex items-center rounded-md border border-[#E4E7E9] bg-white p-1.5 shadow-2xs focus-within:border-[#FA541C] transition-all max-w-lg">
+                <Search size={20} className="text-[#FA541C] ml-3 shrink-0" />
                 <input
                   type="text"
                   placeholder="Enter your question or keyword"
@@ -68,11 +71,11 @@ export default function ContactPage() {
                     setSearchQuery(e.target.value);
                     setSearchSubmitted(false);
                   }}
-                  className="w-full bg-transparent px-3 py-2 text-xs sm:text-sm text-[#191C1F] placeholder-slate-400 focus:outline-none"
+                  className="w-full bg-transparent px-3 py-2 text-xs sm:text-sm text-[#191C1F] placeholder-[#929FA5] focus:outline-none font-medium"
                 />
                 <button
                   type="submit"
-                  className="rounded-lg bg-[#FA541C] hover:bg-[#E04713] text-white font-extrabold text-xs sm:text-sm px-6 py-3 uppercase tracking-wider shadow-md transition-all shrink-0 cursor-pointer active:scale-95"
+                  className="rounded-md bg-[#FA541C] hover:bg-[#E04713] text-white font-extrabold text-xs sm:text-sm px-7 py-3 uppercase tracking-wider shadow-sm transition-all shrink-0 cursor-pointer active:scale-95"
                 >
                   SEND
                 </button>
@@ -88,38 +91,34 @@ export default function ContactPage() {
 
           </div>
 
-          {/* Right Column: Representative Illustration/Photo (5 cols) */}
+          {/* Right Column: Clean Representative Image (5 cols) */}
           <div className="md:col-span-5 flex justify-center md:justify-end">
-            <div className="relative w-full max-w-[360px] aspect-[4/3] sm:aspect-square flex items-center justify-center">
-              {/* High Quality Support Representative Illustration */}
-              <div className="relative w-full h-full rounded-2xl overflow-hidden bg-gradient-to-br from-purple-50 via-purple-100/50 to-amber-50 p-4 border border-purple-100 flex items-center justify-center shadow-2xs">
-                <Image
-                  src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=800"
-                  alt="Customer Support Representative"
-                  fill
-                  priority
-                  className="object-cover rounded-xl"
-                  sizes="(max-width: 768px) 100vw, 400px"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent pointer-events-none rounded-xl" />
-              </div>
+            <div className="relative w-full max-w-[420px] h-[300px] sm:h-[360px] flex items-center justify-end">
+              <Image
+                src={contactHero}
+                alt="Customer Support Representative with Headset and Laptop"
+                priority
+                className="object-contain object-right h-full w-auto"
+              />
             </div>
           </div>
 
         </div>
       </div>
 
-      {/* Middle Contact Section (Soft Lavender Background `bg-[#F8F0FF]`) */}
-      <div className="bg-[#F8F0FF] py-14 md:py-20 px-4 md:px-10 lg:px-16">
+      {/* Middle Contact Section (Soft Lavender Background `bg-[#F7EEFB]`) */}
+      <div className="bg-[#F7EEFB] py-16 md:py-20 px-4 md:px-10 lg:px-16">
         <div className="mx-auto max-w-5xl space-y-12 text-center">
           
           {/* Section Header */}
           <div className="space-y-3">
-            <span className="inline-block rounded-md bg-[#2DA5F3] px-3.5 py-1.5 text-xs font-extrabold text-white uppercase tracking-wider shadow-2xs">
-              CONTACT US
-            </span>
+            <div>
+              <span className="inline-block rounded-md bg-[#2DA5F3] px-3.5 py-1.5 text-xs font-extrabold text-white uppercase tracking-wider shadow-2xs">
+                CONTACT US
+              </span>
+            </div>
 
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-[#191C1F] tracking-tight leading-tight">
+            <h2 className="text-2xl sm:text-3xl md:text-[34px] font-bold text-[#191C1F] tracking-tight leading-snug font-montserrat">
               Don&apos;t find your answer.<br />Contact with us
             </h2>
           </div>
@@ -128,63 +127,67 @@ export default function ContactPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 text-left">
             
             {/* Card 1: Call Us Now */}
-            <div className="rounded-2xl bg-white p-6 sm:p-8 shadow-sm border border-purple-100/60 flex flex-col justify-between gap-6 hover:shadow-md transition-all">
-              <div className="flex items-start gap-4">
-                <div className="h-14 w-14 shrink-0 rounded-2xl bg-[#E6F4FF] text-[#2DA5F3] flex items-center justify-center shadow-2xs">
-                  <Phone size={24} />
+            <div className="rounded-2xl bg-white p-6 sm:p-8 shadow-sm border border-purple-100/40 flex flex-col justify-between gap-6 hover:shadow-md transition-all">
+              <div className="space-y-5">
+                <div className="flex items-start gap-4">
+                  <div className="h-14 w-14 shrink-0 rounded-xl bg-[#E6F4FF] text-[#2DA5F3] flex items-center justify-center shadow-2xs">
+                    <Phone size={26} />
+                  </div>
+                  <div className="space-y-1">
+                    <h3 className="text-base sm:text-lg font-bold text-[#191C1F]">
+                      Call us now
+                    </h3>
+                    <p className="text-xs text-[#77878F] leading-snug font-normal">
+                      we are available online from 9:00 AM to 5:00 PM (GMT95:45) Talk with use now
+                    </p>
+                  </div>
                 </div>
-                <div className="space-y-1">
-                  <h3 className="text-lg font-bold text-[#191C1F]">
-                    Call us now
-                  </h3>
-                  <p className="text-xs text-[#716388] leading-relaxed">
-                    we are available online from 9:00 AM to 5:00 PM (GMT+5:45) Talk with us now
-                  </p>
-                </div>
+
+                <p className="text-xl sm:text-[22px] font-bold text-[#191C1F] pt-1">
+                  +1-202-555-0126
+                </p>
               </div>
 
               <div>
-                <p className="text-2xl sm:text-3xl font-extrabold text-[#191C1F] mb-6">
-                  +1-202-555-0126
-                </p>
-
                 <a
                   href="tel:+12025550126"
-                  className="inline-flex items-center gap-2 rounded-xl bg-[#2DA5F3] hover:bg-[#1C90DC] text-white font-extrabold text-xs sm:text-sm px-7 py-3.5 uppercase tracking-wider shadow-md transition-all cursor-pointer active:scale-95"
+                  className="inline-flex items-center gap-2 rounded-md bg-[#2DA5F3] hover:bg-[#1C90DC] text-white font-extrabold text-xs px-6 py-3 uppercase tracking-wider shadow-2xs transition-all cursor-pointer active:scale-95"
                 >
                   <span>CALL NOW</span>
-                  <ArrowRight size={16} />
+                  <ArrowRight size={15} />
                 </a>
               </div>
             </div>
 
             {/* Card 2: Chat With Us */}
-            <div className="rounded-2xl bg-white p-6 sm:p-8 shadow-sm border border-purple-100/60 flex flex-col justify-between gap-6 hover:shadow-md transition-all">
-              <div className="flex items-start gap-4">
-                <div className="h-14 w-14 shrink-0 rounded-2xl bg-[#E8F7EE] text-[#2DB224] flex items-center justify-center shadow-2xs">
-                  <MessageCircle size={24} />
+            <div className="rounded-2xl bg-white p-6 sm:p-8 shadow-sm border border-purple-100/40 flex flex-col justify-between gap-6 hover:shadow-md transition-all">
+              <div className="space-y-5">
+                <div className="flex items-start gap-4">
+                  <div className="h-14 w-14 shrink-0 rounded-xl bg-[#E8F7EE] text-[#2DB224] flex items-center justify-center shadow-2xs">
+                    <MessageCircle size={26} />
+                  </div>
+                  <div className="space-y-1">
+                    <h3 className="text-base sm:text-lg font-bold text-[#191C1F]">
+                      Chat with us
+                    </h3>
+                    <p className="text-xs text-[#77878F] leading-snug font-normal">
+                      we are available online from 9:00 AM to 5:00 PM (GMT95:45) Talk with use now
+                    </p>
+                  </div>
                 </div>
-                <div className="space-y-1">
-                  <h3 className="text-lg font-bold text-[#191C1F]">
-                    Chat with us
-                  </h3>
-                  <p className="text-xs text-[#716388] leading-relaxed">
-                    we are available online from 9:00 AM to 5:00 PM (GMT+5:45) Talk with us now
-                  </p>
-                </div>
+
+                <p className="text-xl sm:text-[22px] font-bold text-[#191C1F] pt-1 truncate">
+                  Support@clicon.com
+                </p>
               </div>
 
               <div>
-                <p className="text-2xl sm:text-3xl font-extrabold text-[#191C1F] mb-6 truncate">
-                  Support@fastlink.com
-                </p>
-
                 <a
-                  href="mailto:Support@fastlink.com"
-                  className="inline-flex items-center gap-2 rounded-xl bg-[#2DB224] hover:bg-[#239B1B] text-white font-extrabold text-xs sm:text-sm px-7 py-3.5 uppercase tracking-wider shadow-md transition-all cursor-pointer active:scale-95"
+                  href="mailto:Support@clicon.com"
+                  className="inline-flex items-center gap-2 rounded-md bg-[#2DB224] hover:bg-[#239B1B] text-white font-extrabold text-xs px-6 py-3 uppercase tracking-wider shadow-2xs transition-all cursor-pointer active:scale-95"
                 >
                   <span>CONTACT US</span>
-                  <ArrowRight size={16} />
+                  <ArrowRight size={15} />
                 </a>
               </div>
             </div>
