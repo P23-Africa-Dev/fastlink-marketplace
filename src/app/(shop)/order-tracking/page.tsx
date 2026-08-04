@@ -105,10 +105,10 @@ export default function OrderTrackingPage() {
       </div>
 
       {/* Main Track Order Content */}
-      <div className="mx-auto max-w-[1600px] px-4 md:px-10 lg:px-16 py-12 md:py-16 space-y-16">
+      <div className="mx-auto max-w-5xl px-4 sm:px-6 md:px-8 py-12 md:py-16 space-y-16">
         <div className="max-w-3xl space-y-6">
           
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-[#191C1F] font-montserrat tracking-tight">
+          <h1 className="text-3xl sm:text-4xl font-bold text-[#191C1F] font-montserrat tracking-tight">
             Track Order
           </h1>
 

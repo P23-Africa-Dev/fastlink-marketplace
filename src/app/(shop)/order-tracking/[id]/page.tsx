@@ -93,7 +93,7 @@ export default function OrderTrackingDetailsPage() {
       </div>
 
       {/* Main Order Details Container */}
-      <div className="mx-auto max-w-[1600px] px-4 md:px-10 lg:px-16 py-8 md:py-12 space-y-12">
+      <div className="mx-auto max-w-5xl px-4 sm:px-6 md:px-8 py-8 md:py-12 space-y-10">
         <div>
           {/* Back Link */}
           <div className="mb-6">
@@ -107,21 +107,21 @@ export default function OrderTrackingDetailsPage() {
           </div>
 
           {/* Main Card Container (Matching Design Screenshot 2) */}
-          <div className="max-w-4xl rounded-2xl bg-white border border-slate-200/90 shadow-2xs overflow-hidden">
+          <div className="rounded-lg bg-white border border-slate-200/90 shadow-2xs overflow-hidden">
             
             {/* Top Yellow Banner */}
-            <div className="bg-[#FFFDF0] border-b border-[#FFE8A3] p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="bg-[#FFFDF0] border-b border-[#FFE8A3] p-6 sm:p-7 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
-                <h1 className="text-2xl sm:text-3xl font-extrabold text-[#191C1F]">
+                <h1 className="text-xl sm:text-2xl font-bold text-[#191C1F]">
                   {displayOrderId}
                 </h1>
-                <p className="text-xs sm:text-sm text-[#5F6C72] mt-1.5 font-medium">
+                <p className="text-xs sm:text-sm text-[#5F6C72] mt-1 font-normal">
                   4 Products · Order Placed in 17 Jan, 2021 at 7:32 PM
                 </p>
               </div>
 
               <div className="text-left sm:text-right">
-                <span className="text-3xl sm:text-4xl font-extrabold text-[#2DA5F3]">
+                <span className="text-2xl sm:text-3xl font-extrabold text-[#2DA5F3]">
                   $1199.00
                 </span>
               </div>
@@ -129,12 +129,12 @@ export default function OrderTrackingDetailsPage() {
 
             {/* Stepper Progress Bar */}
             <div className="p-6 sm:p-10 border-b border-slate-100">
-              <p className="text-xs sm:text-sm font-semibold text-[#191C1F] mb-10">
-                Order expected arrival <span className="font-extrabold text-[#191C1F]">23 Jan, 2021</span>
+              <p className="text-xs sm:text-sm text-[#5F6C72] font-normal mb-8">
+                Order expected arrival <span className="font-bold text-[#191C1F]">23 Jan, 2021</span>
               </p>
 
               {/* Stepper Track & Nodes */}
-              <div className="relative mb-8 px-4 sm:px-12">
+              <div className="relative mb-6 px-4 sm:px-12">
                 
                 {/* Background Connecting Lines */}
                 <div className="absolute top-3 left-10 right-10 h-1 bg-[#FFE0D3] rounded-full -z-0" />
@@ -149,14 +149,14 @@ export default function OrderTrackingDetailsPage() {
                       <Check size={14} strokeWidth={3} />
                     </div>
                     <div className="flex flex-col items-center gap-1.5 mt-1">
-                      <FileText size={22} className="text-[#2DB224]" />
+                      <FileText size={22} className="text-[#FA541C]" />
                       <span className="text-xs sm:text-sm font-bold text-[#191C1F]">Order Placed</span>
                     </div>
                   </div>
 
                   {/* Step 2: Packaging (Current Active Stage) */}
                   <div className="flex flex-col items-center gap-3 text-center min-w-[80px]">
-                    <div className="h-6 w-6 rounded-full bg-[#FA541C] text-white flex items-center justify-center shadow-xs ring-4 ring-[#FFE0D3]">
+                    <div className="h-6 w-6 rounded-full bg-[#FA541C] text-white flex items-center justify-center shadow-xs">
                       <div className="h-2 w-2 rounded-full bg-white" />
                     </div>
                     <div className="flex flex-col items-center gap-1.5 mt-1">
@@ -167,22 +167,22 @@ export default function OrderTrackingDetailsPage() {
 
                   {/* Step 3: On The Road */}
                   <div className="flex flex-col items-center gap-3 text-center min-w-[80px]">
-                    <div className="h-6 w-6 rounded-full bg-white border-2 border-[#FA541C]/40 text-[#FA541C] flex items-center justify-center">
-                      <div className="h-1.5 w-1.5 rounded-full bg-[#FA541C]/40" />
+                    <div className="h-6 w-6 rounded-full bg-white border-2 border-[#FA541C] text-[#FA541C] flex items-center justify-center">
+                      <div className="h-1.5 w-1.5 rounded-full bg-[#FA541C]" />
                     </div>
                     <div className="flex flex-col items-center gap-1.5 mt-1">
-                      <Truck size={22} className="text-[#FA541C]/40" />
+                      <Truck size={22} className="text-[#FA541C]/50" />
                       <span className="text-xs sm:text-sm font-medium text-[#716388]">On The Road</span>
                     </div>
                   </div>
 
                   {/* Step 4: Delivered */}
                   <div className="flex flex-col items-center gap-3 text-center min-w-[80px]">
-                    <div className="h-6 w-6 rounded-full bg-white border-2 border-[#FA541C]/30 flex items-center justify-center">
-                      <div className="h-1.5 w-1.5 rounded-full bg-[#FA541C]/30" />
+                    <div className="h-6 w-6 rounded-full bg-white border-2 border-[#FFE0D3] flex items-center justify-center">
+                      <div className="h-1.5 w-1.5 rounded-full bg-[#FFE0D3]" />
                     </div>
                     <div className="flex flex-col items-center gap-1.5 mt-1">
-                      <Handshake size={22} className="text-[#FA541C]/30" />
+                      <Handshake size={22} className="text-[#FA541C]/40" />
                       <span className="text-xs sm:text-sm font-medium text-[#716388]">Delivered</span>
                     </div>
                   </div>
@@ -194,7 +194,7 @@ export default function OrderTrackingDetailsPage() {
 
             {/* Order Activity Timeline */}
             <div className="p-6 sm:p-10 space-y-6">
-              <h2 className="text-lg sm:text-xl font-bold text-[#191C1F]">
+              <h2 className="text-base sm:text-lg font-bold text-[#191C1F]">
                 Order Activity
               </h2>
 
@@ -203,7 +203,7 @@ export default function OrderTrackingDetailsPage() {
                   const IconComp = act.icon;
                   return (
                     <div key={act.id} className="flex items-start gap-4">
-                      <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-xl shadow-2xs mt-0.5", act.badgeBg)}>
+                      <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-md shadow-2xs mt-0.5", act.badgeBg)}>
                         <IconComp size={18} />
                       </div>
                       <div className="space-y-1 pt-0.5">
@@ -225,7 +225,7 @@ export default function OrderTrackingDetailsPage() {
         </div>
 
         {/* Bottom CTA Card: Become a Vendor or Rider */}
-        <div className="rounded-3xl bg-[#1E1E22] p-8 sm:p-12 text-white shadow-xl max-w-4xl">
+        <div className="rounded-2xl bg-[#1E1E22] p-8 sm:p-12 text-white shadow-xl max-w-5xl">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
             
             {/* Left Info Column (7 cols) */}
