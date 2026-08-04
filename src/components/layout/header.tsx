@@ -19,6 +19,7 @@ import {
   Shirt,
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 
 import { useCartStore } from "@/store/cart-store";
 import { useAuthStore } from "@/store/auth-store";
@@ -48,9 +49,10 @@ const CATEGORY_LINKS = [
 // ── Component ──────────────────────────────────────────────────
 
 export function Header() {
+  const router = useRouter();
   const { itemCount, openCart } = useCartStore();
   const { isAuthenticated } = useAuthStore();
-  const { openSearch, openMobileMenu, closeMobileMenu, isMobileMenuOpen, setSearchQuery } = useUIStore();
+  const { openMobileMenu, closeMobileMenu, isMobileMenuOpen, setSearchQuery } = useUIStore();
 
   const [isScrolled, setIsScrolled] = useState(false);
   const [searchValue, setSearchValue] = useState("");
@@ -67,9 +69,12 @@ export function Header() {
 
   function handleSearchSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (searchValue.trim()) {
-      setSearchQuery(searchValue.trim());
-      openSearch();
+    const query = searchValue.trim();
+    if (query) {
+      setSearchQuery(query);
+      router.push(`/search?q=${encodeURIComponent(query)}`);
+    } else {
+      router.push("/search");
     }
   }
 
@@ -135,7 +140,7 @@ export function Header() {
             {/* Search bar */}
             <form
               onSubmit={handleSearchSubmit}
-              className="flex flex-1 items-center overflow-hidden rounded-full bg-white p-1 pl-5 shadow-sm max-w-xl mx-auto"
+              className="flex flex-1 items-center overflow-hidden rounded-full bg-white p-1 pl-4 sm:pl-5 shadow-sm max-w-xl mx-auto min-w-0"
             >
               <input
                 ref={searchInputRef}
@@ -143,14 +148,16 @@ export function Header() {
                 value={searchValue}
                 onChange={(e) => setSearchValue(e.target.value)}
                 placeholder="Search Products, Brand, Stores .."
-                className="min-w-0 flex-1 bg-transparent text-sm text-neutral-700 placeholder:text-neutral-400 outline-none"
+                className="min-w-0 flex-1 bg-transparent text-xs sm:text-sm text-neutral-700 placeholder:text-neutral-400 outline-none"
                 aria-label="Search"
               />
               <button
                 type="submit"
-                className="flex items-center justify-center rounded-full bg-[#7E37C9] px-6 py-2 text-sm font-semibold text-white transition-all hover:bg-[#6C2CB5]"
+                aria-label="Search"
+                className="flex h-9 w-9 sm:h-auto sm:w-auto items-center justify-center shrink-0 rounded-full bg-[#7E37C9] sm:px-6 sm:py-2 text-sm font-semibold text-white transition-all hover:bg-[#6C2CB5]"
               >
-                Search
+                <Search size={18} className="sm:hidden" />
+                <span className="hidden sm:inline">Search</span>
               </button>
             </form>
 
