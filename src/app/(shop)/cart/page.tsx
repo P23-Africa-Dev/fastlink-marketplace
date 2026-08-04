@@ -2,12 +2,12 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Trash2, Minus, Plus, ShoppingBag, ArrowRight, Tag } from "lucide-react";
+import { Trash2, Minus, Plus, ShoppingBag, ArrowRight, Tag, ArrowLeft } from "lucide-react";
 import { useState } from "react";
 
 import { useCartStore } from "@/store/cart-store";
 import { formatPrice } from "@/lib/utils";
-import { ProductCard } from "@/components/product/product-card";
+import { ShopProductCard } from "@/components/product/shop-product-card";
 import { MOCK_PRODUCTS } from "@/mocks/data";
 
 const SUGGESTED = MOCK_PRODUCTS.filter((p) => p.isBestseller).slice(0, 4);
@@ -19,29 +19,36 @@ export default function CartPage() {
 
   if (items.length === 0) {
     return (
-      <div className="container-narrow section-padding text-center">
-        <div className="mx-auto mb-8 flex h-20 w-20 items-center justify-center rounded-full bg-muted">
-          <ShoppingBag size={32} className="text-muted-foreground" />
-        </div>
-        <h1 className="font-display mb-3 text-4xl font-light text-foreground">
-          Your bag is empty
-        </h1>
-        <p className="mb-8 text-muted-foreground">
-          Discover handcrafted goods from independent makers.
-        </p>
-        <Link href="/products" className="btn-gold">
-          Explore Products
-          <ArrowRight size={14} />
-        </Link>
-
-        <div className="mt-20">
-          <p className="mb-6 text-xs uppercase tracking-widest text-muted-foreground">
-            You might like
+      <div className="bg-[#EADBF8] min-h-screen py-10 font-montserrat">
+        <div className="container-narrow text-center py-12">
+          <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-[#F2E7FC] border border-white/80 shadow-sm">
+            <ShoppingBag size={32} className="text-[#6D349F]" />
+          </div>
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-[#6D349F] mb-3 font-montserrat">
+            Your Bag is Empty
+          </h1>
+          <p className="mb-8 text-sm text-[#8A79A5] font-medium max-w-md mx-auto">
+            Discover quality goods from local stores, top malls, and verified brands in Kano.
           </p>
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-            {SUGGESTED.map((p) => (
-              <ProductCard key={p.id} product={p} />
-            ))}
+          <Link
+            href="/products"
+            className="inline-flex items-center gap-2 rounded-xl bg-[#7E37C9] hover:bg-[#6C2CB5] text-white font-bold px-8 py-3.5 shadow-md transition-all duration-200"
+          >
+            <span>Explore Products</span>
+            <ArrowRight size={16} />
+          </Link>
+
+          <div className="mt-16 text-left">
+            <div className="border-b border-[#D8C2EF] pb-3 mb-6">
+              <h2 className="text-lg font-bold text-[#6D349F] font-montserrat">
+                Recommended For You
+              </h2>
+            </div>
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
+              {SUGGESTED.map((p) => (
+                <ShopProductCard key={p.id} product={p} />
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -49,29 +56,45 @@ export default function CartPage() {
   }
 
   return (
-    <div className="container-wide py-10">
-      <div className="mb-8 flex items-center justify-between">
-        <h1 className="font-display text-4xl font-light text-foreground">
-          Your Bag{" "}
-          <span className="text-2xl text-muted-foreground">({items.length})</span>
-        </h1>
-        <button
-          onClick={clearCart}
-          className="text-xs uppercase tracking-widest text-muted-foreground transition-colors hover:text-destructive"
-        >
-          Clear all
-        </button>
-      </div>
+    <div className="bg-[#EADBF8] min-h-screen py-10 font-montserrat">
+      <div className="container-wide space-y-8">
+        {/* Back Link & Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#D8C2EF] pb-5">
+          <div>
+            <Link
+              href="/products"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#6D349F] hover:text-[#52237A] transition-colors mb-2"
+            >
+              <ArrowLeft size={14} />
+              <span>Continue Shopping</span>
+            </Link>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-[#6D349F] font-montserrat flex items-center gap-3">
+              <span>Your Shopping Bag</span>
+              <span className="rounded-full bg-[#E4D1F7] px-3 py-1 text-xs font-bold text-[#6D349F]">
+                {items.length} {items.length === 1 ? "item" : "items"}
+              </span>
+            </h1>
+          </div>
 
-      <div className="grid gap-10 lg:grid-cols-3">
-        {/* Items */}
-        <div className="lg:col-span-2">
-          <ul className="divide-y divide-border">
+          <button
+            onClick={clearCart}
+            className="text-xs font-bold text-[#8A79A5] transition-colors hover:text-red-600 underline self-start sm:self-auto"
+          >
+            Clear all items
+          </button>
+        </div>
+
+        <div className="grid gap-8 lg:grid-cols-3">
+          {/* Cart Items List */}
+          <div className="lg:col-span-2 space-y-4">
             {items.map((item) => (
-              <li key={item.productId} className="flex gap-5 py-6">
+              <div
+                key={item.productId}
+                className="flex flex-col sm:flex-row gap-4 p-4 rounded-2xl bg-[#F6EFFD] border border-white/60 shadow-sm transition-all hover:shadow-md"
+              >
                 <Link
                   href={`/products/${item.product.slug}`}
-                  className="relative h-28 w-24 flex-shrink-0 overflow-hidden rounded bg-muted"
+                  className="relative aspect-square sm:w-28 sm:h-28 flex-shrink-0 overflow-hidden rounded-xl bg-purple-100"
                 >
                   <Image
                     src={item.product.images[0]?.url ?? ""}
@@ -80,20 +103,21 @@ export default function CartPage() {
                     className="object-cover"
                   />
                 </Link>
-                <div className="flex flex-1 flex-col justify-between">
+
+                <div className="flex flex-1 flex-col justify-between space-y-3">
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                      <p className="text-[11px] font-bold text-[#8A79A5] uppercase tracking-wider">
                         {item.product.seller.name}
                       </p>
                       <Link
                         href={`/products/${item.product.slug}`}
-                        className="font-display mt-1 text-xl font-light text-foreground hover:text-primary"
+                        className="font-bold text-base sm:text-lg text-[#6D349F] hover:text-[#52237A] transition-colors font-montserrat"
                       >
                         {item.product.name}
                       </Link>
                       {item.selectedVariants && (
-                        <p className="mt-1 text-xs text-muted-foreground">
+                        <p className="mt-1 text-xs text-[#8A79A5]">
                           {Object.entries(item.selectedVariants)
                             .filter(([, v]) => v)
                             .map(([k, v]) => `${k}: ${v}`)
@@ -103,110 +127,106 @@ export default function CartPage() {
                     </div>
                     <button
                       onClick={() => removeItem(item.productId)}
-                      className="flex-shrink-0 p-1 text-muted-foreground transition-colors hover:text-destructive"
+                      className="flex-shrink-0 p-1.5 rounded-lg text-[#8A79A5] transition-colors hover:bg-red-50 hover:text-red-600"
+                      aria-label="Remove item"
                     >
-                      <Trash2 size={15} />
+                      <Trash2 size={16} />
                     </button>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center rounded-full border border-border">
+
+                  <div className="flex items-center justify-between pt-2 border-t border-[#E4D1F7]/60">
+                    <div className="flex items-center rounded-xl bg-white border border-[#D8C2EF] p-1 shadow-xs">
                       <button
                         onClick={() => updateQuantity(item.productId, item.quantity - 1)}
-                        className="flex h-8 w-8 items-center justify-center text-muted-foreground hover:text-foreground"
+                        className="flex h-7 w-7 items-center justify-center text-[#6D349F] hover:bg-purple-100/50 rounded-lg transition-colors"
                       >
-                        <Minus size={12} />
+                        <Minus size={13} />
                       </button>
-                      <span className="min-w-[2rem] text-center text-sm">{item.quantity}</span>
+                      <span className="min-w-[2.2rem] text-center text-xs font-bold text-[#6D349F]">
+                        {item.quantity}
+                      </span>
                       <button
                         onClick={() => updateQuantity(item.productId, item.quantity + 1)}
-                        className="flex h-8 w-8 items-center justify-center text-muted-foreground hover:text-foreground"
+                        className="flex h-7 w-7 items-center justify-center text-[#6D349F] hover:bg-purple-100/50 rounded-lg transition-colors"
                       >
-                        <Plus size={12} />
+                        <Plus size={13} />
                       </button>
                     </div>
-                    <p className="font-display text-xl font-light text-primary">
+
+                    <p className="text-lg font-extrabold text-[#6D349F] font-montserrat">
                       {formatPrice(item.product.price * item.quantity)}
                     </p>
                   </div>
                 </div>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        {/* Summary */}
-        <div className="h-fit rounded bg-card p-6">
-          <h2 className="font-display mb-6 text-xl font-light text-foreground">Order Summary</h2>
-
-          {/* Coupon */}
-          <div className="mb-6">
-            <label className="mb-2 block text-xs uppercase tracking-widest text-muted-foreground">
-              Coupon Code
-            </label>
-            <div className="flex gap-2">
-              <div className="relative flex-1">
-                <Tag
-                  size={13}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                />
-                <input
-                  type="text"
-                  value={couponCode}
-                  onChange={(e) => setCouponCode(e.target.value)}
-                  placeholder="MAKER10"
-                  className="w-full rounded border border-border bg-input py-2.5 pl-8 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
-                />
               </div>
-              <button className="btn-outline-gold px-4 py-2 text-xs">Apply</button>
-            </div>
+            ))}
           </div>
 
-          <div className="rule-gold mb-4" />
+          {/* Order Summary Card */}
+          <div className="h-fit rounded-2xl bg-[#F6EFFD] p-6 border border-white/60 shadow-sm space-y-6">
+            <h2 className="text-xl font-bold text-[#6D349F] font-montserrat border-b border-[#D8C2EF] pb-3">
+              Order Summary
+            </h2>
 
-          <div className="space-y-3 text-sm">
-            <div className="flex justify-between text-muted-foreground">
-              <span>Subtotal</span>
-              <span>{formatPrice(subtotal)}</span>
+            {/* Coupon Code */}
+            <div>
+              <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-[#8A79A5]">
+                Coupon Code
+              </label>
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Tag
+                    size={14}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8A79A5]"
+                  />
+                  <input
+                    type="text"
+                    value={couponCode}
+                    onChange={(e) => setCouponCode(e.target.value)}
+                    placeholder="FASTLINK10"
+                    className="w-full rounded-xl border border-[#D8C2EF] bg-white py-2.5 pl-9 pr-3 text-xs text-[#3B1C5A] placeholder:text-[#8A79A5] focus:border-[#7E37C9] focus:outline-none font-montserrat"
+                  />
+                </div>
+                <button className="rounded-xl border border-[#6D349F] text-[#6D349F] font-bold text-xs px-4 py-2 hover:bg-purple-100/50 transition-colors">
+                  Apply
+                </button>
+              </div>
             </div>
-            <div className="flex justify-between text-muted-foreground">
-              <span>Shipping</span>
-              <span>
-                {shipping === 0 ? (
-                  <span className="text-green-500">Free</span>
-                ) : (
-                  formatPrice(shipping)
-                )}
-              </span>
-            </div>
-            <div className="flex justify-between text-muted-foreground">
-              <span>Tax (9%)</span>
-              <span>{formatPrice(tax)}</span>
-            </div>
-            <div className="rule-gold" />
-            <div className="flex justify-between">
-              <span className="font-display text-xl font-light">Total</span>
-              <span className="font-display text-xl text-primary">{formatPrice(total)}</span>
-            </div>
-          </div>
 
-          {shipping > 0 && (
-            <p className="mt-3 text-center text-xs text-muted-foreground">
-              Add <span className="text-primary">{formatPrice(150 - subtotal)}</span> for free
-              shipping
-            </p>
-          )}
+            <div className="space-y-3 text-sm pt-2">
+              <div className="flex justify-between text-[#8A79A5] font-medium">
+                <span>Subtotal</span>
+                <span className="font-bold text-[#6D349F]">{formatPrice(subtotal)}</span>
+              </div>
+              <div className="flex justify-between text-[#8A79A5] font-medium">
+                <span>Shipping</span>
+                <span>
+                  {shipping === 0 ? (
+                    <span className="font-bold text-emerald-600">Free</span>
+                  ) : (
+                    <span className="font-bold text-[#6D349F]">{formatPrice(shipping)}</span>
+                  )}
+                </span>
+              </div>
+              <div className="flex justify-between text-[#8A79A5] font-medium">
+                <span>Estimated Tax</span>
+                <span className="font-bold text-[#6D349F]">{formatPrice(tax)}</span>
+              </div>
 
-          <Link href="/checkout" className="btn-gold mt-6 w-full">
-            Proceed to Checkout
-            <ArrowRight size={14} />
-          </Link>
+              <div className="border-t border-[#D8C2EF] my-3 pt-3 flex justify-between items-center">
+                <span className="text-base font-bold text-[#6D349F]">Total</span>
+                <span className="text-2xl font-extrabold text-[#6D349F] font-montserrat">
+                  {formatPrice(total)}
+                </span>
+              </div>
+            </div>
 
-          <div className="mt-4 text-center">
             <Link
-              href="/products"
-              className="text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground"
+              href="/checkout"
+              className="flex items-center justify-center gap-2 w-full rounded-xl bg-[#7E37C9] hover:bg-[#6C2CB5] text-white font-bold py-3.5 px-6 shadow-md transition-all text-center"
             >
-              Continue Shopping
+              <span>Proceed to Checkout</span>
+              <ArrowRight size={16} />
             </Link>
           </div>
         </div>

@@ -7,7 +7,7 @@ import { useState } from "react";
 
 import type { Product } from "@/types/product";
 import { useCartStore } from "@/store/cart-store";
-import { cn } from "@/lib/utils";
+import { cn, formatPrice } from "@/lib/utils";
 
 interface ShopProductCardProps {
   product: Product;
@@ -39,11 +39,11 @@ export function ShopProductCard({ product, priority = false }: ShopProductCardPr
   const deliveryLabel = getDeliveryLabel(product);
 
   return (
-    <article className="flex flex-col overflow-hidden rounded-xl bg-white shadow-sm border border-slate-100 hover:shadow-md transition-shadow duration-200">
-      {/* Image */}
-      <Link href={`/products/${product.slug}`} className="relative block aspect-square overflow-hidden bg-slate-100">
+    <article className="group flex flex-col overflow-hidden rounded-2xl bg-[#F6EFFD] shadow-sm border border-white/60 hover:shadow-md transition-all duration-300 hover:-translate-y-1 font-montserrat">
+      {/* Image Container */}
+      <Link href={`/products/${product.slug}`} className="relative block aspect-square overflow-hidden bg-purple-100">
         {!imageLoaded && (
-          <div className="absolute inset-0 animate-pulse bg-gradient-to-br from-slate-100 to-slate-200" />
+          <div className="absolute inset-0 animate-pulse bg-gradient-to-br from-purple-100 to-purple-200" />
         )}
         {primaryImage && (
           <Image
@@ -52,7 +52,7 @@ export function ShopProductCard({ product, priority = false }: ShopProductCardPr
             fill
             priority={priority}
             className={cn(
-              "object-cover transition-transform duration-500 hover:scale-105",
+              "object-cover transition-transform duration-500 group-hover:scale-105",
               imageLoaded ? "opacity-100" : "opacity-0",
             )}
             onLoad={() => setImageLoaded(true)}
@@ -60,54 +60,59 @@ export function ShopProductCard({ product, priority = false }: ShopProductCardPr
           />
         )}
 
-        {/* Delivery badge — top left */}
-        <span
-          className={cn(
-            "absolute left-2.5 top-2.5 rounded-md px-2.5 py-1 text-[10px] font-semibold text-white shadow-sm",
-            deliveryType === "local" ? "bg-[#2a9d8f]" : "bg-[#7a5af8]",
-          )}
-        >
-          {deliveryType === "local" ? "Local Delivery" : "Ships Nationwide"}
-        </span>
-
-        {/* Seller badge — top right */}
-        <span className="absolute right-2.5 top-2.5 flex items-center gap-1 rounded-md bg-black/50 px-2 py-1 backdrop-blur-sm">
-          <Store size={9} className="text-white" />
-          <span className="text-[9px] font-semibold text-white leading-none truncate max-w-[70px]">
-            {product.seller.name}
+        {/* Badges container — stacked vertically on top-left */}
+        <div className="absolute left-2.5 top-2.5 flex flex-col items-start gap-1.5 z-10">
+          <span
+            className={cn(
+              "rounded-lg px-2.5 py-1 text-[10px] font-bold text-white shadow-xs",
+              deliveryType === "local" ? "bg-[#2a9d8f]" : "bg-[#7E37C9]",
+            )}
+          >
+            {deliveryType === "local" ? "Local Delivery" : "Ships Nationwide"}
           </span>
-        </span>
+
+         
+        </div>
       </Link>
 
-      {/* Info */}
-      <div className="flex flex-1 flex-col gap-2 p-3">
-        <Link
-          href={`/products/${product.slug}`}
-          className="text-sm font-bold text-slate-800 leading-snug line-clamp-2 hover:text-[#7a3dbf] transition-colors"
-        >
-          {product.name}
-        </Link>
+      {/* Product Info */}
+      <div className="flex flex-1 flex-col justify-between gap-2.5 p-4">
+         <span className="flex items-center gap-1 rounded-lg bg-[#3B1C5A]/80 backdrop-blur-md px-2 py-1 shadow-xs max-w-[130px]">
+            <Store size={10} className="text-purple-200 shrink-0" />
+            <span className="text-[9px] font-bold text-white leading-none truncate">
+              {product.seller.name}
+            </span>
+          </span>
+        <div className="space-y-1.5">
+          <Link
+            href={`/products/${product.slug}`}
+            className="text-sm font-bold text-[#6D349F] leading-snug line-clamp-1 group-hover:text-[#52237A] transition-colors font-montserrat"
+          >
+            {product.name}
+          </Link>
 
-        {/* Delivery info */}
-        <div className="flex items-center gap-1.5">
-          <CheckCircle size={13} className="text-[#2a9d8f] shrink-0" fill="#2a9d8f" strokeWidth={0} />
-          <span className="text-[11px] font-medium text-slate-500">{deliveryLabel}</span>
+          {/* Delivery info */}
+          <div className="flex items-center gap-1.5">
+            <CheckCircle size={13} className="text-[#2a9d8f] shrink-0" fill="#2a9d8f" strokeWidth={0} />
+            <span className="text-[11px] font-medium text-[#8A79A5]">{deliveryLabel}</span>
+          </div>
         </div>
 
-        {/* Price */}
-        <p className="text-base font-extrabold text-slate-900 mt-auto">
-          {formatNaira(product.price)}
-        </p>
+        {/* Price & Add to Cart */}
+        <div className="space-y-2.5 pt-1">
+          <p className="text-base font-extrabold text-[#6D349F] font-montserrat">
+            {formatPrice(product.price)}
+          </p>
 
-        {/* Add to cart */}
-        <button
-          onClick={() => addItem(product)}
-          disabled={product.stock === 0}
-          className="mt-1 flex w-full items-center justify-center gap-2 rounded-lg bg-[#7a3dbf] py-2.5 text-xs font-bold text-white transition-colors hover:bg-[#682fad] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <ShoppingCart size={13} />
-          {product.stock === 0 ? "Out of Stock" : "Add to Cart"}
-        </button>
+          <button
+            onClick={() => addItem(product)}
+            disabled={product.stock === 0}
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#7E37C9] hover:bg-[#6C2CB5] active:scale-95 py-2.5 text-xs font-bold text-white transition-all shadow-xs disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <ShoppingCart size={13} />
+            <span>{product.stock === 0 ? "Out of Stock" : "Add to Cart"}</span>
+          </button>
+        </div>
       </div>
     </article>
   );

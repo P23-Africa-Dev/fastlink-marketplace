@@ -11,8 +11,8 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ["var(--font-inter)", "Outfit", "system-ui", "sans-serif"],
-        display: ["var(--font-inter)", "Outfit", "system-ui", "sans-serif"],
+        sans: ["var(--font-montserrat)", "Montserrat", "system-ui", "sans-serif"],
+        display: ["var(--font-montserrat)", "Montserrat", "system-ui", "sans-serif"],
         montserrat: ["var(--font-montserrat)", "Montserrat", "sans-serif"],
       },
       colors: {

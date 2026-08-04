@@ -15,19 +15,19 @@ const FAQ_ITEMS: FAQItem[] = [
     id: "track-order",
     question: "How do I track my Order?",
     answer:
-      "Lorem ipsum dolor sit amet consectetur. Quam vitae et commodo neque. A condimentum feugiat tincidunt enim sit in adipiscing. Sed ridiculus scelerisque diam egestas cursus pretium. Tincidunt sem nunc quis gravida.",
+      "You can easily track your order in real-time by navigating to the Orders section in your account dashboard. You will also receive continuous SMS and email notifications with live updates as your parcel moves from vendor dispatch to your doorstep.",
   },
   {
     id: "return-policy",
     question: "What is your return policy?",
     answer:
-      "Items can be returned within 14 days of delivery provided they are in their original condition and packaging. Simply visit your order history to initiate a hassle-free return.",
+      "Items can be returned within 14 days of delivery provided they are in their original condition and packaging. Simply visit your order history to initiate a hassle-free return and schedule a free doorstep pickup.",
   },
   {
     id: "nationwide-delivery",
-    question: "Do you deliver to Nationwide?",
+    question: "Do you deliver Nationwide?",
     answer:
-      "Yes, we provide reliable nationwide delivery across all 36 states. Delivery times typically range between 2 to 5 business days depending on your location.",
+      "Yes! Fastlink provides fast, reliable nationwide delivery across all 36 states in Nigeria. Express local delivery arrives within 24 hours, while nationwide logistics arrive in 2 to 5 business days.",
   },
 ];
 

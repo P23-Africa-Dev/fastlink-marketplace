@@ -7,15 +7,11 @@ export function cn(...inputs: ClassValue[]) {
 
 export function formatPrice(
   price: number,
-  currency = "USD",
-  locale = "en-US",
+  currency = "NGN",
+  locale = "en-NG",
 ): string {
-  return new Intl.NumberFormat(locale, {
-    style: "currency",
-    currency,
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-  }).format(price);
+  const amount = price > 1000 ? price : price * 1500;
+  return `₦${Math.round(amount).toLocaleString("en-NG")}`;
 }
 
 export function formatNumber(n: number): string {
