@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { ChevronRight, ChevronLeft, ShoppingCart } from "lucide-react";
@@ -51,6 +51,11 @@ const BRAND_PARTNERS: BrandPartner[] = [
   { id: "bp-4", name: "Unilever", href: "/brands/unilever", style: "default" },
   { id: "bp-5", name: "TECNO",    href: "/brands/tecno",    style: "blue-bold" },
   { id: "bp-6", name: "SONY",     href: "/brands/sony",     style: "black" },
+  { id: "bp-7", name: "LG",       href: "/brands/lg",       style: "blue-bold" },
+  { id: "bp-8", name: "Apple",    href: "/brands/apple",    style: "black" },
+  { id: "bp-9", name: "Adidas",   href: "/brands/adidas",   style: "black" },
+  { id: "bp-10", name: "Puma",    href: "/brands/puma",     style: "black" },
+  { id: "bp-11", name: "Philips", href: "/brands/philips",  style: "blue-bold" },
 ];
 
 const NATIONWIDE_BRANDS: NationwideBrand[] = [
@@ -88,6 +93,34 @@ const EMERGING_VENDORS: EmergingVendor[] = [
     category: "Designs & Streetwear",
     image: "https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=500&auto=format&fit=crop",
     href: "/stores/urban-wear",
+  },
+  {
+    id: "ev-5",
+    name: "Artisan Leather Crafts",
+    category: "Handmade Goods",
+    image: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=500&auto=format&fit=crop",
+    href: "/stores/artisan-leather-crafts",
+  },
+  {
+    id: "ev-6",
+    name: "Eco Home Essentials",
+    category: "Home & Kitchen",
+    image: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=500&auto=format&fit=crop",
+    href: "/stores/eco-home-essentials",
+  },
+  {
+    id: "ev-7",
+    name: "Glow & Beauty Studio",
+    category: "Beauty & Cosmetics",
+    image: "https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=500&auto=format&fit=crop",
+    href: "/stores/glow-beauty-studio",
+  },
+  {
+    id: "ev-8",
+    name: "Pure Harvest Organics",
+    category: "Fresh Grocery",
+    image: "https://images.unsplash.com/photo-1542838132-92c53300491e?w=500&auto=format&fit=crop",
+    href: "/stores/pure-harvest-organics",
   },
 ];
 
@@ -260,7 +293,39 @@ function BrandWordmark({ brand }: { brand: BrandPartner }) {
 // ── Main component ─────────────────────────────────────────────
 
 export function BrandsDealsSection() {
+  const brandSliderRef = useRef<HTMLDivElement>(null);
+  const vendorsSliderRef = useRef<HTMLDivElement>(null);
   const dealsSliderRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll Brand Partners slider every 1.8s
+  useEffect(() => {
+    const slider = brandSliderRef.current;
+    if (!slider) return;
+
+    const interval = setInterval(() => {
+      if (slider.scrollLeft + slider.clientWidth >= slider.scrollWidth - 10) {
+        slider.scrollTo({ left: 0, behavior: "smooth" });
+      } else {
+        slider.scrollBy({ left: 220, behavior: "smooth" });
+      }
+    }, 1800);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const scrollBrands = (direction: "left" | "right") => {
+    if (brandSliderRef.current) {
+      const scrollAmount = direction === "left" ? -240 : 240;
+      brandSliderRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
+    }
+  };
+
+  const scrollVendors = (direction: "left" | "right") => {
+    if (vendorsSliderRef.current) {
+      const scrollAmount = direction === "left" ? -300 : 300;
+      vendorsSliderRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
+    }
+  };
 
   const scrollDeals = (direction: "left" | "right") => {
     if (dealsSliderRef.current) {
@@ -278,15 +343,20 @@ export function BrandsDealsSection() {
           <SectionHeader
             title="Official Retail & Brand Partners"
             seeMoreHref="/brands"
+            onPrev={() => scrollBrands("left")}
+            onNext={() => scrollBrands("right")}
           />
 
           <div className="overflow-hidden rounded-xl bg-[#F6EFFD] shadow-sm border border-purple-100/80">
-            <div className="flex items-center divide-x divide-[#ECD7F8] overflow-x-auto scrollbar-none">
+            <div
+              ref={brandSliderRef}
+              className="flex items-center divide-x divide-[#ECD7F8] overflow-x-auto scroll-smooth scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+            >
               {BRAND_PARTNERS.map((brand) => (
                 <Link
                   key={brand.id}
                   href={brand.href}
-                  className="flex min-w-[140px] flex-1 items-center justify-center px-6 py-5 transition-colors hover:bg-white/60"
+                  className="flex min-w-[150px] sm:min-w-[180px] flex-shrink-0 items-center justify-center px-6 py-5 transition-colors hover:bg-white/60"
                 >
                   <BrandWordmark brand={brand} />
                 </Link>
@@ -318,38 +388,53 @@ export function BrandsDealsSection() {
           </div>
         </div>
 
-        {/* ③ Verified Emerging Vendors ─────────────────────────── */}
-        <div>
+      </div>
+
+      {/* ③ Verified Emerging Vendors — Full Width Bleeding Right Slider ───── */}
+      <div className="w-full bg-[#EADBF8] pb-8 overflow-hidden">
+        <div className="container-wide">
           <SectionHeader
             title="Verified Emerging Vendors"
             seeMoreHref="/emerging-vendors"
+            onPrev={() => scrollVendors("left")}
+            onNext={() => scrollVendors("right")}
           />
+        </div>
 
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+        <div className="w-full">
+          <div
+            ref={vendorsSliderRef}
+            className="flex items-stretch gap-4 overflow-x-auto scroll-smooth scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden py-3 w-full pl-4 sm:pl-6 lg:pl-[calc(max(1rem,(100vw-80rem)/2+2rem))] pr-4 sm:pr-8 md:pr-12"
+          >
             {EMERGING_VENDORS.map((vendor) => (
               <Link
                 key={vendor.id}
                 href={vendor.href}
-                className="group overflow-hidden rounded-2xl bg-[#F6EFFD] shadow-sm border border-white/60 transition-transform hover:-translate-y-1"
+                className="group flex flex-col justify-between overflow-hidden rounded-2xl bg-[#F6EFFD] shadow-sm border border-white/60 w-[240px] sm:w-[265px] md:w-[285px] shrink-0 transition-transform duration-300 hover:-translate-y-1 hover:shadow-md"
               >
-                <div className="relative aspect-[4/3] w-full overflow-hidden bg-gray-100">
-                  <Image
-                    src={vendor.image}
-                    alt={vendor.name}
-                    fill
-                    sizes="(max-width: 768px) 50vw, 25vw"
-                    className="object-cover transition-transform duration-500 group-hover:scale-105"
-                  />
-                </div>
-                <div className="p-4">
-                  <p className="font-bold text-[#6D349F] truncate">{vendor.name}</p>
-                  <p className="mt-0.5 text-xs text-[#8A79A5] truncate">{vendor.category}</p>
+                <div>
+                  <div className="relative aspect-[4/3] w-full overflow-hidden bg-purple-100">
+                    <Image
+                      src={vendor.image}
+                      alt={vendor.name}
+                      fill
+                      sizes="(max-width: 640px) 240px, 285px"
+                      className="object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                  </div>
+                  <div className="p-4">
+                    <p className="font-bold text-[#6D349F] font-montserrat truncate group-hover:text-[#52237A] transition-colors">
+                      {vendor.name}
+                    </p>
+                    <p className="mt-0.5 text-xs text-[#8A79A5] font-medium truncate">
+                      {vendor.category}
+                    </p>
+                  </div>
                 </div>
               </Link>
             ))}
           </div>
         </div>
-
       </div>
 
       {/* ④ Deals of the Day — Full Width Bleeding Right Slider ─────────── */}
