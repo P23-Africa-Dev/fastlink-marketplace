@@ -42,9 +42,9 @@ export function ProductGrid({ products, isLoading = false, className }: ProductG
 
   if (products.length === 0) {
     return (
-      <div className="flex h-64 flex-col items-center justify-center gap-3 text-center">
-        <p className="font-display text-2xl font-light text-muted-foreground">No products found</p>
-        <p className="text-sm text-muted-foreground">Try adjusting your filters</p>
+      <div className="flex h-64 flex-col items-center justify-center gap-2 text-center font-montserrat">
+        <p className="text-xl sm:text-2xl font-semibold text-[#6D349F]">No products found</p>
+        <p className="text-sm font-medium text-[#8A79A5]">Try adjusting your search query or filters</p>
       </div>
     );
   }
