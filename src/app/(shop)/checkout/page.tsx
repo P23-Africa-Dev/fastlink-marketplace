@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Check, ChevronRight, Lock } from "lucide-react";
+import { Check, ChevronRight, Lock, ArrowLeft, ShieldCheck } from "lucide-react";
 
 import { useCartStore } from "@/store/cart-store";
 import { formatPrice, cn } from "@/lib/utils";
@@ -29,7 +29,7 @@ export default function CheckoutPage() {
     city: "",
     state: "",
     postalCode: "",
-    country: "US",
+    country: "Nigeria",
     cardNumber: "",
     cardExpiry: "",
     cardCvc: "",
@@ -51,291 +51,329 @@ export default function CheckoutPage() {
 
   if (orderPlaced) {
     return (
-      <div className="container-narrow section-padding text-center">
-        <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-primary/10">
-          <Check size={36} className="text-primary" />
-        </div>
-        <h1 className="font-display mb-3 text-4xl font-light text-foreground">
-          Order Confirmed
-        </h1>
-        <p className="mb-2 text-muted-foreground">
-          Thank you for your purchase. You&apos;ll receive an email shortly.
-        </p>
-        <p className="mb-10 text-sm text-muted-foreground">
-          Order #PRV-{Math.random().toString(36).slice(2, 8).toUpperCase()}
-        </p>
-        <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
-          <Link href="/products" className="btn-gold">
-            Continue Shopping
-          </Link>
-          <Link href="/dashboard" className="btn-outline-gold">
-            View Orders
-          </Link>
+      <div className="bg-[#EADBF8] min-h-screen py-16 font-montserrat">
+        <div className="container-narrow text-center py-12">
+          <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-[#F2E7FC] border border-white/80 shadow-md">
+            <Check size={36} className="text-[#6D349F]" />
+          </div>
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-[#6D349F] mb-3 font-montserrat">
+            Order Confirmed!
+          </h1>
+          <p className="mb-2 text-[#8A79A5] font-medium">
+            Thank you for your purchase. We&apos;ve received your order and sent a receipt to your email.
+          </p>
+          <p className="mb-8 text-xs font-bold text-[#6D349F] bg-white/60 inline-block px-4 py-2 rounded-xl border border-white/80">
+            Order Reference: #FLK-{Math.random().toString(36).slice(2, 8).toUpperCase()}
+          </p>
+
+          <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
+            <Link
+              href="/products"
+              className="w-full sm:w-auto rounded-xl bg-[#7E37C9] hover:bg-[#6C2CB5] text-white font-bold px-8 py-3.5 shadow-md transition-all"
+            >
+              Continue Shopping
+            </Link>
+            <Link
+              href="/"
+              className="w-full sm:w-auto rounded-xl border border-[#6D349F] text-[#6D349F] font-bold px-8 py-3.5 hover:bg-purple-100/50 transition-colors"
+            >
+              Return Home
+            </Link>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container-wide py-10">
-      <div className="mb-10 flex items-center justify-between">
-        <Link
-          href="/"
-          className="font-display text-xl font-light tracking-[0.12em] text-foreground"
-        >
-          PROVENANCE
-        </Link>
-        <div className="flex items-center gap-1">
-          <Lock size={12} className="text-muted-foreground" />
-          <span className="text-xs text-muted-foreground">Secure Checkout</span>
-        </div>
-      </div>
+    <div className="bg-[#EADBF8] min-h-screen py-10 font-montserrat">
+      <div className="container-wide space-y-8">
+        {/* Top Header */}
+        <div className="flex items-center justify-between border-b border-[#D8C2EF] pb-5">
+          <Link
+            href="/cart"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#6D349F] hover:text-[#52237A] transition-colors"
+          >
+            <ArrowLeft size={14} />
+            <span>Back to Cart</span>
+          </Link>
 
-      {/* Progress */}
-      <div className="mb-10 flex items-center justify-center gap-0">
-        {STEPS.map((step, i) => {
-          const stepIdx = STEPS.findIndex((s) => s.id === currentStep);
-          const isDone = i < stepIdx;
-          const isActive = step.id === currentStep;
-          return (
-            <div key={step.id} className="flex items-center">
-              <button
-                onClick={() => isDone && setCurrentStep(step.id)}
-                className={cn(
-                  "flex flex-col items-center gap-1.5 transition-colors",
-                  isDone && "cursor-pointer hover:text-primary",
-                )}
-              >
-                <div
-                  className={cn(
-                    "flex h-7 w-7 items-center justify-center rounded-full border text-xs font-medium transition-all",
-                    isActive
-                      ? "border-primary bg-primary text-primary-foreground"
-                      : isDone
-                      ? "border-primary bg-primary/20 text-primary"
-                      : "border-border text-muted-foreground",
-                  )}
-                >
-                  {isDone ? <Check size={12} /> : i + 1}
-                </div>
-                <span
-                  className={cn(
-                    "hidden text-[10px] uppercase tracking-widest sm:block",
-                    isActive ? "text-foreground" : "text-muted-foreground",
-                  )}
-                >
-                  {step.label}
-                </span>
-              </button>
-              {i < STEPS.length - 1 && (
-                <div
-                  className={cn(
-                    "mx-2 h-px w-12 transition-colors sm:w-20",
-                    i < STEPS.findIndex((s) => s.id === currentStep)
-                      ? "bg-primary"
-                      : "bg-border",
-                  )}
-                />
-              )}
-            </div>
-          );
-        })}
-      </div>
+          <h1 className="text-xl sm:text-2xl font-extrabold text-[#6D349F] font-montserrat">
+            Fastlink Checkout
+          </h1>
 
-      <div className="grid gap-10 lg:grid-cols-[1fr_380px]">
-        {/* Form */}
-        <div className="rounded bg-card p-6 md:p-8">
-          {currentStep === "contact" && (
-            <div className="space-y-5">
-              <h2 className="font-display text-2xl font-light text-foreground">
-                Contact Information
-              </h2>
-              <FormField
-                label="Full Name"
-                value={form.name}
-                onChange={(v) => update("name", v)}
-                placeholder="Jordan Avery"
-              />
-              <FormField
-                label="Email Address"
-                type="email"
-                value={form.email}
-                onChange={(v) => update("email", v)}
-                placeholder="jordan@example.com"
-              />
-              <button onClick={nextStep} className="btn-gold w-full mt-2">
-                Continue to Shipping
-                <ChevronRight size={14} />
-              </button>
-            </div>
-          )}
-
-          {currentStep === "shipping" && (
-            <div className="space-y-5">
-              <h2 className="font-display text-2xl font-light text-foreground">
-                Shipping Address
-              </h2>
-              <FormField
-                label="Street Address"
-                value={form.street}
-                onChange={(v) => update("street", v)}
-                placeholder="42 Bleecker Street, Apt 3B"
-              />
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  label="City"
-                  value={form.city}
-                  onChange={(v) => update("city", v)}
-                  placeholder="New York"
-                />
-                <FormField
-                  label="State"
-                  value={form.state}
-                  onChange={(v) => update("state", v)}
-                  placeholder="NY"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  label="Postal Code"
-                  value={form.postalCode}
-                  onChange={(v) => update("postalCode", v)}
-                  placeholder="10012"
-                />
-                <FormField
-                  label="Country"
-                  value={form.country}
-                  onChange={(v) => update("country", v)}
-                  placeholder="US"
-                />
-              </div>
-              <button onClick={nextStep} className="btn-gold w-full mt-2">
-                Continue to Payment
-                <ChevronRight size={14} />
-              </button>
-            </div>
-          )}
-
-          {currentStep === "payment" && (
-            <div className="space-y-5">
-              <h2 className="font-display text-2xl font-light text-foreground">
-                Payment Details
-              </h2>
-              <p className="flex items-center gap-2 text-xs text-muted-foreground">
-                <Lock size={11} />
-                Your card information is encrypted and secure
-              </p>
-              <FormField
-                label="Card Number"
-                value={form.cardNumber}
-                onChange={(v) => update("cardNumber", v)}
-                placeholder="4242 4242 4242 4242"
-              />
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  label="Expiry Date"
-                  value={form.cardExpiry}
-                  onChange={(v) => update("cardExpiry", v)}
-                  placeholder="MM / YY"
-                />
-                <FormField
-                  label="CVC"
-                  value={form.cardCvc}
-                  onChange={(v) => update("cardCvc", v)}
-                  placeholder="•••"
-                />
-              </div>
-              <button onClick={nextStep} className="btn-gold w-full mt-2">
-                Review Order
-                <ChevronRight size={14} />
-              </button>
-            </div>
-          )}
-
-          {currentStep === "review" && (
-            <div className="space-y-5">
-              <h2 className="font-display text-2xl font-light text-foreground">
-                Review Your Order
-              </h2>
-              <div className="rounded border border-border p-4 space-y-3">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Name</span>
-                  <span className="text-foreground">{form.name || "—"}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Email</span>
-                  <span className="text-foreground">{form.email || "—"}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Ship to</span>
-                  <span className="text-right text-foreground">
-                    {[form.street, form.city, form.state].filter(Boolean).join(", ") || "—"}
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Payment</span>
-                  <span className="text-foreground">
-                    {form.cardNumber ? `•••• ${form.cardNumber.slice(-4)}` : "—"}
-                  </span>
-                </div>
-              </div>
-              <button onClick={placeOrder} className="btn-gold w-full mt-2 animate-pulse-gold">
-                Place Order · {formatPrice(total)}
-                <Lock size={14} />
-              </button>
-              <p className="text-center text-xs text-muted-foreground">
-                By placing your order you agree to our Terms & Privacy Policy.
-              </p>
-            </div>
-          )}
+          <div className="flex items-center gap-1.5 bg-white/70 px-3 py-1.5 rounded-full border border-white/80 shadow-xs">
+            <Lock size={13} className="text-[#6D349F]" />
+            <span className="text-xs font-bold text-[#6D349F]">Secure Payment</span>
+          </div>
         </div>
 
-        {/* Order summary */}
-        <div className="h-fit rounded bg-card p-6">
-          <h3 className="font-display mb-4 text-xl font-light text-foreground">
-            Order Summary
-          </h3>
-          <ul className="mb-5 divide-y divide-border">
-            {items.map((item) => (
-              <li key={item.productId} className="flex items-center gap-3 py-3">
-                <div className="relative h-14 w-14 flex-shrink-0 overflow-hidden rounded bg-muted">
-                  <Image
-                    src={item.product.images[0]?.url ?? ""}
-                    alt={item.product.name}
-                    fill
-                    className="object-cover"
+        {/* Progress Bar */}
+        <div className="flex items-center justify-center py-2">
+          {STEPS.map((step, i) => {
+            const stepIdx = STEPS.findIndex((s) => s.id === currentStep);
+            const isDone = i < stepIdx;
+            const isActive = step.id === currentStep;
+
+            return (
+              <div key={step.id} className="flex items-center">
+                <button
+                  onClick={() => isDone && setCurrentStep(step.id)}
+                  className={cn(
+                    "flex flex-col items-center gap-1.5 transition-colors",
+                    isDone && "cursor-pointer hover:opacity-80"
+                  )}
+                >
+                  <div
+                    className={cn(
+                      "flex h-8 w-8 items-center justify-center rounded-full border text-xs font-extrabold transition-all shadow-xs",
+                      isActive
+                        ? "border-[#6D349F] bg-[#6D349F] text-white ring-4 ring-[#6D349F]/20"
+                        : isDone
+                        ? "border-[#7E37C9] bg-[#7E37C9] text-white"
+                        : "border-[#D8C2EF] bg-white text-[#8A79A5]"
+                    )}
+                  >
+                    {isDone ? <Check size={14} /> : i + 1}
+                  </div>
+                  <span
+                    className={cn(
+                      "hidden text-[11px] font-bold uppercase tracking-wider sm:block",
+                      isActive ? "text-[#6D349F]" : "text-[#8A79A5]"
+                    )}
+                  >
+                    {step.label}
+                  </span>
+                </button>
+                {i < STEPS.length - 1 && (
+                  <div
+                    className={cn(
+                      "mx-3 h-0.5 w-12 transition-colors sm:w-20 rounded-full",
+                      i < STEPS.findIndex((s) => s.id === currentStep)
+                        ? "bg-[#7E37C9]"
+                        : "bg-[#D8C2EF]"
+                    )}
                   />
-                  <span className="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-muted-foreground text-[10px] text-background">
-                    {item.quantity}
-                  </span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="grid gap-8 lg:grid-cols-[1fr_380px]">
+          {/* Main Form Box */}
+          <div className="rounded-2xl bg-[#F6EFFD] p-6 md:p-8 border border-white/60 shadow-sm">
+            {currentStep === "contact" && (
+              <div className="space-y-5">
+                <h2 className="text-2xl font-bold text-[#6D349F] font-montserrat border-b border-[#D8C2EF] pb-3">
+                  Contact Information
+                </h2>
+                <FormField
+                  label="Full Name"
+                  value={form.name}
+                  onChange={(v) => update("name", v)}
+                  placeholder="Amina Bello"
+                />
+                <FormField
+                  label="Email Address"
+                  type="email"
+                  value={form.email}
+                  onChange={(v) => update("email", v)}
+                  placeholder="amina@example.com"
+                />
+                <button
+                  onClick={nextStep}
+                  className="flex items-center justify-center gap-2 w-full rounded-xl bg-[#7E37C9] hover:bg-[#6C2CB5] text-white font-bold py-3.5 px-6 shadow-md transition-all mt-4"
+                >
+                  <span>Continue to Shipping</span>
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+            )}
+
+            {currentStep === "shipping" && (
+              <div className="space-y-5">
+                <h2 className="text-2xl font-bold text-[#6D349F] font-montserrat border-b border-[#D8C2EF] pb-3">
+                  Shipping Address
+                </h2>
+                <FormField
+                  label="Street Address"
+                  value={form.street}
+                  onChange={(v) => update("street", v)}
+                  placeholder="15 Zoo Road, Kano Municipal"
+                />
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    label="City"
+                    value={form.city}
+                    onChange={(v) => update("city", v)}
+                    placeholder="Kano"
+                  />
+                  <FormField
+                    label="State"
+                    value={form.state}
+                    onChange={(v) => update("state", v)}
+                    placeholder="Kano State"
+                  />
                 </div>
-                <div className="flex-1">
-                  <p className="text-sm text-foreground">{item.product.name}</p>
-                  <p className="text-xs text-muted-foreground">{item.product.seller.name}</p>
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    label="Postal Code"
+                    value={form.postalCode}
+                    onChange={(v) => update("postalCode", v)}
+                    placeholder="700213"
+                  />
+                  <FormField
+                    label="Country"
+                    value={form.country}
+                    onChange={(v) => update("country", v)}
+                    placeholder="Nigeria"
+                  />
                 </div>
-                <p className="text-sm text-primary">
-                  {formatPrice(item.product.price * item.quantity)}
+                <button
+                  onClick={nextStep}
+                  className="flex items-center justify-center gap-2 w-full rounded-xl bg-[#7E37C9] hover:bg-[#6C2CB5] text-white font-bold py-3.5 px-6 shadow-md transition-all mt-4"
+                >
+                  <span>Continue to Payment</span>
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+            )}
+
+            {currentStep === "payment" && (
+              <div className="space-y-5">
+                <h2 className="text-2xl font-bold text-[#6D349F] font-montserrat border-b border-[#D8C2EF] pb-3">
+                  Payment Details
+                </h2>
+                <p className="flex items-center gap-2 text-xs text-[#8A79A5] bg-white/70 p-3 rounded-xl border border-white/80 font-medium">
+                  <ShieldCheck size={16} className="text-[#6D349F] shrink-0" />
+                  <span>Encrypted 256-bit secure transaction via Fastlink Pay.</span>
                 </p>
-              </li>
-            ))}
-          </ul>
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between text-muted-foreground">
-              <span>Subtotal</span>
-              <span>{formatPrice(subtotal)}</span>
-            </div>
-            <div className="flex justify-between text-muted-foreground">
-              <span>Shipping</span>
-              <span>{shipping === 0 ? "Free" : formatPrice(shipping)}</span>
-            </div>
-            <div className="flex justify-between text-muted-foreground">
-              <span>Tax</span>
-              <span>{formatPrice(tax)}</span>
-            </div>
-            <div className="rule-gold my-2" />
-            <div className="flex justify-between">
-              <span className="font-display text-lg">Total</span>
-              <span className="font-display text-lg text-primary">{formatPrice(total)}</span>
+                <FormField
+                  label="Card Number"
+                  value={form.cardNumber}
+                  onChange={(v) => update("cardNumber", v)}
+                  placeholder="5399 4242 4242 4242"
+                />
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    label="Expiry Date"
+                    value={form.cardExpiry}
+                    onChange={(v) => update("cardExpiry", v)}
+                    placeholder="MM / YY"
+                  />
+                  <FormField
+                    label="CVC"
+                    value={form.cardCvc}
+                    onChange={(v) => update("cardCvc", v)}
+                    placeholder="•••"
+                  />
+                </div>
+                <button
+                  onClick={nextStep}
+                  className="flex items-center justify-center gap-2 w-full rounded-xl bg-[#7E37C9] hover:bg-[#6C2CB5] text-white font-bold py-3.5 px-6 shadow-md transition-all mt-4"
+                >
+                  <span>Review Order</span>
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+            )}
+
+            {currentStep === "review" && (
+              <div className="space-y-5">
+                <h2 className="text-2xl font-bold text-[#6D349F] font-montserrat border-b border-[#D8C2EF] pb-3">
+                  Review Your Order
+                </h2>
+                <div className="rounded-xl border border-[#D8C2EF] bg-white p-4 space-y-3 text-xs">
+                  <div className="flex justify-between">
+                    <span className="text-[#8A79A5] font-semibold">Name</span>
+                    <span className="text-[#3B1C5A] font-bold">{form.name || "—"}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[#8A79A5] font-semibold">Email</span>
+                    <span className="text-[#3B1C5A] font-bold">{form.email || "—"}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[#8A79A5] font-semibold">Shipping Address</span>
+                    <span className="text-[#3B1C5A] font-bold text-right">
+                      {[form.street, form.city, form.state].filter(Boolean).join(", ") || "—"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[#8A79A5] font-semibold">Payment</span>
+                    <span className="text-[#3B1C5A] font-bold">
+                      {form.cardNumber ? `•••• ${form.cardNumber.slice(-4)}` : "—"}
+                    </span>
+                  </div>
+                </div>
+
+                <button
+                  onClick={placeOrder}
+                  className="flex items-center justify-center gap-2 w-full rounded-xl bg-[#6D349F] hover:bg-[#52237A] text-white font-extrabold py-4 px-6 shadow-lg transition-all mt-4 font-montserrat text-base"
+                >
+                  <Lock size={16} />
+                  <span>Place Order · {formatPrice(total)}</span>
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Order Summary Sidebar */}
+          <div className="h-fit rounded-2xl bg-[#F6EFFD] p-6 border border-white/60 shadow-sm space-y-5">
+            <h3 className="text-xl font-bold text-[#6D349F] font-montserrat border-b border-[#D8C2EF] pb-3">
+              Order Summary
+            </h3>
+            <ul className="divide-y divide-[#E4D1F7]/60">
+              {items.map((item) => (
+                <li key={item.productId} className="flex items-center gap-3 py-3">
+                  <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-lg bg-purple-100">
+                    <Image
+                      src={item.product.images[0]?.url ?? ""}
+                      alt={item.product.name}
+                      fill
+                      className="object-cover"
+                    />
+                    <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#6D349F] text-[10px] font-bold text-white">
+                      {item.quantity}
+                    </span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-bold text-[#6D349F] truncate">
+                      {item.product.name}
+                    </p>
+                    <p className="text-[10px] text-[#8A79A5] truncate">
+                      {item.product.seller.name}
+                    </p>
+                  </div>
+                  <p className="text-xs font-bold text-[#6D349F]">
+                    {formatPrice(item.product.price * item.quantity)}
+                  </p>
+                </li>
+              ))}
+            </ul>
+
+            <div className="space-y-2 text-xs pt-2 border-t border-[#D8C2EF]">
+              <div className="flex justify-between text-[#8A79A5] font-medium">
+                <span>Subtotal</span>
+                <span className="font-bold text-[#6D349F]">{formatPrice(subtotal)}</span>
+              </div>
+              <div className="flex justify-between text-[#8A79A5] font-medium">
+                <span>Shipping</span>
+                <span className="font-bold text-emerald-600">
+                  {shipping === 0 ? "Free" : formatPrice(shipping)}
+                </span>
+              </div>
+              <div className="flex justify-between text-[#8A79A5] font-medium">
+                <span>Estimated Tax</span>
+                <span className="font-bold text-[#6D349F]">{formatPrice(tax)}</span>
+              </div>
+
+              <div className="border-t border-[#D8C2EF] my-2 pt-3 flex justify-between items-center">
+                <span className="text-sm font-bold text-[#6D349F]">Total</span>
+                <span className="text-xl font-extrabold text-[#6D349F] font-montserrat">
+                  {formatPrice(total)}
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -359,7 +397,7 @@ function FormField({
 }) {
   return (
     <div>
-      <label className="mb-1.5 block text-xs uppercase tracking-widest text-muted-foreground">
+      <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#8A79A5]">
         {label}
       </label>
       <input
@@ -367,7 +405,7 @@ function FormField({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full rounded border border-border bg-input px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary transition-colors"
+        className="w-full rounded-xl border border-[#D8C2EF] bg-white px-4 py-3 text-xs text-[#3B1C5A] placeholder:text-[#8A79A5] focus:border-[#7E37C9] focus:outline-none transition-colors font-montserrat"
       />
     </div>
   );
