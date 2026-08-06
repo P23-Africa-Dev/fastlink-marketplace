@@ -35,7 +35,7 @@ export function HeroBanner() {
           {/* Left — copy */}
           <div className="flex flex-col gap-6 animate-slide-in-left">
             <h1
-              className="font-montserrat font-bold text-3xl sm:text-5xl lg:text-[50px] leading-tight lg:leading-[68.58px] text-white tracking-normal align-middle"
+              className="font-montserrat font-bold text-3xl sm:text-5xl lg:text-[50px] leading-tight lg:leading-[58.58px] text-white tracking-normal align-middle"
               style={{ verticalAlign: "middle" }}
             >
               Structured Digital<br />

@@ -6,6 +6,7 @@ import { LocalStoresSection } from "@/features/home/local-stores-section";
 import { BrandsDealsSection } from "@/features/home/brands-deals-section";
 import { HotDealBanner } from "@/features/home/hot-deal-banner";
 import { FAQStrip } from "@/features/home/faq-strip";
+import BecomeVendorRiderCta from "@/components/become-vendor-rider-cta";
 
 export default function HomePage() {
   return (
@@ -29,10 +30,15 @@ export default function HomePage() {
           <BrandsDealsSection />
         </div>
 
-        {/* Hot Deal Banner with fade-up */}
-        <div className="animate-fade-up transition-all duration-700">
-          <HotDealBanner />
+        {/* Bottom CTA Card: Become a Vendor or Rider */}
+        <div className="animate-fade-up transition-all duration-700 bg-[#E3D1F6]">
+          <BecomeVendorRiderCta />
         </div>
+
+        {/* Hot Deal Banner with fade-up */}
+        {/* <div className="animate-fade-up transition-all duration-700">
+          <HotDealBanner />
+        </div> */}
 
         {/* FAQ Strip */}
         <div className="animate-fade-up transition-all duration-700">
