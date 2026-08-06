@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 
 import whyUsIllustration from "@/assets/why_us_illustration.png";
-import contactHeroFrame from "@/assets/Frame 1000009508.png";
+import aboutHeroFrame from "@/assets/Frame 1000009509.png";
 import { FAQStrip } from "@/features/home/faq-strip";
 
 export const metadata: Metadata = {
@@ -75,7 +75,7 @@ export default function AboutPage() {
       <section className="relative w-full min-h-[380px] sm:min-h-[460px] flex items-center overflow-hidden">
         {/* Background Frame Image */}
         <Image
-          src={contactHeroFrame}
+          src={aboutHeroFrame}
           alt="About Fastlink Marketplace"
           fill
           priority
