@@ -200,7 +200,8 @@ export function Header() {
 
               {/* Account */}
               <Link
-                href={isAuthenticated ? "/dashboard" : "/login"}
+                // href={isAuthenticated ? "/dashboard" : "/login"}
+                href="#"
                 className="group hidden items-center gap-2 md:flex"
                 aria-label="Account"
               >
