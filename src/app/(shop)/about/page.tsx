@@ -3,20 +3,17 @@ import Link from "next/link";
 import Image from "next/image";
 import {
   Truck,
-  Users,
-  Headphones,
   ShoppingBag,
   CreditCard,
   Award,
-  Package,
+  Headphones,
   Search,
   Percent,
   RotateCcw,
-  Store,
 } from "lucide-react";
 
 import whyUsIllustration from "@/assets/why_us_illustration.png";
-import aboutHeroIllustration from "@/assets/about_hero_illustration.png";
+import contactHeroFrame from "@/assets/Frame 1000009508.png";
 import { FAQStrip } from "@/features/home/faq-strip";
 
 export const metadata: Metadata = {
@@ -74,46 +71,40 @@ const PROMISE_STATS = [
 export default function AboutPage() {
   return (
     <div className="bg-[#EADBF8] min-h-screen text-[#380469] font-montserrat">
-      {/* ── Hero Section ────────────────────────────────────────── */}
-      <section className="container-wide py-16 md:py-24">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-16 items-center">
-          {/* Left Column — Text Content */}
-          <div className="flex flex-col justify-center animate-fade-in">
-            <h1 className="text-4xl md:text-5xl font-extrabold leading-tight text-[#380469] mb-6">
+      {/* ── 1. Hero Section ───────────────────────────────────────────── */}
+      <section className="relative w-full min-h-[380px] sm:min-h-[460px] flex items-center overflow-hidden">
+        {/* Background Frame Image */}
+        <Image
+          src={contactHeroFrame}
+          alt="About Fastlink Marketplace"
+          fill
+          priority
+          className="object-cover object-center"
+        />
+
+        <div className="mx-auto max-w-6xl px-4 w-full relative z-10 py-12 sm:py-16 md:py-20">
+          <div className="max-w-3xl space-y-5">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white leading-tight font-montserrat tracking-tight">
               About Fastlink Marketplace
             </h1>
-            <p className="text-sm md:text-base leading-relaxed text-[#542B7A] font-medium mb-8">
-              FastLink Marketplace is Nigeria&apos;s trusted online shopping destination,
-              connecting you to the best products, top brands, and reliable stores
-              all in one place. We make shopping simple, fast, and secure.
+            <p className="text-xs sm:text-sm md:text-base text-slate-200 leading-relaxed font-medium max-w-2xl sm:max-w-3xl">
+              FastLink Marketplace is Nigeria&apos;s trusted online shopping destination, connecting you to the best product, top brands, and reliable stores all in one place. We make shopping simple, fast and secure.
             </p>
-            <div className="flex flex-wrap gap-4">
+
+            <div className="flex flex-wrap items-center gap-4 pt-3">
               <Link
                 href="/products"
-                className="inline-flex items-center justify-center rounded-xl bg-[#834AB9] px-8 py-3.5 text-sm font-bold text-white transition-all duration-200 hover:bg-[#6B3A99] shadow-md hover:shadow-lg hover:-translate-y-px"
+                className="rounded-xl bg-[#FA8232] hover:bg-[#E06D20] text-white font-extrabold text-xs sm:text-sm px-8 py-3.5 transition-all shadow-md active:scale-95 inline-flex items-center justify-center font-montserrat cursor-pointer"
               >
-                Shop now!
+                Shop Now!
               </Link>
+
               <Link
                 href="/products?type=local-stores"
-                className="inline-flex items-center justify-center rounded-xl border-2 border-[#834AB9] bg-transparent px-8 py-3.5 text-sm font-bold text-[#834AB9] transition-all duration-200 hover:bg-[#834AB9]/10 shadow-sm hover:shadow-md hover:-translate-y-px"
+                className="rounded-xl border border-white/70 bg-white/5 hover:bg-white/15 text-white font-extrabold text-xs sm:text-sm px-8 py-3.5 transition-all active:scale-95 inline-flex items-center justify-center font-montserrat cursor-pointer"
               >
                 Explore Stores Near You
               </Link>
-            </div>
-          </div>
-
-          {/* Right Column — Image Asset */}
-          <div className="flex justify-center animate-fade-in stagger-1">
-            <div className="relative w-full aspect-[4/3] rounded-3xl overflow-hidden shadow-brand-md bg-[#3D3A40] border border-[#834AB9]/15">
-              <Image
-                src={aboutHeroIllustration}
-                alt="About Fastlink Marketplace Storefront"
-                fill
-                sizes="(max-width: 768px) 100vw, 50vw"
-                className="object-cover transition-transform duration-500 hover:scale-105"
-                priority
-              />
             </div>
           </div>
         </div>
@@ -141,7 +132,7 @@ export default function AboutPage() {
           What We Offer
         </h2>
         <div className="flex flex-wrap justify-center gap-6 max-w-6xl mx-auto">
-          {WHAT_WE_OFFER.map((item, index) => {
+          {WHAT_WE_OFFER.map((item) => {
             const Icon = item.icon;
             return (
               <div
