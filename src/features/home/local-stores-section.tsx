@@ -1,3 +1,6 @@
+"use client";
+
+import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -139,17 +142,51 @@ function SectionHeader({
 // ── Main component ────────────────────────────────────────────
 
 export function LocalStoresSection() {
+  const [location, setLocation] = useState("");
+
   return (
     <div className="bg-[#EADBF8] py-10">
       <div className="container-wide space-y-10">
 
         {/* ── Local Stores & Malls in Kano ──────────────────────── */}
         <div>
-          <SectionHeader
-            icon={<StoreIcon size={22} className="text-[#6D349F] shrink-0" />}
-            title="Local Stores & Malls in Kano"
-            seeMoreHref="/local-stores"
-          />
+          <div className="mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-3 sm:gap-4">
+              <StoreIcon size={24} className="text-[#6D349F] shrink-0" />
+
+              {/* Location Search Bar */}
+              <form
+                onSubmit={(e) => e.preventDefault()}
+                className="flex items-center rounded-xl bg-white p-1 border border-[#E4D1F7] shadow-2xs"
+              >
+                <input
+                  type="text"
+                  placeholder="Enter Location"
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  className="w-28 sm:w-36 md:w-40 bg-transparent px-3 py-1 text-xs text-[#411266] placeholder:text-[#C5B5DF] focus:outline-none font-medium"
+                />
+                <button
+                  type="submit"
+                  className="rounded-lg bg-[#8B5CF6] hover:bg-[#7C3AED] text-white font-semibold text-xs px-4 py-1.5 transition-all shadow-2xs active:scale-95 cursor-pointer"
+                >
+                  Search
+                </button>
+              </form>
+
+              <h2 className="text-lg sm:text-xl md:text-2xl font-extrabold text-[#6D349F] font-montserrat tracking-tight">
+                Local Stores & Malls in Kano
+              </h2>
+            </div>
+
+            <Link
+              href="/local-stores"
+              className="flex items-center gap-1 text-sm font-medium text-[#8A79A5] transition-colors hover:text-[#6D349F] shrink-0"
+            >
+              See More
+              <ChevronRight size={16} />
+            </Link>
+          </div>
 
           <div className="grid grid-cols-2 gap-3.5 md:grid-cols-4">
             {LOCAL_STORES.map((store) => (
