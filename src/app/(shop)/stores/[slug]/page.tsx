@@ -1,7 +1,6 @@
-import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowLeft, Clock, MapPin, Store as StoreIcon } from "lucide-react";
+import { Clock, MapPin, Store as StoreIcon } from "lucide-react";
 import { ShopProductCard } from "@/components/product/shop-product-card";
 import {
   getMallBySlug,
@@ -37,7 +36,7 @@ export default function StoreProductsPage({ params, searchParams }: PageProps) {
       <div className="bg-[#EADBF8] min-h-screen pb-16">
         <DynamicHero
           title={displayName}
-          backgroundImage={products[0]?.image || "https://images.unsplash.com/photo-1555529669-e69e7aa0ba9a?w=1600&auto=format&fit=crop"}
+          backgroundImage={products[0]?.images?.[0] || "https://images.unsplash.com/photo-1555529669-e69e7aa0ba9a?w=1600&auto=format&fit=crop"}
           backLink="/malls"
           backLabel="Back to Malls"
         />

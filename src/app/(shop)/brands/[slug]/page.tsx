@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowLeft, Store } from "lucide-react";
+import { Store } from "lucide-react";
 import { ShopProductCard } from "@/components/product/shop-product-card";
 import { TargetIcon } from "@/components/marketplace/target-icon";
 import {
