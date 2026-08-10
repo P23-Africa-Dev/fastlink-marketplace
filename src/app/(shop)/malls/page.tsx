@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { KANO_MALLS } from "@/mocks/stores-data";
 import { MallCard } from "@/components/marketplace/mall-card";
+import { DynamicHero } from "@/components/marketplace/dynamic-hero";
 
 const ITEMS_PER_PAGE = 8;
 
@@ -48,42 +49,22 @@ export default function MallsPage() {
 
   return (
     <div className="bg-[#EADBF8] min-h-screen pb-16">
-      <section className="relative w-full overflow-hidden bg-gradient-to-r from-[#EADBF8] via-[#E4D1F7] to-[#EADBF8] border-b border-[#D8C2EFA0] py-10 sm:py-14">
-        <div className="absolute inset-0 z-0 pointer-events-none select-none">
-          <Image
-            src="https://images.unsplash.com/photo-1519567241046-7f570eee3ce6?w=1600&auto=format&fit=crop"
-            alt="Malls banner"
-            fill
-            priority
-            className="object-cover object-right opacity-25"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#EADBF8] via-[#EADBF8]/95 to-transparent" />
-        </div>
-
-        <div className="container-wide relative z-10">
-          <div className="mb-4">
-            <Link
-              href="/"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#6D349F] hover:text-[#52237A] transition-colors bg-white/60 px-3.5 py-1.5 rounded-lg border border-white/80 shadow-xs"
-            >
-              <ArrowLeft size={14} />
-              <span>Back to Homepage</span>
-            </Link>
-          </div>
-
-          <div className="max-w-2xl">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-[#6D349F] tracking-tight font-montserrat mb-3">
-              Malls in Kano
-            </h1>
-            <p className="text-lg sm:text-xl font-bold text-[#6D349F] mb-2">
+      <DynamicHero
+        title="Malls in Kano"
+        subtitle={
+          <>
+            <p className="text-lg sm:text-xl font-bold mb-2">
               Browse shopping malls near you
             </p>
-            <p className="text-xs sm:text-sm text-[#8A79A5] leading-relaxed max-w-xl">
+            <p>
               Select a mall to explore stores, filter by category, and shop products from verified local vendors.
             </p>
-          </div>
-        </div>
-      </section>
+          </>
+        }
+        backgroundImage={KANO_MALLS[0].image}
+        backLink="/"
+        backLabel="Back to Homepage"
+      />
 
       <div className="container-wide py-10 space-y-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[#F2E7FC] p-4 sm:p-5 rounded-2xl border border-white/60 shadow-sm">
