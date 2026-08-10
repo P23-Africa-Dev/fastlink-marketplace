@@ -11,6 +11,7 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import { ALL_SHOP_CATEGORIES } from "@/mocks/stores-data";
+import { DynamicHero } from "@/components/marketplace/dynamic-hero";
 
 const CATEGORY_ICONS: Record<string, typeof Smartphone> = {
   electronics: Smartphone,
@@ -24,46 +25,13 @@ const CATEGORY_ICONS: Record<string, typeof Smartphone> = {
 export default function CategoriesPage() {
   return (
     <div className="bg-[#EADBF8] min-h-screen pb-16">
-      {/* ── 1. Full-Width Hero Banner Section ───────────────────────────────────── */}
-      <section className="relative w-full overflow-hidden bg-gradient-to-r from-[#8836DB] via-[#7E37C9] to-[#60259E] py-10 sm:py-14 text-white shadow-md">
-        {/* Background overlay graphic */}
-        <div className="absolute right-0 top-0 bottom-0 w-1/2 opacity-20 pointer-events-none bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent" />
-
-        <div className="container-wide relative z-10">
-          {/* Back to Homepage button */}
-          <div className="mb-4">
-            <Link
-              href="/"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-purple-200 hover:text-white transition-colors bg-white/10 px-3 py-1.5 rounded-lg border border-white/20"
-            >
-              <ArrowLeft size={14} />
-              <span>Back to Homepage</span>
-            </Link>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-            <div>
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight font-montserrat mb-3">
-              Shop By Category
-            </h1>
-            <p className="text-sm sm:text-base text-purple-100 font-medium mb-6">
-              Browse products across all brands and stores — no mall navigation required
-            </p>
-            </div>
-
-            {/* Banner Right Image */}
-            <div className="relative aspect-[16/9] md:aspect-[4/3] w-full max-w-md mx-auto md:ml-auto overflow-hidden rounded-xl">
-              <Image
-                src="https://images.unsplash.com/photo-1550009158-9ebf69173e03?w=800&auto=format&fit=crop"
-                alt="Kano Mall showcase"
-                fill
-                priority
-                className="object-cover rounded-xl shadow-lg"
-              />
-            </div>
-          </div>
-        </div>
-      </section>
+      <DynamicHero
+        title="Shop By Category"
+        subtitle="Browse products across all brands and stores — no mall navigation required"
+        backgroundImage={ALL_SHOP_CATEGORIES[0].image}
+        backLink="/"
+        backLabel="Back to Homepage"
+      />
 
       {/* ── 2. Category Cards Grid (Matching Homepage Styling) ──────────────────── */}
       <section className="container-wide py-10">

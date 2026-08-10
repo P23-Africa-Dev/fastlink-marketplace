@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowLeft, Store } from "lucide-react";
-import { ALL_BRAND_PARTNERS, BrandPartner } from "@/mocks/stores-data";
+import { ALL_BRAND_PARTNERS, BrandPartner, ALL_SHOP_CATEGORIES } from "@/mocks/stores-data";
+import { DynamicHero } from "@/components/marketplace/dynamic-hero";
 
 function BrandWordmark({ brand }: { brand: BrandPartner }) {
   const colorMap: Record<NonNullable<BrandPartner["style"]>, string> = {
@@ -48,28 +49,13 @@ export default function BrandsPage() {
   return (
     <div className="bg-[#EADBF8] min-h-screen pb-16">
       {/* ── 1. Full-Width Hero Section ───────────────────────────────────── */}
-      <section className="relative w-full overflow-hidden bg-gradient-to-r from-[#6D349F] via-[#7E37C9] to-[#52237A] py-10 sm:py-14 text-white shadow-md">
-        <div className="container-wide relative z-10">
-          <div className="mb-4">
-            <Link
-              href="/"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-purple-200 hover:text-white transition-colors bg-white/10 px-3 py-1.5 rounded-lg border border-white/20"
-            >
-              <ArrowLeft size={14} />
-              <span>Back to Homepage</span>
-            </Link>
-          </div>
-
-          <div className="max-w-2xl">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight font-montserrat mb-3">
-              Official Retail &amp; Brand Partners
-            </h1>
-            <p className="text-sm sm:text-base text-purple-100 font-medium">
-              Shop authentic products directly from verified global and national brand partners.
-            </p>
-          </div>
-        </div>
-      </section>
+      <DynamicHero
+        title="Official Retail & Brand Partners"
+        subtitle="Shop authentic products directly from verified global and national brand partners."
+        backgroundImage={ALL_SHOP_CATEGORIES[2]?.image || "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1600&auto=format&fit=crop"}
+        backLink="/"
+        backLabel="Back to Homepage"
+      />
 
       {/* ── 2. Brands Grid (Matching Homepage Card Design) ──────────────────── */}
       <section className="container-wide py-10">

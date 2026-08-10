@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowLeft, Store } from "lucide-react";
+import { Store } from "lucide-react";
 import { ShopProductCard } from "@/components/product/shop-product-card";
 import { TargetIcon } from "@/components/marketplace/target-icon";
 import {
@@ -9,6 +9,7 @@ import {
   getBrandProductName,
   getProductsByBrandSlug,
 } from "@/lib/brands";
+import { DynamicHero } from "@/components/marketplace/dynamic-hero";
 
 interface PageProps {
   params: { slug: string };
@@ -38,28 +39,13 @@ export default function BrandDetailPage({ params, searchParams }: PageProps) {
 
   return (
     <div className="bg-[#EADBF8] min-h-screen pb-16">
-      <section className="relative w-full overflow-hidden bg-gradient-to-r from-[#8836DB] via-[#7E37C9] to-[#60259E] py-10 sm:py-14 text-white shadow-md">
-        <div className="container-wide relative z-10">
-          <div className="mb-4">
-            <Link
-              href="/brands"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-purple-200 hover:text-white transition-colors bg-white/10 px-3 py-1.5 rounded-lg border border-white/20"
-            >
-              <ArrowLeft size={14} />
-              <span>Back to Brand Partners</span>
-            </Link>
-          </div>
-
-          <div className="max-w-2xl">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight font-montserrat mb-3">
-              {brandLabel}
-            </h1>
-            <p className="text-sm sm:text-base text-purple-100 font-medium">
-              Official retail partner — shop by category
-            </p>
-          </div>
-        </div>
-      </section>
+      <DynamicHero
+        title={brandLabel}
+        subtitle="Official retail partner — shop by category"
+        backgroundImage={products[0]?.images?.[0] || categories[0]?.image || "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=1600&auto=format&fit=crop"}
+        backLink="/brands"
+        backLabel="Back to Brand Partners"
+      />
 
       <div className="container-wide py-10">
         {!selectedCategory ? (

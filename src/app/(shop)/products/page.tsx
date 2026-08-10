@@ -12,6 +12,7 @@ import { ProductFilters } from "@/components/product/product-filters";
 import { useProducts } from "@/hooks/use-products";
 import { useUIStore } from "@/store/ui-store";
 import { cn } from "@/lib/utils";
+import { DynamicHero } from "@/components/marketplace/dynamic-hero";
 
 // ── Category-specific hero content ─────────────────────────────
 
@@ -153,92 +154,38 @@ function ProductsContent() {
     <div className="min-h-screen bg-[#EADBF8] font-montserrat">
 
       {/* ── Hero Banner ────────────────────────────────────────── */}
-      <div className={cn("relative w-full overflow-hidden", hero.bg.startsWith("bg-") ? hero.bg : cn("bg-gradient-to-r", hero.bg))}>
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-10 md:px-10 md:py-14">
-          {/* Left: text */}
-          <div className="z-20 max-w-xs md:max-w-sm relative">
-            <h1 className="text-3xl font-extrabold leading-tight text-white md:text-[32px]">
-              {hero.title}
-            </h1>
-            <p className="mt-2 text-[15px] font-medium text-white/90">{hero.subtitle}</p>
-            
-            {hero.buttons ? (
-              <div className="mt-8 flex items-center bg-[#f3eafb] rounded-[10px] w-fit shadow-sm">
-                <button className="flex items-center gap-2 px-5 py-3 text-sm font-semibold text-[#7a3dbf] hover:bg-white/50 transition-colors rounded-l-[10px]">
-                  {hero.buttons[0].icon}
-                  {hero.buttons[0].label}
-                </button>
-                <div className="w-[1px] h-5 bg-[#7a3dbf]/20"></div>
-                <button className="flex items-center gap-2 px-5 py-3 text-sm font-semibold text-[#7a3dbf] hover:bg-white/50 transition-colors rounded-r-[10px]">
-                  {hero.buttons[1].icon}
-                  {hero.buttons[1].label}
-                </button>
-              </div>
-            ) : (
-              <div className="mt-6 flex items-center gap-3">
-                <button className="flex items-center gap-2 rounded-xl bg-white/20 px-5 py-2.5 text-sm font-bold text-white backdrop-blur-sm hover:bg-white/30 transition-colors border border-white/30">
-                  <LayoutGrid size={15} />
-                  Browse Collection
-                </button>
-                <button className="flex items-center gap-2 rounded-xl bg-white/10 px-5 py-2.5 text-sm font-bold text-white backdrop-blur-sm hover:bg-white/20 transition-colors border border-white/20">
-                  <span className="text-base">📦</span>
-                  Free Returns
-                </button>
-              </div>
-            )}
+      <DynamicHero
+        title={hero.title}
+        subtitle={hero.subtitle}
+        backgroundImage={products[0]?.images?.[0] || hero.images?.[0] || hero.singleImage || "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=1600&auto=format&fit=crop"}
+        backLink="/"
+        backLabel="Back to Homepage"
+      >
+        {hero.buttons ? (
+          <div className="mt-4 flex items-center bg-[#f3eafb] rounded-[10px] w-fit shadow-sm">
+            <button className="flex items-center gap-2 px-5 py-3 text-sm font-semibold text-[#7a3dbf] hover:bg-white/50 transition-colors rounded-l-[10px]">
+              {hero.buttons[0].icon}
+              {hero.buttons[0].label}
+            </button>
+            <div className="w-[1px] h-5 bg-[#7a3dbf]/20"></div>
+            <button className="flex items-center gap-2 px-5 py-3 text-sm font-semibold text-[#7a3dbf] hover:bg-white/50 transition-colors rounded-r-[10px]">
+              {hero.buttons[1].icon}
+              {hero.buttons[1].label}
+            </button>
           </div>
-
-          {/* Right: images collage */}
-          {hero.singleImage ? (
-            <div className="hidden md:block absolute right-0 bottom-0 top-0 w-[55%] pointer-events-none">
-              <Image
-                src={hero.singleImage}
-                alt="Category showcase"
-                fill
-                className="object-contain object-right"
-                priority
-                sizes="50vw"
-              />
-            </div>
-          ) : hero.images && (
-            <div className="hidden md:flex items-end gap-3 h-44 shrink-0 z-10 relative">
-              <div className="relative h-44 w-36 overflow-hidden rounded-2xl shadow-xl ring-2 ring-white/20">
-                <Image
-                  src={hero.images[0]}
-                  alt="Category showcase"
-                  fill
-                  className="object-cover"
-                  sizes="144px"
-                />
-              </div>
-              <div className="flex flex-col gap-3 pb-2">
-                <div className="relative h-20 w-28 overflow-hidden rounded-xl shadow-lg ring-2 ring-white/20">
-                  <Image
-                    src={hero.images[1]}
-                    alt="Category showcase 2"
-                    fill
-                    className="object-cover"
-                    sizes="112px"
-                  />
-                </div>
-                <div className="relative h-20 w-28 overflow-hidden rounded-xl shadow-lg ring-2 ring-white/20">
-                  <Image
-                    src={hero.images[2]}
-                    alt="Category showcase 3"
-                    fill
-                    className="object-cover"
-                    sizes="112px"
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Decorative blur circles */}
-        <div className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-white/10 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-8 left-1/3 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
-      </div>
+        ) : (
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <button className="flex items-center gap-2 rounded-xl bg-white/20 px-5 py-2.5 text-sm font-bold text-white backdrop-blur-md hover:bg-white/30 transition-colors border border-white/30 shadow-sm">
+              <LayoutGrid size={15} />
+              Browse Collection
+            </button>
+            <button className="flex items-center gap-2 rounded-xl bg-white/10 px-5 py-2.5 text-sm font-bold text-white backdrop-blur-md hover:bg-white/20 transition-colors border border-white/20 shadow-sm">
+              <span className="text-base">📦</span>
+              Free Returns
+            </button>
+          </div>
+        )}
+      </DynamicHero>
 
       {/* ── Main Layout ────────────────────────────────────────── */}
       <div className="mx-auto max-w-7xl px-4 py-6 md:px-8 font-montserrat">

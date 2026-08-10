@@ -1,7 +1,6 @@
-import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowLeft, Clock, MapPin, Store as StoreIcon } from "lucide-react";
+import { Clock, MapPin, Store as StoreIcon } from "lucide-react";
 import { ShopProductCard } from "@/components/product/shop-product-card";
 import {
   getMallBySlug,
@@ -9,6 +8,7 @@ import {
   getProductsByStoreSlug,
   getStoreBySlug,
 } from "@/lib/marketplace";
+import { DynamicHero } from "@/components/marketplace/dynamic-hero";
 
 interface PageProps {
   params: { slug: string };
@@ -34,22 +34,12 @@ export default function StoreProductsPage({ params, searchParams }: PageProps) {
 
     return (
       <div className="bg-[#EADBF8] min-h-screen pb-16">
-        <section className="relative w-full overflow-hidden bg-gradient-to-r from-[#8836DB] via-[#7E37C9] to-[#60259E] py-10 sm:py-14 text-white shadow-md">
-          <div className="container-wide relative z-10">
-            <div className="mb-4">
-              <Link
-                href="/malls"
-                className="inline-flex items-center gap-1.5 text-xs font-semibold text-purple-200 hover:text-white transition-colors bg-white/10 px-3 py-1.5 rounded-lg border border-white/20"
-              >
-                <ArrowLeft size={14} />
-                <span>Back to Malls</span>
-              </Link>
-            </div>
-            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight font-montserrat">
-              {displayName}
-            </h1>
-          </div>
-        </section>
+        <DynamicHero
+          title={displayName}
+          backgroundImage={products[0]?.images?.[0] || "https://images.unsplash.com/photo-1555529669-e69e7aa0ba9a?w=1600&auto=format&fit=crop"}
+          backLink="/malls"
+          backLabel="Back to Malls"
+        />
 
         <div className="container-wide py-10">
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
@@ -67,58 +57,38 @@ export default function StoreProductsPage({ params, searchParams }: PageProps) {
 
   return (
     <div className="bg-[#EADBF8] min-h-screen pb-16">
-      <section className="relative w-full overflow-hidden bg-gradient-to-r from-[#8836DB] via-[#7E37C9] to-[#60259E] py-10 sm:py-14 text-white shadow-md">
-        <div className="container-wide relative z-10">
-          <div className="mb-4">
-            <Link
-              href={mall ? `/malls/${mall.slug}` : "/malls"}
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-purple-200 hover:text-white transition-colors bg-white/10 px-3 py-1.5 rounded-lg border border-white/20"
-            >
-              <ArrowLeft size={14} />
-              <span>Back to {mall?.name ?? "Mall"}</span>
-            </Link>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-            <div>
-              {mall && (
-                <div className="flex items-center gap-2 text-xs text-purple-200 mb-2">
-                  <Link href={`/malls/${mall.slug}`} className="hover:underline">
-                    {mall.name}
-                  </Link>
-                  <span>/</span>
-                  <span className="font-semibold text-white">{store.name}</span>
-                </div>
-              )}
-              <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight font-montserrat mb-3">
-                {store.name}
-              </h1>
-              <p className="text-sm text-purple-100 font-medium mb-4">{store.category}</p>
-
-              <div className="flex flex-wrap items-center gap-3">
-                <div className="inline-flex items-center gap-2 rounded-xl bg-white/20 backdrop-blur-md px-4 py-2 text-xs font-semibold text-white border border-white/30">
-                  <MapPin size={16} />
-                  <span>{store.location}</span>
-                </div>
-                <div className="inline-flex items-center gap-2 rounded-xl bg-white/20 backdrop-blur-md px-4 py-2 text-xs font-semibold text-white border border-white/30">
-                  <Clock size={16} />
-                  <span>{store.deliveryTag}</span>
-                </div>
+      <DynamicHero
+        title={store.name}
+        subtitle={
+          <>
+            <div className="flex flex-wrap items-center gap-3 mt-4">
+              <div className="inline-flex items-center gap-2 rounded-xl bg-white/20 backdrop-blur-md px-4 py-2 text-xs font-semibold text-white border border-white/30">
+                <MapPin size={16} />
+                <span>{store.location}</span>
+              </div>
+              <div className="inline-flex items-center gap-2 rounded-xl bg-white/20 backdrop-blur-md px-4 py-2 text-xs font-semibold text-white border border-white/30">
+                <Clock size={16} />
+                <span>{store.deliveryTag}</span>
               </div>
             </div>
-
-            <div className="relative aspect-[16/9] md:aspect-[4/3] w-full max-w-md mx-auto md:ml-auto overflow-hidden rounded-xl">
-              <Image
-                src={store.image}
-                alt={store.name}
-                fill
-                priority
-                className="object-cover rounded-xl shadow-lg"
-              />
+          </>
+        }
+        backgroundImage={store.image}
+        backLink={mall ? `/malls/${mall.slug}` : "/malls"}
+        backLabel={`Back to ${mall?.name ?? "Mall"}`}
+      >
+        {mall && (
+          <div className="w-full">
+            <div className="flex items-center gap-2 text-xs text-purple-200">
+              <Link href={`/malls/${mall.slug}`} className="hover:underline">
+                {mall.name}
+              </Link>
+              <span>/</span>
+              <span className="font-semibold text-white">{store.name}</span>
             </div>
           </div>
-        </div>
-      </section>
+        )}
+      </DynamicHero>
 
       <div className="container-wide py-10 space-y-6">
         <div className="flex items-center gap-2.5 border-b border-[#D8C2EF] pb-3">
