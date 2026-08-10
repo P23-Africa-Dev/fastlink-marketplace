@@ -7,6 +7,15 @@ const nextConfig = {
       { protocol: "https", hostname: "api.dicebear.com" },
     ],
   },
+  async redirects() {
+    return [
+      {
+        source: "/local-stores",
+        destination: "/malls",
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

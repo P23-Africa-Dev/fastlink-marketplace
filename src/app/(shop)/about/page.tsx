@@ -100,7 +100,7 @@ export default function AboutPage() {
               </Link>
 
               <Link
-                href="/products?type=local-stores"
+                href="/malls"
                 className="rounded-xl border border-white/70 bg-white/5 hover:bg-white/15 text-white font-extrabold text-xs sm:text-sm px-8 py-3.5 transition-all active:scale-95 inline-flex items-center justify-center font-montserrat cursor-pointer"
               >
                 Explore Stores Near You

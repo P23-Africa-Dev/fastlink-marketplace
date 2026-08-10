@@ -82,8 +82,8 @@ const CATEGORY_HERO: Record<
 };
 
 const DEFAULT_HERO = {
-  title: "Shop Everything",
-  subtitle: "Discover thousands of products from verified local and nationwide sellers",
+  title: "Featured Products",
+  subtitle: "Discover featured and recently added products from verified local and nationwide sellers",
   bg: "from-[#7c3aed] to-[#4f46e5]",
   images: [
     "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=320&auto=format&fit=crop",
@@ -108,17 +108,26 @@ function ProductsContent() {
   const { isFilterOpen, openFilters, closeFilters } = useUIStore();
 
   const categoryParam = searchParams.get("category") ?? undefined;
+  const featuredParam = searchParams.get("featured");
+  const showFeatured = featuredParam === "true" || (!categoryParam && featuredParam !== "false");
 
   const [filters, setFilters] = useState<ProductFilter>({
     category: categoryParam,
+    featured: showFeatured ? true : undefined,
+    sortBy: showFeatured && !categoryParam ? "newest" : undefined,
   });
   const [page, setPage] = useState(1);
   const [view, setView] = useState<"grid" | "list">("grid");
 
   useEffect(() => {
-    setFilters((prev) => ({ ...prev, category: categoryParam }));
+    const showFeatured = featuredParam === "true" || (!categoryParam && featuredParam !== "false");
+    setFilters({
+      category: categoryParam,
+      featured: showFeatured ? true : undefined,
+      sortBy: showFeatured && !categoryParam ? "newest" : undefined,
+    });
     setPage(1);
-  }, [categoryParam]);
+  }, [categoryParam, featuredParam]);
 
   const { data, isLoading } = useProducts(filters, page);
   const products = data?.data ?? [];
@@ -249,7 +258,7 @@ function ProductsContent() {
             <div className="mb-4 flex items-center justify-between rounded-2xl bg-[#F6EFFD] px-5 py-3.5 shadow-xs border border-white/80">
               <div className="flex items-center gap-2">
                 <span className="text-base sm:text-lg font-extrabold text-[#6D349F]">
-                  {filters.category ?? "All Products"}
+                  {filters.category ?? (filters.featured ? "Featured Products" : "All Products")}
                 </span>
                 <span className="text-xs sm:text-sm font-semibold text-[#8A79A5]">
                   - Local &amp; Nationwide

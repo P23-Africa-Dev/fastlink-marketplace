@@ -2,7 +2,6 @@ import Image from "next/image";
 import Link from "next/link";
 import {
   LayoutGrid,
-  Award,
   Smartphone,
   Shirt,
   Home,
@@ -44,24 +43,12 @@ export default function CategoriesPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
             <div>
-              <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight font-montserrat mb-3">
-                This is the Kano Mall
-              </h1>
-              <p className="text-sm sm:text-base text-purple-100 font-medium mb-6">
-                Faster access and easiest way to shop E &amp; bay in
-              </p>
-
-              {/* Action Filter Tags */}
-              <div className="flex flex-wrap items-center gap-3">
-                <div className="inline-flex items-center gap-2 rounded-xl bg-white/20 backdrop-blur-md px-4 py-2 text-xs font-semibold text-white border border-white/30">
-                  <LayoutGrid size={16} />
-                  <span>Write Subea</span>
-                </div>
-                <div className="inline-flex items-center gap-2 rounded-xl bg-white/20 backdrop-blur-md px-4 py-2 text-xs font-semibold text-white border border-white/30">
-                  <Award size={16} />
-                  <span>35 Days</span>
-                </div>
-              </div>
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight font-montserrat mb-3">
+              Shop By Category
+            </h1>
+            <p className="text-sm sm:text-base text-purple-100 font-medium mb-6">
+              Browse products across all brands and stores — no mall navigation required
+            </p>
             </div>
 
             {/* Banner Right Image */}

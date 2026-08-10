@@ -10,6 +10,7 @@ import {
   MOCK_ORDERS,
 } from "@/mocks/data";
 import { delay } from "@/lib/utils";
+import { productMatchesCategoryFilter } from "@/lib/category-mapping";
 
 // ---------------------------------------------------------------------------
 // Axios instance — swap baseURL for your real API when ready
@@ -55,8 +56,14 @@ export const productsApi = {
 
     let results = [...MOCK_PRODUCTS];
 
+    if (filters.featured) {
+      results = results.filter((p) => p.isFeatured);
+    }
+
     if (filters.category) {
-      results = results.filter((p) => p.category === filters.category);
+      results = results.filter((p) =>
+        productMatchesCategoryFilter(p.category, filters.category)
+      );
     }
     if (filters.minPrice !== undefined) {
       results = results.filter((p) => p.price >= filters.minPrice!);
@@ -74,6 +81,14 @@ export const productsApi = {
       results.sort(
         (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
       );
+    if (filters.sortBy === "bestseller")
+      results.sort((a, b) => Number(b.isBestseller) - Number(a.isBestseller));
+
+    if (!filters.sortBy && filters.featured) {
+      results.sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      );
+    }
 
     const total = results.length;
     const start = (page - 1) * limit;
