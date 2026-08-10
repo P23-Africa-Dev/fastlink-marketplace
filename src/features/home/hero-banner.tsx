@@ -54,14 +54,14 @@ export function HeroBanner() {
             {/* CTA buttons */}
             <div className="flex flex-wrap gap-4 pt-2">
               <Link
-                href="/products?type=local-stores"
+                href="/malls"
                 className="inline-flex items-center justify-center h-[50px] px-7 rounded-lg bg-[#F59E0B] hover:bg-[#E59100] text-base font-bold text-white shadow-md transition-all duration-300 hover:scale-105 hover:shadow-lg active:scale-95"
               >
                 Explore Stores Near You
               </Link>
 
               <Link
-                href="/products?type=nationwide"
+                href="/nationwide-stores"
                 className="inline-flex items-center justify-center h-[50px] px-7 rounded-lg border border-white/80 bg-purple-900/30 hover:bg-white/20 text-base font-bold text-white backdrop-blur-xs transition-all duration-300 hover:scale-105 hover:shadow-md active:scale-95"
               >
                 Shop Nationwide Brands

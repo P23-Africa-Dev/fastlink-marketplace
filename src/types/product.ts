@@ -26,6 +26,7 @@ export interface Product {
   images: ProductImage[];
   category: string;
   subcategory?: string;
+  storeId?: string;
   tags: string[];
   seller: {
     id: string;
@@ -60,4 +61,5 @@ export interface ProductFilter {
   tags?: string[];
   sortBy?: "price_asc" | "price_desc" | "rating" | "newest" | "bestseller";
   inStock?: boolean;
+  featured?: boolean;
 }

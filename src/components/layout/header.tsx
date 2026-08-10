@@ -12,7 +12,6 @@ import {
   ShoppingCart,
   ChevronDown,
   LayoutGrid,
-  Store,
   ShoppingBag,
   Building2,
   Smartphone,
@@ -40,9 +39,8 @@ const TOP_LINKS = [
 
 const CATEGORY_LINKS = [
   { href: "/categories", label: "All Categories", icon: LayoutGrid },
-  { href: "/local-stores", label: "Local Stores", icon: Store },
+  { href: "/malls", label: "Malls", icon: Building2 },
   { href: "/products?category=Groceries", label: "Groceries", icon: ShoppingBag },
-  { href: "/local-stores", label: "Malls", icon: Building2 },
   { href: "/products?category=Electronics", label: "Electronics", icon: Smartphone },
   { href: "/products?category=Fashion", label: "Fashions", icon: Shirt },
 ];

@@ -4,198 +4,13 @@ import { useRef, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { ChevronRight, ChevronLeft, ShoppingCart } from "lucide-react";
-
-// ── Types ──────────────────────────────────────────────────────
-
-interface BrandPartner {
-  id: string;
-  name: string;
-  logo?: string;
-  href: string;
-  style?: "blue-bold" | "black" | "orange" | "default";
-}
-
-interface NationwideBrand {
-  id: string;
-  name: string;
-  tagline: string;
-  logo?: string;
-  href: string;
-}
-
-interface EmergingVendor {
-  id: string;
-  name: string;
-  category: string;
-  image: string;
-  href: string;
-}
-
-interface DealProduct {
-  id: string;
-  name: string;
-  category: string;
-  discount: number;
-  image: string;
-  href: string;
-  rating: number;
-  reviews: string;
-}
-
-// ── Mock data ──────────────────────────────────────────────────
-
-const BRAND_PARTNERS: BrandPartner[] = [
-  { id: "bp-1", name: "SAMSUNG",  href: "/brands/samsung",  style: "blue-bold" },
-  { id: "bp-2", name: "NIKE",     href: "/brands/nike",     style: "black" },
-  { id: "bp-3", name: "Xiaomi",   href: "/brands/xiaomi",   style: "orange" },
-  { id: "bp-4", name: "Unilever", href: "/brands/unilever", style: "default" },
-  { id: "bp-5", name: "TECNO",    href: "/brands/tecno",    style: "blue-bold" },
-  { id: "bp-6", name: "SONY",     href: "/brands/sony",     style: "black" },
-  { id: "bp-7", name: "LG",       href: "/brands/lg",       style: "blue-bold" },
-  { id: "bp-8", name: "Apple",    href: "/brands/apple",    style: "black" },
-  { id: "bp-9", name: "Adidas",   href: "/brands/adidas",   style: "black" },
-  { id: "bp-10", name: "Puma",    href: "/brands/puma",     style: "black" },
-  { id: "bp-11", name: "Philips", href: "/brands/philips",  style: "blue-bold" },
-];
-
-const NATIONWIDE_BRANDS: NationwideBrand[] = [
-  { id: "nb-1", name: "Brand X",    tagline: "Ships Nationwide",   href: "/stores/brand-x" },
-  { id: "nb-2", name: "Zara HOME",  tagline: "3-5 Days",           href: "/stores/zara-home" },
-  { id: "nb-3", name: "Sara Home",  tagline: "3-5 Days Delivery",  href: "/stores/sara-home" },
-  { id: "nb-4", name: "StyleHub",   tagline: "3-5 Days Delivery",  href: "/stores/stylehub" },
-];
-
-const EMERGING_VENDORS: EmergingVendor[] = [
-  {
-    id: "ev-1",
-    name: "Zuri Fashion Hub",
-    category: "Fashion store",
-    image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=500&auto=format&fit=crop",
-    href: "/stores/zuri-fashion-hub",
-  },
-  {
-    id: "ev-2",
-    name: "Trendy Gadgets",
-    category: "Electronics store",
-    image: "https://images.unsplash.com/photo-1550009158-9ebf69173e03?w=500&auto=format&fit=crop",
-    href: "/stores/trendy-gadgets",
-  },
-  {
-    id: "ev-3",
-    name: "NajaMart",
-    category: "Fashion Bakery",
-    image: "https://images.unsplash.com/photo-1607082349566-187342175e2f?w=500&auto=format&fit=crop",
-    href: "/stores/najamart",
-  },
-  {
-    id: "ev-4",
-    name: "Urban Wear",
-    category: "Designs & Streetwear",
-    image: "https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=500&auto=format&fit=crop",
-    href: "/stores/urban-wear",
-  },
-  {
-    id: "ev-5",
-    name: "Artisan Leather Crafts",
-    category: "Handmade Goods",
-    image: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=500&auto=format&fit=crop",
-    href: "/stores/artisan-leather-crafts",
-  },
-  {
-    id: "ev-6",
-    name: "Eco Home Essentials",
-    category: "Home & Kitchen",
-    image: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=500&auto=format&fit=crop",
-    href: "/stores/eco-home-essentials",
-  },
-  {
-    id: "ev-7",
-    name: "Glow & Beauty Studio",
-    category: "Beauty & Cosmetics",
-    image: "https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=500&auto=format&fit=crop",
-    href: "/stores/glow-beauty-studio",
-  },
-  {
-    id: "ev-8",
-    name: "Pure Harvest Organics",
-    category: "Fresh Grocery",
-    image: "https://images.unsplash.com/photo-1542838132-92c53300491e?w=500&auto=format&fit=crop",
-    href: "/stores/pure-harvest-organics",
-  },
-];
-
-const DEALS: DealProduct[] = [
-  {
-    id: "deal-1",
-    name: "PlayStation 5 Console",
-    category: "Gaming",
-    discount: 32,
-    image: "https://images.unsplash.com/photo-1606813907291-d86efa9b94db?w=500&auto=format&fit=crop",
-    href: "/products/playstation-5",
-    rating: 5.0,
-    reviews: "1.3k",
-  },
-  {
-    id: "deal-2",
-    name: "Amazon Echo Dot",
-    category: "Home & Wellness",
-    discount: 32,
-    image: "https://images.unsplash.com/photo-1543512214-318c7553f230?w=500&auto=format&fit=crop",
-    href: "/products/amazon-echo",
-    rating: 5.0,
-    reviews: "1.3k",
-  },
-  {
-    id: "deal-3",
-    name: "JBL Bluetooth Speaker",
-    category: "Audio",
-    discount: 40,
-    image: "https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=500&auto=format&fit=crop",
-    href: "/products/jbl-bluetooth-speaker",
-    rating: 4.8,
-    reviews: "850",
-  },
-  {
-    id: "deal-4",
-    name: "Binatone Standing Fan",
-    category: "Appliances",
-    discount: 25,
-    image: "https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=500&auto=format&fit=crop",
-    href: "/products/binatone-fan",
-    rating: 4.5,
-    reviews: "420",
-  },
-  {
-    id: "deal-5",
-    name: "Binatone Tower Fan",
-    category: "Appliances",
-    discount: 35,
-    image: "https://images.unsplash.com/photo-1558618047-3c5de1be0b6e?w=500&auto=format&fit=crop",
-    href: "/products/binatone-tower-fan",
-    rating: 4.6,
-    reviews: "315",
-  },
-  {
-    id: "deal-6",
-    name: "Samsung 4K Smart TV",
-    category: "Electronics",
-    discount: 20,
-    image: "https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?w=500&auto=format&fit=crop",
-    href: "/products/samsung-smart-tv",
-    rating: 4.9,
-    reviews: "950",
-  },
-  {
-    id: "deal-7",
-    name: "Apple iPad Air",
-    category: "Electronics",
-    discount: 15,
-    image: "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=500&auto=format&fit=crop",
-    href: "/products/ipad-air",
-    rating: 4.8,
-    reviews: "1.1k",
-  },
-];
+import {
+  ALL_BRAND_PARTNERS,
+  ALL_DEALS,
+  ALL_EMERGING_VENDORS,
+  ALL_NATIONWIDE_BRANDS,
+  type BrandPartner,
+} from "@/mocks/stores-data";
 
 // ── Shared: section header ─────────────────────────────────────
 
@@ -347,9 +162,9 @@ export function BrandsDealsSection() {
         <div>
           <SectionHeader
             title="Official Retail & Brand Partners"
+            seeMoreHref="/brands"
             onPrev={() => scrollBrands("left")}
             onNext={() => scrollBrands("right")}
-            hideSeeMore
           />
 
           <div className="overflow-hidden rounded-xl bg-[#F6EFFD] shadow-sm border border-purple-100/80">
@@ -357,7 +172,7 @@ export function BrandsDealsSection() {
               ref={brandSliderRef}
               className="flex items-center divide-x divide-[#ECD7F8] overflow-x-auto scroll-smooth scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
             >
-              {BRAND_PARTNERS.map((brand) => (
+              {ALL_BRAND_PARTNERS.map((brand) => (
                 <Link
                   key={brand.id}
                   href={brand.href}
@@ -378,7 +193,7 @@ export function BrandsDealsSection() {
           />
 
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-            {NATIONWIDE_BRANDS.map((brand) => (
+            {ALL_NATIONWIDE_BRANDS.map((brand) => (
               <Link
                 key={brand.id}
                 href={brand.href}
@@ -411,7 +226,7 @@ export function BrandsDealsSection() {
             ref={vendorsSliderRef}
             className="flex items-stretch gap-4 overflow-x-auto scroll-smooth scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden py-3 w-full pl-4 sm:pl-6 lg:pl-[calc(max(1rem,(100vw-80rem)/2+2rem))] pr-4 sm:pr-8 md:pr-12"
           >
-            {EMERGING_VENDORS.map((vendor) => (
+            {ALL_EMERGING_VENDORS.map((vendor) => (
               <Link
                 key={vendor.id}
                 href={vendor.href}
@@ -459,7 +274,7 @@ export function BrandsDealsSection() {
             ref={dealsSliderRef}
             className="flex items-stretch gap-4 overflow-x-auto scroll-smooth scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden py-3 w-full pl-4 sm:pl-6 lg:pl-[calc(max(1rem,(100vw-80rem)/2+2rem))] pr-4 sm:pr-8 md:pr-12"
           >
-            {DEALS.map((deal) => (
+            {ALL_DEALS.map((deal) => (
               <Link
                 key={deal.id}
                 href={deal.href}
