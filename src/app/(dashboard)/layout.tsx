@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
+import logoSvg from "@/assets/logo.svg";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useState, Suspense } from "react";
 import {
@@ -19,10 +21,12 @@ import {
   LogOut,
   Menu,
   X,
+  ShoppingCart,
   type LucideIcon,
 } from "lucide-react";
 
 import { useAuthStore } from "@/store/auth-store";
+import { useCartStore } from "@/store/cart-store";
 import { cn } from "@/lib/utils";
 import { useMessagesStore } from "@/store/messages-store";
 
@@ -364,6 +368,7 @@ function HeaderTitleContent() {
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { logout } = useAuthStore();
+  const { itemCount } = useCartStore();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
@@ -380,21 +385,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <Menu size={24} />
           </button>
           
-          <Link href="/" className="flex flex-col select-none border border-white/30 rounded-2xl px-4 py-1.5 md:py-2">
-            <div className="flex items-center gap-1.5 justify-center">
-              {/* Official Fastlink Arrow Icon */}
-              <svg width="26" height="22" viewBox="0 0 26 22" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M2 11L10 3L18 11L10 19" stroke="#5FD0C8" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M10 11H24" stroke="#5FD0C8" strokeWidth="2.5" strokeLinecap="round"/>
-                <path d="M2 6H12" stroke="white" strokeWidth="2" strokeLinecap="round" opacity="0.7"/>
-              </svg>
-              <span className="text-white font-display font-extrabold text-xl md:text-2xl tracking-wide leading-none">
-                ASTLINK
-              </span>
-            </div>
-            <span className="ml-[30px] text-[8px] font-bold tracking-[0.25em] text-[#5FD0C8] leading-none">
-              MARKETPLACE
-            </span>
+          <Link href="/" className="flex shrink-0 items-center select-none" aria-label="Fastlink Marketplace">
+            <Image
+              src={logoSvg}
+              alt="Fastlink Marketplace"
+              width={190}
+              height={42}
+              className="h-10 w-auto object-contain"
+              priority
+            />
           </Link>
         </div>
 
@@ -410,27 +409,22 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </Suspense>
         </div>
 
-        {/* Center-Right: Search Input (desktop only) */}
-        <div className="hidden lg:flex flex-1 max-w-md mx-6">
-          <form className="w-full bg-[#fdfafb] rounded-full pl-6 pr-1 py-1 flex items-center shadow-inner">
-            <input
-              type="text"
-              placeholder="Search Products, Brand, Stores .."
-              className="w-full bg-transparent text-sm text-slate-800 placeholder:text-slate-400 outline-none pr-3"
-            />
-            <button
-              type="submit"
-              className="bg-[#7a3dbf] hover:bg-[#682fad] text-white font-bold text-sm rounded-full px-6 py-2 transition-all shrink-0"
-            >
-              Search
-            </button>
-          </form>
-        </div>
-
         {/* Far Right: Cart Link */}
         <div className="flex items-center gap-4">
-          <Link href="/cart" className="text-white font-bold text-base md:text-lg hover:underline">
-            View Cart
+          <Link
+            href="/cart"
+            className="group flex items-center gap-2"
+            aria-label={`View Cart${itemCount > 0 ? `, ${itemCount} items` : ""}`}
+          >
+            <div className="relative">
+              <ShoppingCart
+                size={24}
+                className="stroke-[#F59E0B] stroke-[2.2] transition-transform group-hover:scale-110"
+              />
+              <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-[#F59E0B] text-[10px] font-bold text-white">
+                {itemCount}
+              </span>
+            </div>
           </Link>
         </div>
       </header>

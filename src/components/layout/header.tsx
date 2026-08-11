@@ -31,7 +31,7 @@ import { cn } from "@/lib/utils";
 const TOP_LINKS = [
   { href: "/", label: "Home" },
   { href: "/about", label: "About Us" },
-  { href: "#/", label: "My Account" },
+  { href: "/dashboard", label: "My Account" },
   { href: "/blog", label: "Blog" },
   { href: "/contact", label: "Contact" },
   { href: "/order-tracking", label: "Order Tracking" },
