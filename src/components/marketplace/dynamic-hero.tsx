@@ -35,7 +35,7 @@ export function DynamicHero({
       {/* Overlay to ensure text readability */}
       <div className={`absolute inset-0 ${customOverlay}`} />
 
-      <div className="mx-auto max-w-7xl px-4 w-full relative z-10 py-12 sm:py-16 md:py-20">
+      <div className="container-wide w-full relative z-10 py-12 sm:py-16 md:py-20">
         <div className="max-w-3xl space-y-5">
           {backLink && (
             <div className="mb-6">
