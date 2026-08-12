@@ -28,6 +28,7 @@ import {
   Tooltip,
 } from "recharts";
 
+import { StatCard } from "@/components/dashboard/stat-card";
 import headphonesImg from "@/assets/headphones.png";
 
 export default function DashboardPage() {
@@ -192,99 +193,41 @@ export default function DashboardPage() {
 
       {/* ── Stats Cards ────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-5">
-        
-        {/* Total Orders */}
-        <div className="group relative bg-white rounded-[1.4rem] p-3.5 sm:p-4 shadow-sm hover:shadow-lg hover:shadow-purple-500/10 border border-[#ebd7fa] transition-all duration-300 overflow-hidden">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-[#7a3dbf]/5 rounded-full blur-xl group-hover:scale-150 transition-all duration-500 pointer-events-none" />
-          
-          <div className="flex items-center justify-between mb-2">
-            <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl bg-gradient-to-br from-[#f3eafb] to-[#ebd7fa] flex items-center justify-center text-[#7a3dbf] shadow-inner group-hover:scale-110 transition-transform duration-300 shrink-0">
-              <ShoppingCart size={18} />
-            </div>
-            <span className="flex items-center gap-0.5 text-[11px] font-semibold text-emerald-600 bg-emerald-50 border border-emerald-200/60 px-2 py-0.5 rounded-full">
-              <TrendingUp size={11} /> 18.6%
-            </span>
-          </div>
+        <StatCard
+          title="Total Orders"
+          value="1,248"
+          icon={<ShoppingCart size={18} />}
+          badgeText="18.6%"
+          badgeIcon={<TrendingUp size={11} />}
+          variant="purple"
+        />
 
-          <div>
-            <p className="text-[10px] sm:text-[11px] font-semibold text-[#7a3dbf] uppercase tracking-wider">Total Orders</p>
-            <h3 className="text-xl sm:text-2xl font-semibold text-slate-800 tracking-tight mt-0.5">1,248</h3>
-            {/* <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100/80">
-              <span className="text-[9px] sm:text-[10px] font-medium text-slate-400">vs last month</span>
-              <span className="text-[9px] sm:text-[10px] font-semibold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded">+196 new</span>
-            </div> */}
-          </div>
-        </div>
+        <StatCard
+          title="Total Sales"
+          value="₦2,450,000"
+          icon={<Wallet size={18} />}
+          badgeText="24.8%"
+          badgeIcon={<TrendingUp size={11} />}
+          variant="emerald"
+        />
 
-        {/* Total Sales */}
-        <div className="group relative bg-white rounded-[1.4rem] p-3.5 sm:p-4 shadow-sm hover:shadow-lg hover:shadow-emerald-500/10 border border-[#ebd7fa] transition-all duration-300 overflow-hidden">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 rounded-full blur-xl group-hover:scale-150 transition-all duration-500 pointer-events-none" />
-          
-          <div className="flex items-center justify-between mb-2">
-            <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100 flex items-center justify-center text-emerald-700 shadow-inner group-hover:scale-110 transition-transform duration-300 shrink-0">
-              <Wallet size={18} />
-            </div>
-            <span className="flex items-center gap-0.5 text-[11px] font-semibold text-emerald-600 bg-emerald-50 border border-emerald-200/60 px-2 py-0.5 rounded-full">
-              <TrendingUp size={11} /> 24.8%
-            </span>
-          </div>
+        <StatCard
+          title="Total Customers"
+          value="856"
+          icon={<Users size={18} />}
+          badgeText="15.7%"
+          badgeIcon={<TrendingUp size={11} />}
+          variant="blue"
+        />
 
-          <div>
-            <p className="text-[10px] sm:text-[11px] font-semibold text-[#7a3dbf] uppercase tracking-wider">Total Sales</p>
-            <h3 className="text-xl sm:text-2xl font-semibold text-slate-800 tracking-tight mt-0.5">₦2,450,000</h3>
-            {/* <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100/80">
-              <span className="text-[9px] sm:text-[10px] font-medium text-slate-400">vs last month</span>
-              <span className="text-[9px] sm:text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">+₦480k</span>
-            </div> */}
-          </div>
-        </div>
-
-        {/* Total Customers */}
-        <div className="group relative bg-white rounded-[1.4rem] p-3.5 sm:p-4 shadow-sm hover:shadow-lg hover:shadow-blue-500/10 border border-[#ebd7fa] transition-all duration-300 overflow-hidden">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-full blur-xl group-hover:scale-150 transition-all duration-500 pointer-events-none" />
-          
-          <div className="flex items-center justify-between mb-2">
-            <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center text-blue-700 shadow-inner group-hover:scale-110 transition-transform duration-300 shrink-0">
-              <Users size={18} />
-            </div>
-            <span className="flex items-center gap-0.5 text-[11px] font-semibold text-emerald-600 bg-emerald-50 border border-emerald-200/60 px-2 py-0.5 rounded-full">
-              <TrendingUp size={11} /> 15.7%
-            </span>
-          </div>
-
-          <div>
-            <p className="text-[10px] sm:text-[11px] font-semibold text-[#7a3dbf] uppercase tracking-wider">Total Customers</p>
-            <h3 className="text-xl sm:text-2xl font-semibold text-slate-800 tracking-tight mt-0.5">856</h3>
-            {/* <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100/80">
-              <span className="text-[9px] sm:text-[10px] font-medium text-slate-400">vs last month</span>
-              <span className="text-[9px] sm:text-[10px] font-semibold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded">88.4% retention</span>
-            </div> */}
-          </div>
-        </div>
-
-        {/* Total Products */}
-        <div className="group relative bg-white rounded-[1.4rem] p-3.5 sm:p-4 shadow-sm hover:shadow-lg hover:shadow-amber-500/10 border border-[#ebd7fa] transition-all duration-300 overflow-hidden">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/5 rounded-full blur-xl group-hover:scale-150 transition-all duration-500 pointer-events-none" />
-          
-          <div className="flex items-center justify-between mb-2">
-            <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl bg-gradient-to-br from-amber-50 to-amber-100 flex items-center justify-center text-amber-700 shadow-inner group-hover:scale-110 transition-transform duration-300 shrink-0">
-              <Package size={18} />
-            </div>
-            <span className="flex items-center gap-0.5 text-[11px] font-semibold text-emerald-600 bg-emerald-50 border border-emerald-200/60 px-2 py-0.5 rounded-full">
-              <TrendingUp size={11} /> 9.3%
-            </span>
-          </div>
-
-          <div>
-            <p className="text-[10px] sm:text-[11px] font-semibold text-[#7a3dbf] uppercase tracking-wider">Total Products</p>
-            <h3 className="text-xl sm:text-2xl font-semibold text-slate-800 tracking-tight mt-0.5">320</h3>
-            {/* <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100/80">
-              <span className="text-[9px] sm:text-[10px] font-medium text-slate-400">vs last month</span>
-              <span className="text-[9px] sm:text-[10px] font-semibold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded">28 low stock</span>
-            </div> */}
-          </div>
-        </div>
-
+        <StatCard
+          title="Total Products"
+          value="320"
+          icon={<Package size={18} />}
+          badgeText="9.3%"
+          badgeIcon={<TrendingUp size={11} />}
+          variant="amber"
+        />
       </div>
 
       {/* ── Main Dashboard Section ───────────────────────────────────── */}
