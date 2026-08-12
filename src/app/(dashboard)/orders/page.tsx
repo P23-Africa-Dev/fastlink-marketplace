@@ -28,6 +28,7 @@ import {
 } from "recharts";
 
 import { useOrdersStore, Order } from "@/store/orders-store";
+import { Pagination } from "@/components/dashboard/pagination";
 import { cn } from "@/lib/utils";
 
 const WEEKLY_DATA = [
@@ -93,6 +94,18 @@ export default function DashboardOrdersPage() {
       return matchesSearch && matchesStatus;
     });
   }, [orders, searchQuery, statusFilter]);
+
+  // Reset to page 1 on filter or search change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter, pageSize]);
+
+  // Pagination calculation
+  const totalPages = Math.max(1, Math.ceil(filteredOrders.length / pageSize));
+  const paginatedOrders = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredOrders.slice(start, start + pageSize);
+  }, [filteredOrders, currentPage, pageSize]);
 
   // Open modal for specific order
   const handleOpenStatusModal = (order: Order) => {
@@ -405,8 +418,8 @@ export default function DashboardOrdersPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-sm font-normal text-slate-700">
-              {filteredOrders.length > 0 ? (
-                filteredOrders.map((order) => {
+              {paginatedOrders.length > 0 ? (
+                paginatedOrders.map((order) => {
                   const isDropdownOpen = openDropdownId === order.id;
                   return (
                     <tr key={order.id} className="hover:bg-[#faf6ff]/50 transition-colors">
@@ -502,32 +515,17 @@ export default function DashboardOrdersPage() {
           </table>
         </div>
 
-        {/* Table Footer / Pagination */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-slate-100 pt-4">
-          <p className="text-xs font-normal text-slate-400 whitespace-nowrap">
-            Showing <span className="font-semibold text-slate-700">{filteredOrders.length}</span> of{" "}
-            <span className="font-semibold text-slate-700">{orders.length}</span> order records
-          </p>
-          
-          <div className="flex items-center gap-1.5">
-            <button
-              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
-              className="p-2 rounded-xl border border-[#ebd7fa] text-slate-500 hover:bg-[#faf6ff] disabled:opacity-40 transition-colors"
-            >
-              <ChevronLeft size={16} />
-            </button>
-            <button className="h-8 w-8 rounded-xl flex items-center justify-center font-semibold text-xs bg-[#7a3dbf] text-white shadow-md">
-              1
-            </button>
-            <button
-              onClick={() => setCurrentPage((p) => p + 1)}
-              className="p-2 rounded-xl border border-[#ebd7fa] text-slate-500 hover:bg-[#faf6ff] transition-colors"
-            >
-              <ChevronRight size={16} />
-            </button>
-          </div>
-        </div>
+        {/* Reusable Functional Pagination Component */}
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={filteredOrders.length}
+          pageSize={pageSize}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={setPageSize}
+          pageSizeOptions={[10, 25, 50]}
+          itemName="orders"
+        />
 
       </div>
 

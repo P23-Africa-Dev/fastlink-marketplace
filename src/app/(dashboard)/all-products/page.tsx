@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import {
@@ -22,6 +22,7 @@ import {
 
 import { cn } from "@/lib/utils";
 import { StatCard } from "@/components/dashboard/stat-card";
+import { Pagination } from "@/components/dashboard/pagination";
 import { MOCK_PRODUCTS } from "@/lib/mock-products";
 import type { Product } from "@/lib/mock-products";
 
@@ -110,6 +111,20 @@ export default function AllProductsPage() {
       return 0;
     });
   }, [filtered, sortBy]);
+
+  // Pagination State & Logic
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, categoryFilter, statusFilter, sortBy, pageSize]);
+
+  const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize));
+  const paginatedProducts = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return sorted.slice(start, start + pageSize);
+  }, [sorted, currentPage, pageSize]);
 
   // Multi-row Selection Handlers
   const handleSelectAll = (checked: boolean) => {
@@ -418,8 +433,8 @@ export default function AllProductsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-sm font-normal text-slate-700">
-              {sorted.length > 0 ? (
-                sorted.map((p) => {
+              {paginatedProducts.length > 0 ? (
+                paginatedProducts.map((p) => {
                   const isChecked = selectedIds.includes(p.id);
                   return (
                     <tr
@@ -533,28 +548,16 @@ export default function AllProductsPage() {
           </table>
         </div>
 
-        {/* Pagination & Counter controls */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-slate-100 pt-4">
-          <p className="text-xs font-normal text-slate-400 whitespace-nowrap">
-            Showing <span className="font-semibold text-slate-700">1-{sorted.length}</span> of{" "}
-            <span className="font-semibold text-slate-700">{products.length}</span> products
-          </p>
-
-          <div className="flex items-center gap-1.5 select-none">
-            <button className="p-2 rounded-xl border border-[#ebd7fa] text-slate-500 hover:bg-[#faf6ff] transition-colors">
-              <ChevronLeft size={16} />
-            </button>
-            <button className="h-8 w-8 rounded-xl flex items-center justify-center font-semibold text-xs bg-[#7a3dbf] text-white shadow-md">
-              1
-            </button>
-            <button className="h-8 w-8 rounded-xl flex items-center justify-center font-semibold text-xs text-slate-700 hover:bg-[#faf6ff] transition-colors border border-[#ebd7fa]">
-              2
-            </button>
-            <button className="p-2 rounded-xl border border-[#ebd7fa] text-slate-500 hover:bg-[#faf6ff] transition-colors">
-              <ChevronRight size={16} />
-            </button>
-          </div>
-        </div>
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={sorted.length}
+          pageSize={pageSize}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={setPageSize}
+          pageSizeOptions={[10, 25, 50]}
+          itemName="products"
+        />
       </div>
 
       {/* --- ADD PRODUCT MODAL DIALOG --- */}
