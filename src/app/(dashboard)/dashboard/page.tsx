@@ -5,6 +5,9 @@ import Image from "next/image";
 import Link from "next/link";
 import {
   ShoppingCart,
+  ShoppingBag,
+  Receipt,
+  Boxes,
   Users,
   Package,
   TrendingUp,
@@ -196,7 +199,7 @@ export default function DashboardPage() {
         <StatCard
           title="Total Orders"
           value="1,248"
-          icon={<ShoppingCart size={18} />}
+          icon={<ShoppingBag size={18} />}
           badgeText="18.6%"
           badgeIcon={<TrendingUp size={11} />}
           variant="purple"
@@ -205,7 +208,7 @@ export default function DashboardPage() {
         <StatCard
           title="Total Sales"
           value="₦2,450,000"
-          icon={<Wallet size={18} />}
+          icon={<Receipt size={18} />}
           badgeText="24.8%"
           badgeIcon={<TrendingUp size={11} />}
           variant="emerald"
@@ -223,7 +226,7 @@ export default function DashboardPage() {
         <StatCard
           title="Total Products"
           value="320"
-          icon={<Package size={18} />}
+          icon={<Boxes size={18} />}
           badgeText="9.3%"
           badgeIcon={<TrendingUp size={11} />}
           variant="amber"

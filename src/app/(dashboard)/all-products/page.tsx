@@ -10,10 +10,10 @@ import {
   Eye,
   Trash2,
   Download,
-  AlertTriangle,
-  Clock,
-  ShoppingCart,
-  Package,
+  AlertCircle,
+  PackageX,
+  BadgeCheck,
+  Boxes,
   ChevronLeft,
   ChevronRight,
   X,
@@ -255,37 +255,12 @@ export default function AllProductsPage() {
         </div>
       )}
 
-      {/* Top Header Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white/70 backdrop-blur-md p-5 rounded-[2rem] border border-[#ebd7fa] shadow-sm">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="h-2.5 w-2.5 rounded-full bg-[#7a3dbf] animate-pulse" />
-            <h1 className="text-xl sm:text-2xl font-semibold text-slate-800 tracking-tight">
-              Products Catalog
-            </h1>
-          </div>
-          <p className="text-xs sm:text-sm font-normal text-slate-500 mt-1">
-            Manage store listings, inventory levels, pricing matrices, and catalog exports.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-3 shrink-0">
-          <button
-            onClick={() => router.push("/products/new/add-new-product")}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#7a3dbf] hover:bg-[#682fad] text-white text-xs font-semibold shadow-md shadow-purple-600/20 transition-all active:scale-95"
-          >
-            <Plus size={16} />
-            <span>Add Product</span>
-          </button>
-        </div>
-      </div>
-
       {/* Telemetry Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-5">
         <StatCard
           title="Total SKUs"
           value={totalSKUs.toLocaleString()}
-          icon={<Package size={18} />}
+          icon={<Boxes size={18} />}
           badgeText="+15%"
           badgeType="success"
           variant="purple"
@@ -294,7 +269,7 @@ export default function AllProductsPage() {
         <StatCard
           title="Active Listings"
           value={activeListings.toLocaleString()}
-          icon={<ShoppingCart size={18} />}
+          icon={<BadgeCheck size={18} />}
           badgeText="+10%"
           badgeType="success"
           variant="emerald"
@@ -303,7 +278,7 @@ export default function AllProductsPage() {
         <StatCard
           title="Low Stock Items"
           value={lowStockCount}
-          icon={<Clock size={18} />}
+          icon={<AlertCircle size={18} />}
           badgeText="Low Stock"
           badgeType="warning"
           variant="amber"
@@ -312,7 +287,7 @@ export default function AllProductsPage() {
         <StatCard
           title="Out of Stock"
           value={outOfStockCount}
-          icon={<AlertTriangle size={18} />}
+          icon={<PackageX size={18} />}
           badgeText="Action Required"
           badgeType="danger"
           variant="rose"
@@ -322,14 +297,25 @@ export default function AllProductsPage() {
       {/* Main Inventory Records Card */}
       <div className="bg-white rounded-[2.2rem] p-6 shadow-sm border border-[#ebd7fa] space-y-6">
         
-        {/* Header & Filter Controls Row */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-5">
+        {/* Top Header Row with Add Product Button (Aligned to the Right) */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-5">
           <div>
             <h2 className="text-[#7a3dbf] text-xl font-semibold tracking-tight">Inventory Listings</h2>
             <p className="text-slate-400 text-xs font-normal mt-0.5">Filter, search, and manage product inventory</p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+          <button
+            onClick={() => router.push("/products/new/add-new-product")}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#7a3dbf] hover:bg-[#682fad] text-white text-xs font-semibold shadow-md shadow-purple-600/20 transition-all active:scale-95 shrink-0 self-start sm:self-auto"
+          >
+            <Plus size={16} />
+            <span>Add Product</span>
+          </button>
+        </div>
+
+        {/* Filter Controls Row (Search Inputs on top of component) */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+          <div className="flex flex-wrap items-center gap-3 w-full">
             {/* Search Input */}
             <div className="relative flex-1 md:w-64">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
@@ -342,20 +328,26 @@ export default function AllProductsPage() {
               />
             </div>
 
-            {/* Category Filter Input */}
-            <div className="relative flex-1 md:w-48">
-              <input
-                type="text"
-                placeholder="Filter category..."
+            {/* Category Filter Dropdown */}
+            <div className="relative flex-1 md:w-52 bg-[#faf6ff] border border-[#ebd7fa] rounded-full px-4 py-2 text-xs sm:text-sm text-slate-700 shadow-sm flex items-center justify-between">
+              <select
                 value={categoryFilter}
                 onChange={(e) => setCategoryFilter(e.target.value)}
-                className="w-full bg-[#faf6ff] border border-[#ebd7fa] rounded-full px-4 py-2 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#7a3dbf]/40 transition-all"
-              />
+                className="w-full bg-transparent focus:outline-none pr-6 cursor-pointer font-semibold text-slate-700 appearance-none text-xs md:text-sm"
+              >
+                <option value="">All Categories</option>
+                {Array.from(new Set(products.map((p) => p.category).filter(Boolean))).sort().map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
+                ))}
+              </select>
+              <div className="absolute right-4 pointer-events-none text-slate-400 text-xs">▼</div>
             </div>
           </div>
         </div>
 
-        {/* Status Filter Tabs & Action Controls Row */}
+        {/* Status Filter Tabs & Export Controls Row */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-3">
           {/* Status Tabs */}
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none text-xs font-semibold">
@@ -572,7 +564,7 @@ export default function AllProductsPage() {
           <div className="bg-white w-full max-w-lg rounded-3xl p-6 shadow-2xl border border-[#ebd7fa] relative z-10 animate-in fade-in zoom-in-95 duration-200 space-y-4">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <h3 className="text-slate-800 text-base font-semibold flex items-center gap-2">
-                <Package className="text-[#7a3dbf]" size={18} />
+                <Boxes className="text-[#7a3dbf]" size={18} />
                 <span>Add New Product Listing</span>
               </h3>
               <button
@@ -805,7 +797,7 @@ export default function AllProductsPage() {
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => { setActiveModal(null); setSelectedProduct(null); }} />
           <div className="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl border border-[#ebd7fa] relative z-10 animate-in fade-in zoom-in-95 duration-200 space-y-4">
             <h3 className="text-slate-800 text-base font-semibold flex items-center gap-2">
-              <AlertTriangle className="text-rose-500" size={18} />
+              <AlertCircle className="text-rose-500" size={18} />
               <span>Confirm Deletion</span>
             </h3>
 
