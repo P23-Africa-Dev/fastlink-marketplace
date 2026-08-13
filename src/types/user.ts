@@ -6,6 +6,7 @@ export interface User {
   role: "buyer" | "seller" | "admin" | "rider";
   status?: "active" | "pending" | "suspended";
   phone?: string | null;
+  loyaltyPoints?: number;
   createdAt: string;
   addresses?: Address[];
 }

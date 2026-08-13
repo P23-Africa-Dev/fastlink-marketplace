@@ -39,6 +39,23 @@ export function useProductSearch(query: string) {
   });
 }
 
+export function useSearchSuggest(query: string) {
+  return useQuery({
+    queryKey: QUERY_KEYS.products.suggest(query),
+    queryFn: () => productsApi.suggest(query),
+    enabled: query.trim().length >= 2,
+    staleTime: 1000 * 30,
+  });
+}
+
+export function useRecommendations() {
+  return useQuery({
+    queryKey: QUERY_KEYS.products.recommendations(),
+    queryFn: () => productsApi.recommendations(8),
+    staleTime: 1000 * 60 * 5,
+  });
+}
+
 export function useProductReviews(id: string) {
   return useQuery({
     queryKey: QUERY_KEYS.products.reviews(id),

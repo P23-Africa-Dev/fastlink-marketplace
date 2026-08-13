@@ -9,6 +9,8 @@ import {
   Package,
   Bell,
   Heart,
+  Gift,
+  Coins,
   User,
 } from "lucide-react";
 
@@ -21,6 +23,8 @@ const LINKS = [
   { href: "/wishlist", label: "Wishlist", icon: Heart },
   { href: "/account/messages", label: "Messages", icon: MessageSquare },
   { href: "/account/notifications", label: "Notifications", icon: Bell },
+  { href: "/account/referrals", label: "Referrals", icon: Gift },
+  { href: "/account/rewards", label: "Rewards", icon: Coins },
   { href: "/account/profile", label: "Profile", icon: User },
 ];
 

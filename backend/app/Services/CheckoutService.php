@@ -17,6 +17,7 @@ class CheckoutService
         private DeliveryZoneService $delivery,
         private InventoryService $inventory,
         private PromotionService $promos,
+        private LoyaltyService $loyalty,
     ) {}
 
     /**
@@ -31,17 +32,20 @@ class CheckoutService
      *     total: float,
      *     discount: float,
      *     promoCode: string|null,
+     *     loyaltyPoints: int,
+     *     loyaltyDiscount: float,
+     *     availablePoints: int,
      *     deliveryZone: array<string, mixed>|null
      * }
      */
-    public function quote(User $buyer, Address $address, array $items, ?string $couponCode = null): array
+    public function quote(User $buyer, Address $address, array $items, ?string $couponCode = null, int $redeemPoints = 0): array
     {
         if ($address->user_id !== $buyer->id) {
             throw ValidationException::withMessages(['address_id' => 'Address not found.']);
         }
 
         $grouped = $this->groupItems($items);
-        $priced = $this->priceGrouped($buyer, $address, $grouped, $couponCode);
+        $priced = $this->priceGrouped($buyer, $address, $grouped, $couponCode, $redeemPoints);
 
         return [
             'groupPreview' => count($priced['stores']) > 1,
@@ -52,6 +56,9 @@ class CheckoutService
             'tax' => $priced['tax'],
             'discount' => $priced['discount'],
             'promoCode' => $priced['promoCode'],
+            'loyaltyPoints' => $priced['loyaltyPoints'],
+            'loyaltyDiscount' => $priced['loyaltyDiscount'],
+            'availablePoints' => $priced['availablePoints'],
             'total' => $priced['total'],
             'deliveryZone' => $priced['deliveryZone'],
         ];
@@ -61,16 +68,16 @@ class CheckoutService
      * @param  list<array{product_id: int|string, quantity: int, variants?: array<string, mixed>}>  $items
      * @return Collection<int, Order>
      */
-    public function checkout(User $buyer, Address $address, array $items, string $deliveryMethod = 'standard', ?string $paymentMethod = 'demo', ?string $couponCode = null): Collection
+    public function checkout(User $buyer, Address $address, array $items, string $deliveryMethod = 'standard', ?string $paymentMethod = 'demo', ?string $couponCode = null, int $redeemPoints = 0): Collection
     {
         if ($address->user_id !== $buyer->id) {
             throw ValidationException::withMessages(['address_id' => 'Address not found.']);
         }
 
-        return DB::transaction(function () use ($buyer, $address, $items, $deliveryMethod, $paymentMethod, $couponCode) {
+        return DB::transaction(function () use ($buyer, $address, $items, $deliveryMethod, $paymentMethod, $couponCode, $redeemPoints) {
             $groupId = (string) Str::uuid();
             $grouped = $this->groupItems($items, lock: true);
-            $priced = $this->priceGrouped($buyer, $address, $grouped, $couponCode);
+            $priced = $this->priceGrouped($buyer, $address, $grouped, $couponCode, $redeemPoints);
             $orders = collect();
             $promo = $priced['promo'];
 
@@ -100,6 +107,8 @@ class CheckoutService
                     'tax' => $totals['tax'],
                     'discount' => $totals['discount'] ?? 0,
                     'promo_code' => ($totals['discount'] ?? 0) > 0 ? $priced['promoCode'] : null,
+                    'loyalty_points' => $totals['loyaltyPoints'] ?? 0,
+                    'loyalty_discount' => $totals['loyaltyDiscount'] ?? 0,
                     'total' => $totals['total'],
                     'buyer_email' => $buyer->email,
                     'buyer_name' => $buyer->name,
@@ -157,6 +166,10 @@ class CheckoutService
                 );
             }
 
+            if ($priced['loyaltyPoints'] > 0 && $orders->isNotEmpty()) {
+                $this->loyalty->debit($buyer, $priced['loyaltyPoints'], (int) $orders->first()->id);
+            }
+
             return $orders;
         });
     }
@@ -193,6 +206,8 @@ class CheckoutService
                 'Stock restored from return/cancel',
             );
         }
+
+        $this->loyalty->restore($order);
     }
 
     /**
@@ -251,10 +266,13 @@ class CheckoutService
      *     total: float,
      *     promoCode: string|null,
      *     promo: \App\Models\PromoCode|null,
+     *     loyaltyPoints: int,
+     *     loyaltyDiscount: float,
+     *     availablePoints: int,
      *     deliveryZone: array<string, mixed>|null
      * }
      */
-    private function priceGrouped(User $buyer, Address $address, array $grouped, ?string $couponCode): array
+    private function priceGrouped(User $buyer, Address $address, array $grouped, ?string $couponCode, int $redeemPoints = 0): array
     {
         $storeSubtotals = [];
         $storeLines = [];
@@ -296,17 +314,26 @@ class CheckoutService
             $promoCode = $promo->code;
         }
 
+        $remaining = [];
+        foreach ($storeLines as $storeId => $meta) {
+            $remaining[$storeId] = max(0, round($meta['subtotal'] - (float) ($allocations[$storeId] ?? 0), 2));
+        }
+        $loyaltyQuote = $this->loyalty->quote($buyer, array_sum($remaining), max(0, $redeemPoints));
+        $loyaltyAlloc = $this->loyalty->allocate($remaining, $loyaltyQuote['amount']);
+
         $stores = [];
         $subtotal = 0.0;
         $shipping = 0.0;
         $tax = 0.0;
         $discount = 0.0;
+        $loyaltyDiscount = 0.0;
         $zone = null;
 
         foreach ($storeLines as $storeId => $meta) {
             $raw = $meta['subtotal'];
             $storeDiscount = (float) ($allocations[$storeId] ?? 0);
-            $discounted = max(0, round($raw - $storeDiscount, 2));
+            $storeLoyalty = (float) ($loyaltyAlloc[$storeId] ?? 0);
+            $discounted = max(0, round($raw - $storeDiscount - $storeLoyalty, 2));
             $totals = $this->delivery->totals($discounted, $address);
             $zone ??= $totals['zone'];
 
@@ -316,6 +343,8 @@ class CheckoutService
                 'items' => $meta['items'],
                 'subtotal' => $raw,
                 'discount' => round($storeDiscount, 2),
+                'loyaltyDiscount' => round($storeLoyalty, 2),
+                'loyaltyPoints' => $storeLoyalty > 0 ? (int) round($storeLoyalty / LoyaltyService::POINT_VALUE) : 0,
                 'shipping' => $totals['shipping'],
                 'tax' => $totals['tax'],
                 'total' => $totals['total'],
@@ -325,9 +354,11 @@ class CheckoutService
             $shipping += $totals['shipping'];
             $tax += $totals['tax'];
             $discount += $storeDiscount;
+            $loyaltyDiscount += $storeLoyalty;
         }
 
         $discount = round($discount, 2);
+        $loyaltyDiscount = round($loyaltyDiscount, 2);
 
         return [
             'stores' => $stores,
@@ -335,9 +366,12 @@ class CheckoutService
             'shipping' => round($shipping, 2),
             'tax' => round($tax, 2),
             'discount' => $discount,
-            'total' => round($subtotal - $discount + $shipping + $tax, 2),
+            'total' => round($subtotal - $discount - $loyaltyDiscount + $shipping + $tax, 2),
             'promoCode' => $discount > 0 ? $promoCode : null,
             'promo' => $promo,
+            'loyaltyPoints' => $loyaltyQuote['points'],
+            'loyaltyDiscount' => $loyaltyDiscount,
+            'availablePoints' => $loyaltyQuote['available'],
             'deliveryZone' => $zone,
         ];
     }

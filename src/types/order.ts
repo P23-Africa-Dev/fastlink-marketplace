@@ -94,6 +94,10 @@ export interface ApiOrder {
   subtotal: number;
   shipping: number;
   tax: number;
+  discount?: number;
+  promoCode?: string | null;
+  loyaltyPoints?: number;
+  loyaltyDiscount?: number;
   total: number;
   buyer: {
     id: string;
@@ -146,6 +150,7 @@ export interface CheckoutQuoteStore {
   subtotal: number;
   shipping: number;
   tax: number;
+  discount?: number;
   total: number;
 }
 
@@ -156,6 +161,11 @@ export interface CheckoutQuote {
   subtotal: number;
   shipping: number;
   tax: number;
+  discount?: number;
+  promoCode?: string | null;
+  loyaltyPoints?: number;
+  loyaltyDiscount?: number;
+  availablePoints?: number;
   total: number;
   deliveryZone?: { id: string; name: string; fee: number } | null;
 }

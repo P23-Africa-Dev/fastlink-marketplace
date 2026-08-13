@@ -40,6 +40,8 @@ class Order extends Model
         'tax',
         'discount',
         'promo_code',
+        'loyalty_points',
+        'loyalty_discount',
         'total',
         'buyer_email',
         'buyer_name',
@@ -63,6 +65,7 @@ class Order extends Model
             'shipping' => 'decimal:2',
             'tax' => 'decimal:2',
             'discount' => 'decimal:2',
+            'loyalty_discount' => 'decimal:2',
             'total' => 'decimal:2',
             'paid_at' => 'datetime',
         ];

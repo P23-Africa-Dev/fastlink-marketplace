@@ -6,7 +6,7 @@ import { Trash2, Heart, ShoppingBag, ArrowRight, ArrowLeft, Check, Store, Loader
 import { useState } from "react";
 
 import { useWishlist } from "@/hooks/use-wishlist";
-import { useFeaturedProducts } from "@/hooks/use-products";
+import { useRecommendations } from "@/hooks/use-products";
 import { useCartStore } from "@/store/cart-store";
 import { formatPrice, cn } from "@/lib/utils";
 import { ShopProductCard } from "@/components/product/shop-product-card";
@@ -14,8 +14,8 @@ import type { Product } from "@/types/product";
 
 export default function WishlistPage() {
   const { products, itemCount, isLoading, removeItem, clearWishlist } = useWishlist();
-  const { data: featured } = useFeaturedProducts();
-  const recommended = (featured?.data ?? []).slice(0, 4);
+  const { data: recs } = useRecommendations();
+  const recommended = (recs?.forYou ?? []).slice(0, 4);
   const { addItem } = useCartStore();
   const [addedItems, setAddedItems] = useState<Record<string, boolean>>({});
 

@@ -168,6 +168,7 @@ class PaymentService
                     'Payment confirmed',
                     'Payment for order '.$order->reference.' was successful.',
                 );
+                app(LoyaltyService::class)->earnForOrder($order->fresh());
             }
 
             app(LedgerService::class)->recordPaymentCaptured($payment->fresh());

@@ -9,30 +9,33 @@ const TAX_RATE = 0.09;
 const FREE_SHIPPING_THRESHOLD = 150;
 const SHIPPING_COST = 9.99;
 
-function calculateCart(items: CartItem[]): Omit<Cart, "items"> {
+function calculateCart(items: CartItem[], discount = 0): Omit<Cart, "items" | "couponCode"> {
   const subtotal = items.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
   const shipping = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : items.length > 0 ? SHIPPING_COST : 0;
   const tax = subtotal * TAX_RATE;
-  const total = subtotal + shipping + tax;
-  return { subtotal, shipping, tax, total };
+  const safeDiscount = Math.min(Math.max(0, discount), subtotal);
+  const total = Math.max(0, subtotal - safeDiscount + shipping + tax);
+  return { subtotal, shipping, tax, total, discount: safeDiscount };
 }
 
 interface CartStore {
   items: CartItem[];
   isOpen: boolean;
+  couponCode: string;
+  discount: number;
 
-  // derived values
   itemCount: number;
   subtotal: number;
   shipping: number;
   tax: number;
   total: number;
 
-  // actions
   addItem: (product: Product, quantity?: number, variants?: CartItem["selectedVariants"]) => void;
   removeItem: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
+  setCoupon: (code: string, discount: number) => void;
+  clearCoupon: () => void;
   openCart: () => void;
   closeCart: () => void;
   toggleCart: () => void;
@@ -43,6 +46,8 @@ export const useCartStore = create<CartStore>()(
     immer((set) => ({
       items: [],
       isOpen: false,
+      couponCode: "",
+      discount: 0,
       itemCount: 0,
       subtotal: 0,
       shipping: 0,
@@ -57,7 +62,8 @@ export const useCartStore = create<CartStore>()(
           } else {
             state.items.push({ productId: product.id, product, quantity, selectedVariants: variants });
           }
-          const totals = calculateCart(state.items);
+          state.discount = 0;
+          const totals = calculateCart(state.items, 0);
           state.subtotal = totals.subtotal;
           state.shipping = totals.shipping;
           state.tax = totals.tax;
@@ -69,7 +75,8 @@ export const useCartStore = create<CartStore>()(
       removeItem: (productId) =>
         set((state) => {
           state.items = state.items.filter((i) => i.productId !== productId);
-          const totals = calculateCart(state.items);
+          state.discount = 0;
+          const totals = calculateCart(state.items, 0);
           state.subtotal = totals.subtotal;
           state.shipping = totals.shipping;
           state.tax = totals.tax;
@@ -86,7 +93,8 @@ export const useCartStore = create<CartStore>()(
           } else {
             item.quantity = Math.min(quantity, item.product.stock);
           }
-          const totals = calculateCart(state.items);
+          state.discount = 0;
+          const totals = calculateCart(state.items, 0);
           state.subtotal = totals.subtotal;
           state.shipping = totals.shipping;
           state.tax = totals.tax;
@@ -102,6 +110,30 @@ export const useCartStore = create<CartStore>()(
           state.shipping = 0;
           state.tax = 0;
           state.total = 0;
+          state.discount = 0;
+          state.couponCode = "";
+        }),
+
+      setCoupon: (code, discount) =>
+        set((state) => {
+          state.couponCode = code;
+          const totals = calculateCart(state.items, discount);
+          state.discount = totals.discount ?? discount;
+          state.subtotal = totals.subtotal;
+          state.shipping = totals.shipping;
+          state.tax = totals.tax;
+          state.total = totals.total;
+        }),
+
+      clearCoupon: () =>
+        set((state) => {
+          state.couponCode = "";
+          state.discount = 0;
+          const totals = calculateCart(state.items, 0);
+          state.subtotal = totals.subtotal;
+          state.shipping = totals.shipping;
+          state.tax = totals.tax;
+          state.total = totals.total;
         }),
 
       openCart: () => set((state) => { state.isOpen = true; }),
@@ -111,14 +143,15 @@ export const useCartStore = create<CartStore>()(
     {
       name: "marketplace-cart",
       storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({ items: state.items }),
+      partialize: (state) => ({ items: state.items, couponCode: state.couponCode }),
       onRehydrateStorage: () => (state) => {
         if (state) {
-          const totals = calculateCart(state.items);
+          const totals = calculateCart(state.items, state.discount ?? 0);
           state.subtotal = totals.subtotal;
           state.shipping = totals.shipping;
           state.tax = totals.tax;
           state.total = totals.total;
+          state.discount = totals.discount ?? 0;
           state.itemCount = state.items.reduce((sum, i) => sum + i.quantity, 0);
         }
       },

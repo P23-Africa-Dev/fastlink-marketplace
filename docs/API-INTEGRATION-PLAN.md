@@ -964,6 +964,45 @@ Seller:
 
 ---
 
+### Phase 15 — Growth (CR-Tier 3, partial)
+
+**Promotions (CR-3.1)**
+
+- `promo_codes` + `promo_redemptions`; seeded platform code `FASTLINK10` (10% off, max ₦5,000).
+- `POST /promo/preview`, checkout `coupon_code` on quote/place; discount applied before tax and free-shipping thresholds.
+- Admin `GET/POST/PATCH /admin/promo-codes` + `/admin/promos` UI.
+- Seller store-scoped `GET/POST/PATCH /seller/promo-codes` + `/promos` UI.
+
+**Referrals (CR-3.2)**
+
+- `referral_codes` / `referral_attributions`; `GET /referrals/me`.
+- Register accepts optional `referral_code` (`?ref=` on `/register`); self-referral rejected.
+
+**Abandoned cart (CR-3.4)**
+
+- `POST /cart/sync` stores a per-user snapshot; `php artisan cart:remind-stale --hours=2` (hourly schedule) notifies stale carts.
+
+**Seller insights (CR-3.7)**
+
+- `GET /seller/growth` restock (stock ≤ 5) and promote (no paid orders in 30 days) + `/growth` UI.
+
+**Loyalty (CR-3.3)**
+
+- `users.loyalty_points` + `loyalty_transactions`; earn 1 point per ₦100 paid; 1 point = ₦1 at checkout (capped at 50% of cart after promo).
+- Checkout `redeem_points`; `GET /loyalty/me`; account `/account/rewards`.
+
+**Search suggest (CR-3.5, partial)**
+
+- Public `GET /search/suggest?q=` returns products, brands, stores (prefix preferred). Header autocomplete. Full Meilisearch still optional.
+
+**Personalization (CR-3.6)**
+
+- `GET /recommendations` (optional Sanctum): `forYou` from views + wishlist + purchases; `recentlyViewed`. Home “For you” rail.
+
+Still deferred: Meilisearch typo engine (CR-3.5 remainder), seller staff roles (CR-3.8).
+
+---
+
 ## 6. MVP add list
 
 This is the product cut for the first shippable marketplace. Fastlink already has most **buyer browse** and **seller dashboard** screens. MVP is not the full 13-section marketplace catalog — it is the glue that makes those screens real: identity, ownership, money, and an admin.

@@ -21,6 +21,7 @@ class UserResource extends JsonResource
             'role' => $this->role,
             'status' => $this->status,
             'phone' => $this->phone,
+            'loyaltyPoints' => (int) ($this->loyalty_points ?? 0),
             'createdAt' => $this->created_at?->toIso8601String(),
         ];
     }

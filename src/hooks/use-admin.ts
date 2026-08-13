@@ -418,3 +418,26 @@ export function useAdminDeliveryZoneActions() {
     }),
   };
 }
+
+export function useAdminPromoCodes() {
+  return useQuery({
+    queryKey: QUERY_KEYS.admin.promoCodes(),
+    queryFn: adminApi.promoCodes,
+  });
+}
+
+export function useAdminPromoCodeActions() {
+  const queryClient = useQueryClient();
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.admin.promoCodes() });
+  return {
+    create: useMutation({
+      mutationFn: adminApi.createPromoCode,
+      onSuccess: invalidate,
+    }),
+    update: useMutation({
+      mutationFn: ({ id, ...payload }: { id: string; is_active?: boolean; value?: number }) =>
+        adminApi.updatePromoCode(id, payload),
+      onSuccess: invalidate,
+    }),
+  };
+}

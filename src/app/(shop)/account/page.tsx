@@ -1,13 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { Package, MapPin, Heart, Bell } from "lucide-react";
+import { Package, MapPin, Heart, Bell, Gift, Coins } from "lucide-react";
 
 const QUICK = [
   { href: "/account/orders", label: "My Orders", icon: Package, desc: "Track purchases and request returns" },
   { href: "/account/addresses", label: "Addresses", icon: MapPin, desc: "Manage delivery addresses" },
   { href: "/wishlist", label: "Wishlist", icon: Heart, desc: "Saved products" },
   { href: "/account/notifications", label: "Notifications", icon: Bell, desc: "Order updates and alerts" },
+  { href: "/account/referrals", label: "Referrals", icon: Gift, desc: "Share your code and track signups" },
+  { href: "/account/rewards", label: "Rewards", icon: Coins, desc: "Loyalty points you can spend at checkout" },
 ];
 
 export default function AccountHubPage() {

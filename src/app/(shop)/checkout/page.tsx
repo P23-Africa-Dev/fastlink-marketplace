@@ -12,6 +12,7 @@ import { formatPrice, cn } from "@/lib/utils";
 import { apiErrorMessage, checkoutApi } from "@/lib/api";
 import { useMe } from "@/hooks/use-auth";
 import { useCheckout, useCreateAddress, useCheckoutQuote, useInitializeCheckout } from "@/hooks/use-orders";
+import { useCartSync } from "@/hooks/use-growth";
 import type { ApiOrder, CheckoutQuote } from "@/types/order";
 
 type Step = "contact" | "shipping" | "payment" | "review";
@@ -42,7 +43,9 @@ export default function CheckoutPage() {
   const [pendingGroupId, setPendingGroupId] = useState<string | null>(null);
   const [shippingAddressId, setShippingAddressId] = useState<number | null>(null);
   const [quote, setQuote] = useState<CheckoutQuote | null>(null);
-  const { items, subtotal, shipping, tax, total, clearCart } = useCartStore();
+  const [usePoints, setUsePoints] = useState(false);
+  const { items, subtotal, shipping, tax, total, clearCart, couponCode, discount } = useCartStore();
+  useCartSync();
 
   const storeGroups = useMemo(() => {
     const map = new Map<string, { storeName: string; items: typeof items }>();
@@ -59,7 +62,11 @@ export default function CheckoutPage() {
   const displaySubtotal = quote?.subtotal ?? subtotal;
   const displayShipping = quote?.shipping ?? shipping;
   const displayTax = quote?.tax ?? tax;
+  const displayDiscount = quote?.discount ?? discount;
+  const displayPromo = quote?.promoCode ?? (displayDiscount > 0 ? couponCode : "");
+  const displayLoyalty = quote?.loyaltyDiscount ?? 0;
   const displayTotal = quote?.total ?? total;
+  const availablePoints = quote?.availablePoints ?? me?.loyaltyPoints ?? 0;
 
   const [form, setForm] = useState({
     email: "",
@@ -124,6 +131,8 @@ export default function CheckoutPage() {
 
     const quoted = await checkoutQuote.mutateAsync({
       address_id: addressId,
+      coupon_code: couponCode || undefined,
+      redeem_points: usePoints ? 999999 : 0,
       items: items.map((item) => ({
         product_id: item.productId,
         quantity: item.quantity,
@@ -158,6 +167,8 @@ export default function CheckoutPage() {
           address_id: addressId,
           delivery_method: "standard",
           payment_method: "paystack",
+          coupon_code: couponCode || undefined,
+          redeem_points: usePoints ? 999999 : 0,
           items: items.map((item) => ({
             product_id: item.productId,
             quantity: item.quantity,
@@ -573,6 +584,47 @@ export default function CheckoutPage() {
                 <span>Estimated Tax</span>
                 <span className="font-bold text-[#6D349F]">{formatPrice(displayTax)}</span>
               </div>
+              {displayDiscount > 0 && (
+                <div className="flex justify-between text-emerald-700 font-medium">
+                  <span>Discount{displayPromo ? ` (${displayPromo})` : ""}</span>
+                  <span className="font-bold">-{formatPrice(displayDiscount)}</span>
+                </div>
+              )}
+              {displayLoyalty > 0 && (
+                <div className="flex justify-between text-emerald-700 font-medium">
+                  <span>Rewards</span>
+                  <span className="font-bold">-{formatPrice(displayLoyalty)}</span>
+                </div>
+              )}
+              {availablePoints > 0 && (
+                <label className="flex items-center gap-2 text-xs font-semibold text-[#6D349F] pt-1">
+                  <input
+                    type="checkbox"
+                    checked={usePoints}
+                    onChange={async (e) => {
+                      const next = e.target.checked;
+                      setUsePoints(next);
+                      if (!shippingAddressId) return;
+                      try {
+                        const quoted = await checkoutQuote.mutateAsync({
+                          address_id: shippingAddressId,
+                          coupon_code: couponCode || undefined,
+                          redeem_points: next ? 999999 : 0,
+                          items: items.map((item) => ({
+                            product_id: item.productId,
+                            quantity: item.quantity,
+                            variants: item.selectedVariants,
+                          })),
+                        });
+                        setQuote(quoted);
+                      } catch {
+                        /* quote errors surface on place */
+                      }
+                    }}
+                  />
+                  Use {availablePoints} pts ({formatPrice(availablePoints)} max 50% of cart)
+                </label>
+              )}
 
               <div className="border-t border-[#D8C2EF] my-2 pt-3 flex justify-between items-center">
                 <span className="text-sm font-bold text-[#6D349F]">Total</span>

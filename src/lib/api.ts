@@ -46,6 +46,7 @@ import type {
 } from "@/types/inbox";
 import type { NotificationListResult } from "@/types/notifications";
 import type { ApiReturnRequest } from "@/types/returns";
+import type { GrowthInsight, LoyaltySummary, PromoCodeRow, PromoPreview, ReferralSummary, SearchSuggestResult } from "@/types/growth";
 import type {
   BrandPartner,
   DealProduct,
@@ -176,6 +177,21 @@ export const productsApi = {
     });
     return { data: data.data.data, success: data.success };
   },
+
+  suggest: async (query: string) => {
+    const { data } = await apiClient.get<ApiResponse<SearchSuggestResult>>("/search/suggest", {
+      params: { q: query },
+    });
+    return data.data;
+  },
+
+  recommendations: async (limit = 8) => {
+    const { data } = await apiClient.get<ApiResponse<{ forYou: Product[]; recentlyViewed: Product[] }>>(
+      "/recommendations",
+      { params: { limit } },
+    );
+    return data.data;
+  },
 };
 
 export const catalogApi = {
@@ -303,7 +319,7 @@ export const authApi = {
     name: string,
     email: string,
     password: string,
-    options?: { passwordConfirmation?: string; role?: "buyer" | "seller" },
+    options?: { passwordConfirmation?: string; role?: "buyer" | "seller"; referralCode?: string },
   ) => {
     const { data } = await apiClient.post<ApiResponse<{ user: User; token: string }>>(
       "/auth/register",
@@ -313,6 +329,7 @@ export const authApi = {
         password,
         password_confirmation: options?.passwordConfirmation ?? password,
         role: options?.role ?? "buyer",
+        referral_code: options?.referralCode || undefined,
       },
     );
     return data;
@@ -509,6 +526,8 @@ export const checkoutApi = {
     address_id: number;
     delivery_method?: string;
     payment_method?: string;
+    coupon_code?: string;
+    redeem_points?: number;
     items: Array<{ product_id: string; quantity: number; variants?: Record<string, unknown> }>;
   }) => {
     const { data } = await apiClient.post<ApiResponse<CheckoutResult>>("/checkout", payload);
@@ -538,9 +557,48 @@ export const checkoutApi = {
 
   quote: async (payload: {
     address_id: number;
+    coupon_code?: string;
+    redeem_points?: number;
     items: Array<{ product_id: string; quantity: number; variants?: Record<string, unknown> }>;
   }) => {
     const { data } = await apiClient.post<ApiResponse<CheckoutQuote>>("/checkout/quote", payload);
+    return data.data;
+  },
+};
+
+export const promoApi = {
+  preview: async (payload: {
+    coupon_code: string;
+    items: Array<{ product_id: string; quantity: number }>;
+  }) => {
+    const { data } = await apiClient.post<ApiResponse<PromoPreview>>("/promo/preview", payload);
+    return data.data;
+  },
+};
+
+export const cartApi = {
+  sync: async (payload: {
+    items: Array<{ product_id: string; quantity: number }>;
+    coupon_code?: string;
+  }) => {
+    const { data } = await apiClient.post<ApiResponse<{ itemCount: number; couponCode: string | null }>>(
+      "/cart/sync",
+      payload,
+    );
+    return data.data;
+  },
+};
+
+export const referralsApi = {
+  me: async () => {
+    const { data } = await apiClient.get<ApiResponse<ReferralSummary>>("/referrals/me");
+    return data.data;
+  },
+};
+
+export const loyaltyApi = {
+  me: async () => {
+    const { data } = await apiClient.get<ApiResponse<LoyaltySummary>>("/loyalty/me");
     return data.data;
   },
 };
@@ -854,6 +912,31 @@ export const adminApi = {
     return data.data;
   },
 
+  promoCodes: async () => {
+    const { data } = await apiClient.get<ApiResponse<PromoCodeRow[]>>("/admin/promo-codes");
+    return data.data;
+  },
+
+  createPromoCode: async (payload: {
+    code: string;
+    type: "percent" | "fixed";
+    value: number;
+    min_subtotal?: number;
+    max_discount?: number | null;
+    usage_limit?: number | null;
+    per_user_limit?: number;
+    store_id?: number | null;
+    ends_at?: string | null;
+  }) => {
+    const { data } = await apiClient.post<ApiResponse<PromoCodeRow>>("/admin/promo-codes", payload);
+    return data.data;
+  },
+
+  updatePromoCode: async (id: string, payload: Partial<{ is_active: boolean; value: number; ends_at: string | null }>) => {
+    const { data } = await apiClient.patch<ApiResponse<PromoCodeRow>>(`/admin/promo-codes/${id}`, payload);
+    return data.data;
+  },
+
   updateDeliveryZone: async (
     id: string,
     payload: Partial<{
@@ -1082,6 +1165,37 @@ export const sellerSupportApi = {
 export const sellerAnalyticsApi = {
   get: async (range: string) => {
     const { data } = await apiClient.get<ApiResponse<SellerAnalytics>>("/seller/analytics", { params: { range } });
+    return data.data;
+  },
+};
+
+export const sellerGrowthApi = {
+  insights: async () => {
+    const { data } = await apiClient.get<ApiResponse<GrowthInsight[]>>("/seller/growth");
+    return data.data;
+  },
+};
+
+export const sellerPromoCodesApi = {
+  list: async () => {
+    const { data } = await apiClient.get<ApiResponse<PromoCodeRow[]>>("/seller/promo-codes");
+    return data.data;
+  },
+  create: async (payload: {
+    code: string;
+    type: "percent" | "fixed";
+    value: number;
+    min_subtotal?: number;
+    max_discount?: number | null;
+    usage_limit?: number | null;
+    per_user_limit?: number;
+    ends_at?: string | null;
+  }) => {
+    const { data } = await apiClient.post<ApiResponse<PromoCodeRow>>("/seller/promo-codes", payload);
+    return data.data;
+  },
+  update: async (id: string, payload: Partial<{ is_active: boolean; value: number; ends_at: string | null }>) => {
+    const { data } = await apiClient.patch<ApiResponse<PromoCodeRow>>(`/seller/promo-codes/${id}`, payload);
     return data.data;
   },
 };

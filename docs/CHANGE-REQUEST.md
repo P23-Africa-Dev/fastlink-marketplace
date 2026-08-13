@@ -1,7 +1,7 @@
 # Fastlink Marketplace — Change Request (CR-1)
 
 **Document ID:** CR-1  
-**Status:** Shipped (Tier 0 — 13 August 2026) · Tier 1 complete (13 August 2026) · Tier 2 largely shipped (zones, inventory, checkout quote, KYC — 13 August 2026)  
+**Status:** Shipped (Tier 0 — 13 August 2026) · Tier 1 complete (13 August 2026) · Tier 2 largely shipped (zones, inventory, checkout quote, KYC — 13 August 2026) · Tier 3 largely shipped (promos, referrals, cart recovery, insights, loyalty, recommendations, search suggest — 13 August 2026)  
 **Audience:** Product, engineering, design  
 **Last updated:** 13 August 2026  
 **Related docs:** [`API-INTEGRATION-PLAN.md`](./API-INTEGRATION-PLAN.md) · [`API-CATALOG.md`](./API-CATALOG.md) · [`BACKLOG.md`](./BACKLOG.md)
@@ -91,8 +91,8 @@ The integration plan correctly scoped MVP to transactional features and deferred
 | Seller reputation | Product rating from reviews | No seller health score or badges |
 | Events | `page_views` | Not a general event bus |
 | Financial records | `payments` fees/net | No immutable ledger |
-| Cart coupons | UI placeholder | No promotion engine |
-| Buyer account | Sub-pages only | No hub, addresses UI, invoices |
+| Cart coupons | UI + engine | Loyalty/wallet still deferred |
+| Buyer account | Hub, addresses, invoices, referrals | — |
 
 ### 4.3 Explicitly deferred (integration plan §6.3)
 
@@ -194,13 +194,13 @@ Wallets, loyalty, gift cards, affiliates, auctions, subscriptions, B2B/RFQ, AI a
 
 | ID | Requirement | Summary |
 |----|-------------|---------|
-| CR-3.1 | Promotions engine | Coupons, promo codes, seller/platform campaigns applied at checkout |
-| CR-3.2 | Referral system | Links, codes, tracking, fraud checks |
-| CR-3.3 | Loyalty / rewards | Points, redemption (optional wallet) |
-| CR-3.4 | Abandoned cart recovery | Server-side cart events + notification automation |
-| CR-3.5 | Advanced search | Meilisearch/Algolia: autocomplete, typo tolerance, ranking |
-| CR-3.6 | Personalization | Recommendations from views, purchases, wishlist |
-| CR-3.7 | Seller growth center | Actionable insights (“restock X”, “reduce price 5%”) |
+| CR-3.1 | Promotions engine | **Shipped (13 Aug 2026):** coupons at quote/checkout; seller + platform codes; `FASTLINK10` |
+| CR-3.2 | Referral system | **Shipped (13 Aug 2026):** codes, signup attribution, self-referral rejected |
+| CR-3.3 | Loyalty / rewards | **Shipped (13 Aug 2026):** 1 pt / ₦100 paid; redeem at checkout (1 pt = ₦1, max 50% of cart) |
+| CR-3.4 | Abandoned cart recovery | **Shipped (13 Aug 2026):** `POST /cart/sync` + `cart:remind-stale` notifications |
+| CR-3.5 | Advanced search | **Partial (13 Aug 2026):** `/search/suggest` autocomplete (LIKE/prefix). Meilisearch still optional |
+| CR-3.6 | Personalization | **Shipped (13 Aug 2026):** `GET /recommendations` from views, purchases, wishlist |
+| CR-3.7 | Seller growth center | **Shipped (13 Aug 2026):** restock / promote insights at `/seller/growth` |
 | CR-3.8 | Seller team permissions | Store staff roles: inventory, orders, finance, support |
 
 ---

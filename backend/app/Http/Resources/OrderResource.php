@@ -30,6 +30,8 @@ class OrderResource extends JsonResource
             'tax' => (float) $this->tax,
             'discount' => (float) ($this->discount ?? 0),
             'promoCode' => $this->promo_code,
+            'loyaltyPoints' => (int) ($this->loyalty_points ?? 0),
+            'loyaltyDiscount' => (float) ($this->loyalty_discount ?? 0),
             'total' => (float) $this->total,
             'buyer' => [
                 'id' => (string) $this->buyer_id,

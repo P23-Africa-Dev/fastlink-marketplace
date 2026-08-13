@@ -25,6 +25,8 @@ import {
   Menu,
   X,
   ShoppingCart,
+  Tag,
+  Lightbulb,
   type LucideIcon,
 } from "lucide-react";
 
@@ -69,6 +71,8 @@ const NAV_SECTIONS: NavSection[] = [
       { href: "/payments", label: "Payments", icon: CreditCard, showStar: true },
       { href: "/payouts", label: "Payouts", icon: Wallet },
       { href: "/analytics", label: "Analytics", icon: BarChart3 },
+      { href: "/growth", label: "Growth", icon: Lightbulb },
+      { href: "/promos", label: "Promos", icon: Tag },
       { href: "/marketing", label: "Marketing", icon: Megaphone },
       { href: "/reviews", label: "Reviews", icon: Star },
     ],

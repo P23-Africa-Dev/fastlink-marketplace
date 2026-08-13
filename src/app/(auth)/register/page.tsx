@@ -24,6 +24,7 @@ export default function RegisterPage() {
     password: "",
     confirmPassword: "",
     sellOnFastlink: requestedSeller,
+    referralCode: searchParams.get("ref") ?? "",
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -43,6 +44,7 @@ export default function RegisterPage() {
       const { data } = await authApi.register(form.name, form.email, form.password, {
         passwordConfirmation: form.confirmPassword,
         role,
+        referralCode: form.referralCode.trim() || undefined,
       });
       setUser(data.user, data.token);
       queryClient.setQueryData(QUERY_KEYS.auth.user(), data.user);
@@ -154,6 +156,16 @@ export default function RegisterPage() {
                 onChange={(e) => setForm((p) => ({ ...p, confirmPassword: e.target.value }))}
                 placeholder="Confirm password"
                 required
+                className="w-full bg-transparent border border-white rounded font-medium text-white placeholder:text-white px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-white/50 transition-all text-center"
+              />
+            </div>
+
+            <div>
+              <input
+                type="text"
+                value={form.referralCode}
+                onChange={(e) => setForm((p) => ({ ...p, referralCode: e.target.value.toUpperCase() }))}
+                placeholder="Referral code (optional)"
                 className="w-full bg-transparent border border-white rounded font-medium text-white placeholder:text-white px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-white/50 transition-all text-center"
               />
             </div>

@@ -27,6 +27,8 @@ export const QUERY_KEYS = {
     featured: () => [...QUERY_KEYS.products.all, "featured"] as const,
     search: (query: string) => [...QUERY_KEYS.products.all, "search", query] as const,
     reviews: (id: string) => [...QUERY_KEYS.products.all, "reviews", id] as const,
+    suggest: (query: string) => [...QUERY_KEYS.products.all, "suggest", query] as const,
+    recommendations: () => [...QUERY_KEYS.products.all, "recommendations"] as const,
   },
   cart: {
     all: ["cart"] as const,
@@ -60,6 +62,8 @@ export const QUERY_KEYS = {
     inventory: (filters: Record<string, unknown> = {}) =>
       [...QUERY_KEYS.seller.all, "inventory", filters] as const,
     documents: () => [...QUERY_KEYS.seller.all, "documents"] as const,
+    promoCodes: () => [...QUERY_KEYS.seller.all, "promo-codes"] as const,
+    growth: () => [...QUERY_KEYS.seller.all, "growth"] as const,
   },
   orders: {
     all: ["orders"] as const,
@@ -133,6 +137,7 @@ export const QUERY_KEYS = {
     chargebacks: (filters: Record<string, unknown> = {}) =>
       [...QUERY_KEYS.admin.all, "chargebacks", filters] as const,
     deliveryZones: () => [...QUERY_KEYS.admin.all, "delivery-zones"] as const,
+    promoCodes: () => [...QUERY_KEYS.admin.all, "promo-codes"] as const,
   },
   conversations: {
     all: ["conversations"] as const,
@@ -158,5 +163,11 @@ export const QUERY_KEYS = {
   notifications: {
     all: ["notifications"] as const,
     list: (params: Record<string, unknown> = {}) => [...QUERY_KEYS.notifications.all, "list", params] as const,
+  },
+  referrals: {
+    me: () => ["referrals", "me"] as const,
+  },
+  loyalty: {
+    me: () => ["loyalty", "me"] as const,
   },
 } as const;

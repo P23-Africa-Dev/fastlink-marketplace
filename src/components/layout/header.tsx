@@ -27,6 +27,8 @@ import { accountHref } from "@/lib/auth-session";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { useUIStore } from "@/store/ui-store";
 import { cn } from "@/lib/utils";
+import { useDebounce } from "@/hooks/use-debounce";
+import { useSearchSuggest } from "@/hooks/use-products";
 
 // ── Navigation data ────────────────────────────────────────────
 
@@ -57,7 +59,12 @@ export function Header() {
 
   const [isScrolled, setIsScrolled] = useState(false);
   const [searchValue, setSearchValue] = useState("");
+  const [suggestOpen, setSuggestOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const debouncedSearch = useDebounce(searchValue, 250);
+  const { data: suggestions } = useSearchSuggest(debouncedSearch);
+  const hasSuggestions =
+    (suggestions?.products.length ?? 0) + (suggestions?.brands.length ?? 0) + (suggestions?.stores.length ?? 0) > 0;
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 4);
@@ -144,16 +151,23 @@ export function Header() {
             {/* Search bar */}
             <form
               onSubmit={handleSearchSubmit}
-              className="flex flex-1 items-center overflow-hidden rounded-full bg-white p-1 pl-4 sm:pl-5 shadow-sm max-w-xl mx-auto min-w-0"
+              className="relative flex flex-1 items-center max-w-xl mx-auto min-w-0"
             >
+              <div className="flex flex-1 items-center overflow-hidden rounded-full bg-white p-1 pl-4 sm:pl-5 shadow-sm min-w-0">
               <input
                 ref={searchInputRef}
                 type="text"
                 value={searchValue}
-                onChange={(e) => setSearchValue(e.target.value)}
+                onChange={(e) => {
+                  setSearchValue(e.target.value);
+                  setSuggestOpen(true);
+                }}
+                onFocus={() => setSuggestOpen(true)}
+                onBlur={() => window.setTimeout(() => setSuggestOpen(false), 180)}
                 placeholder="Search Products, Brand, Stores .."
                 className="min-w-0 flex-1 bg-transparent text-xs sm:text-sm text-neutral-700 placeholder:text-neutral-400 outline-none"
                 aria-label="Search"
+                autoComplete="off"
               />
               <button
                 type="submit"
@@ -163,6 +177,35 @@ export function Header() {
                 <Search size={18} className="sm:hidden" />
                 <span className="hidden sm:inline">Search</span>
               </button>
+              </div>
+              {suggestOpen && hasSuggestions && (
+                <div className="absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-2xl bg-white shadow-lg border border-[#EBD7FA]">
+                  {suggestions?.products.map((item) => (
+                    <Link
+                      key={item.id ?? item.slug}
+                      href={`/products/${item.slug}`}
+                      className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#3B1C5A] hover:bg-[#F6EFFD]"
+                    >
+                      {item.image ? (
+                        <Image src={item.image} alt="" width={36} height={36} className="h-9 w-9 rounded-lg object-cover" />
+                      ) : (
+                        <div className="h-9 w-9 rounded-lg bg-purple-100" />
+                      )}
+                      <span className="truncate font-semibold">{item.name}</span>
+                    </Link>
+                  ))}
+                  {suggestions?.brands.map((item) => (
+                    <Link key={`b-${item.slug}`} href={`/brands/${item.slug}`} className="block px-4 py-2 text-xs font-bold text-[#7a3dbf] hover:bg-[#F6EFFD]">
+                      Brand · {item.name}
+                    </Link>
+                  ))}
+                  {suggestions?.stores.map((item) => (
+                    <Link key={`s-${item.slug}`} href={`/stores/${item.slug}`} className="block px-4 py-2 text-xs font-bold text-[#7a3dbf] hover:bg-[#F6EFFD]">
+                      Store · {item.name}
+                    </Link>
+                  ))}
+                </div>
+              )}
             </form>
 
             {/* Actions */}

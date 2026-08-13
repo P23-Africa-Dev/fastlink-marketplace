@@ -65,4 +65,11 @@ class ProductController extends Controller
 
         return $this->index($request);
     }
+
+    public function suggest(Request $request, \App\Services\SearchSuggestService $suggest): JsonResponse
+    {
+        $q = trim((string) $request->query('q', $request->query('query', '')));
+
+        return ApiResponse::success($suggest->suggest($q));
+    }
 }

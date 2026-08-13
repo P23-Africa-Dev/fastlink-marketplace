@@ -7,15 +7,22 @@ import { useState } from "react";
 
 import { useCartStore } from "@/store/cart-store";
 import { formatPrice } from "@/lib/utils";
+import { apiErrorMessage } from "@/lib/api";
 import { ShopProductCard } from "@/components/product/shop-product-card";
 import { MOCK_PRODUCTS } from "@/mocks/data";
+import { useCartSync, usePromoPreview } from "@/hooks/use-growth";
+import { useAuthStore } from "@/store/auth-store";
 
 const SUGGESTED = MOCK_PRODUCTS.filter((p) => p.isBestseller).slice(0, 4);
 
 export default function CartPage() {
-  const { items, removeItem, updateQuantity, clearCart, subtotal, shipping, tax, total } =
+  const { items, removeItem, updateQuantity, clearCart, subtotal, shipping, tax, total, couponCode, discount, setCoupon, clearCoupon } =
     useCartStore();
-  const [couponCode, setCouponCode] = useState("");
+  const [codeInput, setCodeInput] = useState(couponCode);
+  const [couponError, setCouponError] = useState("");
+  const preview = usePromoPreview();
+  const token = useAuthStore((s) => s.token);
+  useCartSync();
 
   if (items.length === 0) {
     return (
@@ -181,16 +188,43 @@ export default function CartPage() {
                   />
                   <input
                     type="text"
-                    value={couponCode}
-                    onChange={(e) => setCouponCode(e.target.value)}
+                    value={codeInput}
+                    onChange={(e) => setCodeInput(e.target.value.toUpperCase())}
                     placeholder="FASTLINK10"
                     className="w-full rounded-xl border border-[#D8C2EF] bg-white py-2.5 pl-9 pr-3 text-xs text-[#3B1C5A] placeholder:text-[#8A79A5] focus:border-[#7E37C9] focus:outline-none font-montserrat"
                   />
                 </div>
-                <button className="rounded-xl border border-[#6D349F] text-[#6D349F] font-bold text-xs px-4 py-2 hover:bg-purple-100/50 transition-colors">
-                  Apply
+                <button
+                  type="button"
+                  disabled={preview.isPending || !codeInput.trim()}
+                  onClick={async () => {
+                    setCouponError("");
+                    if (!token) {
+                      setCouponError("Sign in to apply a promo code.");
+                      return;
+                    }
+                    try {
+                      const result = await preview.mutateAsync({
+                        coupon_code: codeInput.trim(),
+                        items: items.map((item) => ({ product_id: item.productId, quantity: item.quantity })),
+                      });
+                      setCoupon(result.code, result.discount);
+                    } catch (err) {
+                      clearCoupon();
+                      setCouponError(apiErrorMessage(err, "This promo code could not be applied."));
+                    }
+                  }}
+                  className="rounded-xl border border-[#6D349F] text-[#6D349F] font-bold text-xs px-4 py-2 hover:bg-purple-100/50 transition-colors disabled:opacity-50"
+                >
+                  {preview.isPending ? "…" : "Apply"}
                 </button>
               </div>
+              {couponError && <p className="mt-2 text-[11px] font-semibold text-rose-600">{couponError}</p>}
+              {discount > 0 && couponCode && (
+                <p className="mt-2 text-[11px] font-semibold text-emerald-700">
+                  {couponCode} applied — {formatPrice(discount)} off
+                </p>
+              )}
             </div>
 
             <div className="space-y-3 text-sm pt-2">
@@ -212,6 +246,12 @@ export default function CartPage() {
                 <span>Estimated Tax</span>
                 <span className="font-bold text-[#6D349F]">{formatPrice(tax)}</span>
               </div>
+              {discount > 0 && (
+                <div className="flex justify-between text-emerald-700 font-medium">
+                  <span>Discount{couponCode ? ` (${couponCode})` : ""}</span>
+                  <span className="font-bold">-{formatPrice(discount)}</span>
+                </div>
+              )}
 
               <div className="border-t border-[#D8C2EF] my-3 pt-3 flex justify-between items-center">
                 <span className="text-base font-bold text-[#6D349F]">Total</span>

@@ -32,6 +32,7 @@ class CheckoutController extends Controller
             'items.*.quantity' => ['required', 'integer', 'min:1'],
             'items.*.variants' => ['nullable', 'array'],
             'coupon_code' => ['nullable', 'string', 'max:40'],
+            'redeem_points' => ['nullable', 'integer', 'min:0'],
         ]);
 
         $address = Address::query()->findOrFail($validated['address_id']);
@@ -42,6 +43,7 @@ class CheckoutController extends Controller
             $validated['delivery_method'] ?? 'standard',
             $validated['payment_method'] ?? 'demo',
             $this->couponCode($validated),
+            (int) ($validated['redeem_points'] ?? 0),
         );
 
         return ApiResponse::success([
@@ -101,6 +103,7 @@ class CheckoutController extends Controller
             'items.*.quantity' => ['required', 'integer', 'min:1'],
             'items.*.variants' => ['nullable', 'array'],
             'coupon_code' => ['nullable', 'string', 'max:40'],
+            'redeem_points' => ['nullable', 'integer', 'min:0'],
         ]);
 
         $address = Address::query()->findOrFail($validated['address_id']);
@@ -109,6 +112,7 @@ class CheckoutController extends Controller
             $address,
             $validated['items'],
             $this->couponCode($validated),
+            (int) ($validated['redeem_points'] ?? 0),
         );
 
         return ApiResponse::success($quote);
