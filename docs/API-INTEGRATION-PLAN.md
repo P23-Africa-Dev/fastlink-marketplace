@@ -901,7 +901,37 @@ Seller:
 - `GET/PATCH /admin/settings` + expanded `/admin/settings` config UI.
 - Maintenance mode blocks new checkout.
 
-**Shipped:** 13 August 2026 — disputes, webhook reconciliation, seller reputation, and product moderation remain Tier 1 backlog.
+**Shipped:** 13 August 2026 — disputes, moderation pipeline, seller reputation badges, webhook log, buyer report UI.
+
+**Dispute engine (CR-1.2)**
+
+- `disputes` table; buyer opens on paid order; seller responds; admin resolves (refund/replacement/reject).
+- APIs: `/disputes`, `/orders/{order}/disputes`, `/seller/disputes`, `/admin/disputes`.
+- Refund resolution writes to financial ledger.
+
+**Product moderation (CR-1.6, partial)**
+
+- Statuses: `submitted`, `under_review`, `published`, `rejected` (+ legacy `active`, `draft`, `archived`).
+- Seller `POST /seller/products/{id}/submit`; admin moderation queue + approve/reject.
+- Public catalog accepts `active` and `published`.
+
+**Seller reputation (CR-1.5, partial)**
+
+- `ReputationService` computes score from ratings, fulfillment, cancellations.
+- Badges: `verified_seller`, `trusted_seller` on product detail.
+
+**Payment reconciliation (CR-1.4, partial)**
+
+- `paystack_webhook_events` log (processed, failed, duplicate, invalid_signature).
+- Admin `GET /admin/webhooks/paystack` + UI.
+
+**Chargebacks & partial refunds (CR-1.8)**
+
+- `chargebacks` table; admin records reversals against a payment with provider reference.
+- Prorated ledger entries: `chargeback`, `chargeback_partial`, fee and seller reversals.
+- Admin resolve chargeback as won/lost; `/admin/chargebacks` UI.
+- Partial refunds on dispute resolution and admin return approval (`refund_amount`).
+- Ledger types: `order_refund_partial` for partial buyer refunds.
 
 ---
 

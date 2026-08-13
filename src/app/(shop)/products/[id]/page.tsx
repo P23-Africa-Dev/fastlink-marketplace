@@ -37,6 +37,7 @@ import { formatPrice, cn, pluralize } from "@/lib/utils";
 import { apiErrorMessage } from "@/lib/api";
 import { formatOrderDate } from "@/lib/order-map";
 import { MessageSellerButton } from "@/components/inbox/message-seller";
+import { ReportListingButton } from "@/components/trust/report-listing-button";
 import type { Product } from "@/types/product";
 
 interface ProductDetailPageProps {
@@ -346,6 +347,19 @@ export default function ProductDetailPage(props: ProductDetailPageProps) {
                 {product.name}
               </h1>
 
+              {product.storeReputation?.badge === "trusted_seller" && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-[10px] font-black uppercase tracking-wider px-2.5 py-1 w-fit">
+                  <Award size={12} />
+                  Trusted Seller
+                </span>
+              )}
+              {product.storeReputation?.badge === "verified_seller" && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-[#FAF8FC] border border-[#EBD7FA] text-[#6D349F] text-[10px] font-black uppercase tracking-wider px-2.5 py-1 w-fit">
+                  <Shield size={12} />
+                  Verified Seller
+                </span>
+              )}
+
               {/* 2-Column Metadata */}
               <div className="grid grid-cols-2 gap-y-2 gap-x-4 text-xs sm:text-sm">
                 <div>
@@ -559,10 +573,7 @@ export default function ProductDetailPage(props: ProductDetailPageProps) {
 
                 <MessageSellerButton storeId={product.store?.id} productId={product.id} />
 
-                <button className="flex items-center gap-1.5 text-[#594970] hover:text-[#411266] font-semibold transition-colors cursor-pointer">
-                  <ArrowLeftRight size={16} />
-                  <span>Add to Compare</span>
-                </button>
+                <ReportListingButton subjectType="product" subjectId={product.id} />
 
                 <div className="flex items-center gap-2 text-[#594970]">
                   <span>Share product:</span>

@@ -48,3 +48,16 @@ export function useDeleteSellerProduct() {
     },
   });
 }
+
+export function useSubmitSellerProduct() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => sellerProductsApi.submitForReview(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.seller.products() });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.all });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.admin.moderation() });
+    },
+  });
+}

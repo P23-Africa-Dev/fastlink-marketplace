@@ -40,10 +40,15 @@ class AdminReturnController extends Controller
         $validated = $request->validate([
             'action' => ['required', 'in:approve,reject'],
             'note' => ['nullable', 'string', 'max:1000'],
+            'refund_amount' => ['nullable', 'numeric', 'min:0.01'],
         ]);
 
         $result = $validated['action'] === 'approve'
-            ? $returns->approve($request->user(), $return)
+            ? $returns->approve(
+                $request->user(),
+                $return,
+                isset($validated['refund_amount']) ? (float) $validated['refund_amount'] : null,
+            )
             : $returns->reject($request->user(), $return, $validated['note'] ?? null);
 
         return ApiResponse::success(

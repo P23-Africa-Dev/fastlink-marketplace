@@ -8,6 +8,7 @@ use App\Models\Product;
 use App\Support\ApiResponse;
 use App\Support\PageViewRecorder;
 use App\Support\ProductQuery;
+use App\Services\ReputationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -42,13 +43,18 @@ class ProductController extends Controller
             })
             ->firstOrFail();
 
-        if ($product->status !== 'active') {
+        if (! Product::isPublicStatus($product->status)) {
             abort(404);
         }
 
         PageViewRecorder::record($request->user(), $product->store, $product, '/products/'.$product->slug);
 
-        return ApiResponse::success((new ProductResource($product))->resolve());
+        $payload = (new ProductResource($product))->resolve();
+        if ($product->store) {
+            $payload['storeReputation'] = app(ReputationService::class)->forStore($product->store);
+        }
+
+        return ApiResponse::success($payload);
     }
 
     public function search(Request $request): JsonResponse

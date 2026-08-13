@@ -4,13 +4,14 @@ import Link from "next/link";
 import Image from "next/image";
 import { useParams } from "next/navigation";
 import { useState } from "react";
-import { ArrowLeft, Package, RotateCcw, Download } from "lucide-react";
+import { ArrowLeft, Package, RotateCcw, Download, Scale } from "lucide-react";
 
 import { formatPrice } from "@/lib/utils";
 import { formatOrderDate } from "@/lib/order-map";
 import { apiErrorMessage, ordersApi } from "@/lib/api";
 import { useMyOrder } from "@/hooks/use-orders";
 import { useOrderReturn, useRequestReturn } from "@/hooks/use-returns";
+import { useOpenDispute, useOrderDispute } from "@/hooks/use-disputes";
 import { MessageSellerButton } from "@/components/inbox/message-seller";
 
 export default function AccountOrderDetailPage() {
@@ -18,13 +19,18 @@ export default function AccountOrderDetailPage() {
   const id = decodeURIComponent(String(params?.id ?? ""));
   const { data, isLoading, isError } = useMyOrder(id);
   const returnQuery = useOrderReturn(id);
+  const disputeQuery = useOrderDispute(id);
   const requestReturn = useRequestReturn();
+  const openDispute = useOpenDispute();
   const [reason, setReason] = useState("");
   const [showForm, setShowForm] = useState(false);
+  const [disputeReason, setDisputeReason] = useState("");
+  const [showDisputeForm, setShowDisputeForm] = useState(false);
   const [toast, setToast] = useState("");
   const [invoiceLoading, setInvoiceLoading] = useState(false);
   const order = data?.data;
   const returnRequest = returnQuery.data ?? null;
+  const dispute = disputeQuery.data ?? null;
 
   if (isLoading) {
     return (
@@ -51,6 +57,12 @@ export default function AccountOrderDetailPage() {
   const canRequestReturn =
     order.paymentStatus === "paid" &&
     ["confirmed", "shipped", "delivered"].includes(order.status) &&
+    !returnRequest &&
+    !dispute;
+
+  const canOpenDispute =
+    order.paymentStatus === "paid" &&
+    !dispute &&
     !returnRequest;
 
   async function handleDownloadInvoice() {
@@ -80,6 +92,21 @@ export default function AccountOrderDetailPage() {
       setTimeout(() => setToast(""), 3000);
     } catch (err) {
       setToast(apiErrorMessage(err, "Could not submit return request."));
+      setTimeout(() => setToast(""), 4000);
+    }
+  }
+
+  async function handleDisputeSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!disputeReason.trim()) return;
+    try {
+      await openDispute.mutateAsync({ orderId: id, reason: disputeReason.trim() });
+      setShowDisputeForm(false);
+      setDisputeReason("");
+      setToast("Dispute opened. The seller and platform will review it.");
+      setTimeout(() => setToast(""), 3000);
+    } catch (err) {
+      setToast(apiErrorMessage(err, "Could not open dispute."));
       setTimeout(() => setToast(""), 4000);
     }
   }
@@ -201,6 +228,66 @@ export default function AccountOrderDetailPage() {
                 className="rounded-xl border border-[#EBD7FA] px-4 py-2 text-xs font-bold text-[#6D349F] hover:bg-[#FAF8FC]"
               >
                 Request a return
+              </button>
+            )}
+          </div>
+        )}
+
+        {(dispute || canOpenDispute) && (
+          <div className="rounded-2xl border border-[#EBD7FA] bg-white p-6 space-y-4">
+            <h2 className="font-bold text-[#3B1C5A] flex items-center gap-2">
+              <Scale size={18} className="text-[#7a3dbf]" />
+              Disputes
+            </h2>
+            {dispute ? (
+              <div className="rounded-xl bg-[#FAF8FC] border border-[#EBD7FA] p-4 space-y-2">
+                <p className="text-xs font-black uppercase text-[#6D349F]">{dispute.displayStatus}</p>
+                <p className="text-sm">{dispute.reason}</p>
+                {dispute.sellerResponse && (
+                  <p className="text-sm text-[#5F6C72]">
+                    <span className="font-semibold">Seller:</span> {dispute.sellerResponse}
+                  </p>
+                )}
+                {dispute.refundAmount != null && (
+                  <p className="text-sm font-bold text-[#3B1C5A]">
+                    Refund: {formatPrice(dispute.refundAmount)}
+                  </p>
+                )}
+                <p className="text-xs text-[#8A79A5]">Opened {formatOrderDate(dispute.createdAt)}</p>
+              </div>
+            ) : showDisputeForm ? (
+              <form onSubmit={handleDisputeSubmit} className="space-y-3">
+                <textarea
+                  value={disputeReason}
+                  onChange={(e) => setDisputeReason(e.target.value)}
+                  placeholder="Describe the issue with this order…"
+                  className="w-full min-h-[100px] rounded-xl border border-[#EBD7FA] px-3 py-2 text-sm outline-none focus:border-[#7a3dbf]"
+                  required
+                />
+                <div className="flex gap-2">
+                  <button
+                    type="submit"
+                    disabled={openDispute.isPending}
+                    className="rounded-xl bg-[#7a3dbf] px-4 py-2 text-xs font-bold text-white"
+                  >
+                    Submit dispute
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowDisputeForm(false)}
+                    className="rounded-xl border border-[#EBD7FA] px-4 py-2 text-xs font-bold text-[#6D349F]"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setShowDisputeForm(true)}
+                className="rounded-xl border border-[#EBD7FA] px-4 py-2 text-xs font-bold text-[#6D349F] hover:bg-[#FAF8FC]"
+              >
+                Open a dispute
               </button>
             )}
           </div>

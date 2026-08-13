@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\ProductResource;
 use App\Http\Resources\StoreResource;
 use App\Models\Store;
+use App\Services\ReputationService;
 use App\Support\ApiResponse;
 use App\Support\PageViewRecorder;
 use App\Support\ProductQuery;
@@ -45,7 +46,11 @@ class StoreController extends Controller
 
         PageViewRecorder::record($request->user(), $store, null, '/stores/'.$store->slug);
 
-        return ApiResponse::success((new StoreResource($store))->resolve());
+        $reputation = app(ReputationService::class)->forStore($store);
+        $data = (new StoreResource($store))->resolve();
+        $data['reputation'] = $reputation;
+
+        return ApiResponse::success($data);
     }
 
     public function products(Request $request, string $slug): JsonResponse

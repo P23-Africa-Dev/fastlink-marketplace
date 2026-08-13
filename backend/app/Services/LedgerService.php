@@ -93,31 +93,44 @@ class LedgerService
         }
     }
 
-    public function recordRefund(Payment $payment, ?int $returnId = null): void
+    public function recordRefund(Payment $payment, ?int $referenceId = null, ?float $refundAmount = null): void
     {
         $paymentId = (int) $payment->id;
         $storeId = (int) $payment->store_id;
         $orderId = (int) $payment->order_id;
-        $amount = (float) $payment->amount;
-        $fees = (float) $payment->fees;
-        $net = (float) $payment->net;
-        $suffix = $returnId ? ":return:{$returnId}" : '';
+        $paymentAmount = (float) $payment->amount;
+        $amount = $refundAmount ?? $paymentAmount;
+
+        if ($amount <= 0) {
+            return;
+        }
+
+        if ($amount > $paymentAmount) {
+            $amount = $paymentAmount;
+        }
+
+        $ratio = $paymentAmount > 0 ? min(1, $amount / $paymentAmount) : 1;
+        $gross = round($amount, 2);
+        $fees = round((float) $payment->fees * $ratio, 2);
+        $net = round((float) $payment->net * $ratio, 2);
+        $suffix = $referenceId ? ":ref:{$referenceId}" : '';
+        $partialTag = $amount < $paymentAmount - 0.01 ? ':partial' : '';
 
         $this->record(
-            "refund:{$paymentId}{$suffix}:gross",
-            'order_refund',
+            "refund:{$paymentId}{$suffix}{$partialTag}:gross",
+            $amount < $paymentAmount - 0.01 ? 'order_refund_partial' : 'order_refund',
             'debit',
-            $amount,
+            $gross,
             'payment',
             $paymentId,
             $storeId,
             $orderId,
-            ['returnId' => $returnId],
+            ['referenceId' => $referenceId, 'refundAmount' => $amount],
         );
 
         if ($fees > 0) {
             $this->record(
-                "refund:{$paymentId}{$suffix}:fee",
+                "refund:{$paymentId}{$suffix}{$partialTag}:fee",
                 'platform_fee_reversal',
                 'debit',
                 $fees,
@@ -130,12 +143,68 @@ class LedgerService
 
         if ($net > 0) {
             $this->record(
-                "refund:{$paymentId}{$suffix}:net",
+                "refund:{$paymentId}{$suffix}{$partialTag}:net",
                 'seller_earnings_reversal',
                 'debit',
                 $net,
                 'payment',
                 $paymentId,
+                $storeId,
+                $orderId,
+            );
+        }
+    }
+
+    public function recordChargeback(Payment $payment, float $amount, int $chargebackId): void
+    {
+        $paymentId = (int) $payment->id;
+        $storeId = (int) $payment->store_id;
+        $orderId = (int) $payment->order_id;
+        $paymentAmount = (float) $payment->amount;
+
+        if ($amount <= 0 || $amount > $paymentAmount) {
+            return;
+        }
+
+        $ratio = $paymentAmount > 0 ? min(1, $amount / $paymentAmount) : 1;
+        $gross = round($amount, 2);
+        $fees = round((float) $payment->fees * $ratio, 2);
+        $net = round((float) $payment->net * $ratio, 2);
+        $partialTag = $amount < $paymentAmount - 0.01 ? ':partial' : '';
+
+        $this->record(
+            "chargeback:{$chargebackId}{$partialTag}:gross",
+            $amount < $paymentAmount - 0.01 ? 'chargeback_partial' : 'chargeback',
+            'debit',
+            $gross,
+            'chargeback',
+            $chargebackId,
+            $storeId,
+            $orderId,
+            ['paymentId' => $paymentId],
+        );
+
+        if ($fees > 0) {
+            $this->record(
+                "chargeback:{$chargebackId}{$partialTag}:fee",
+                'chargeback_fee_reversal',
+                'debit',
+                $fees,
+                'chargeback',
+                $chargebackId,
+                $storeId,
+                $orderId,
+            );
+        }
+
+        if ($net > 0) {
+            $this->record(
+                "chargeback:{$chargebackId}{$partialTag}:net",
+                'chargeback_seller_reversal',
+                'debit',
+                $net,
+                'chargeback',
+                $chargebackId,
                 $storeId,
                 $orderId,
             );

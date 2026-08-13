@@ -63,16 +63,25 @@ class ReturnService
         return $return;
     }
 
-    public function approve(User $actor, ReturnRequest $return): ReturnRequest
+    public function approve(User $actor, ReturnRequest $return, ?float $refundAmount = null): ReturnRequest
     {
         if (! in_array($return->status, ['pending', 'approved'], true)) {
             throw ValidationException::withMessages(['status' => 'Return is already resolved.']);
         }
 
-        return DB::transaction(function () use ($actor, $return) {
+        return DB::transaction(function () use ($actor, $return, $refundAmount) {
             $order = $return->order()->lockForUpdate()->firstOrFail();
+            $amount = $refundAmount ?? (float) $order->total;
 
-            if ($order->status !== 'cancelled') {
+            if ($amount <= 0 || $amount > (float) $order->total) {
+                throw ValidationException::withMessages([
+                    'refund_amount' => 'Refund amount must be between 0.01 and the order total.',
+                ]);
+            }
+
+            $isFullRefund = $amount >= (float) $order->total - 0.01;
+
+            if ($isFullRefund && $order->status !== 'cancelled') {
                 $this->checkout->restoreStock($order);
                 $order->update(['status' => 'cancelled']);
                 $order->addEvent('cancelled', 'Return approved. Order cancelled and stock restored.');
@@ -80,30 +89,32 @@ class ReturnService
 
             Payment::query()
                 ->where('order_id', $order->id)
-                ->where('status', 'paid')
+                ->whereIn('status', ['paid', 'partially_refunded'])
                 ->get()
-                ->each(function (Payment $payment) use ($return) {
-                    $payment->update(['status' => 'refunded']);
-                    app(LedgerService::class)->recordRefund($payment->fresh(), (int) $return->id);
+                ->each(function (Payment $payment) use ($return, $amount) {
+                    $payment->update([
+                        'status' => $amount >= (float) $payment->amount - 0.01 ? 'refunded' : 'partially_refunded',
+                    ]);
+                    app(LedgerService::class)->recordRefund($payment->fresh(), (int) $return->id, $amount);
                 });
 
-            $order->update(['payment_status' => 'refunded']);
+            $order->update(['payment_status' => $isFullRefund ? 'refunded' : 'partially_refunded']);
 
             $return->update([
                 'status' => 'refunded',
-                'refund_amount' => $order->total,
+                'refund_amount' => $amount,
                 'resolved_by' => $actor->id,
                 'resolved_at' => now(),
             ]);
 
-            AuditLog::record($actor, 'return.approved', $return, ['order_id' => $order->id]);
+            AuditLog::record($actor, 'return.approved', $return, ['order_id' => $order->id, 'refund_amount' => $amount]);
 
             $return->loadMissing('buyer');
             $this->notifications->notify(
                 $return->buyer,
                 'return.approved',
                 'Return approved for '.$order->reference,
-                'Your return was approved. A full refund of ₦'.number_format((float) $order->total, 2).' has been recorded.',
+                'Your return was approved. A refund of ₦'.number_format($amount, 2).' has been recorded.',
                 ['orderId' => (string) $order->id, 'returnId' => (string) $return->id],
             );
 

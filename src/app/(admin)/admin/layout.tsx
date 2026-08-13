@@ -25,6 +25,10 @@ import {
   X,
   BookOpen,
   Flag,
+  Scale,
+  AlertTriangle,
+  PackageCheck,
+  Webhook,
   type LucideIcon,
 } from "lucide-react";
 
@@ -39,6 +43,9 @@ const NAV: { href: string; label: string; icon: LucideIcon }[] = [
   { href: "/admin/malls", label: "Malls", icon: Building2 },
   { href: "/admin/verification", label: "Verification", icon: ShieldCheck },
   { href: "/admin/trust-reports", label: "Trust reports", icon: Flag },
+  { href: "/admin/disputes", label: "Disputes", icon: Scale },
+  { href: "/admin/chargebacks", label: "Chargebacks", icon: AlertTriangle },
+  { href: "/admin/moderation", label: "Moderation", icon: PackageCheck },
   { href: "/admin/vendors", label: "Vendors", icon: Store },
   { href: "/admin/customers", label: "Customers", icon: Users },
   { href: "/admin/riders", label: "Riders", icon: Bike },
@@ -46,6 +53,7 @@ const NAV: { href: string; label: string; icon: LucideIcon }[] = [
   { href: "/admin/returns", label: "Returns", icon: RotateCcw },
   { href: "/admin/payments", label: "Payments", icon: CreditCard },
   { href: "/admin/ledger", label: "Ledger", icon: BookOpen },
+  { href: "/admin/webhooks", label: "Webhooks", icon: Webhook },
   { href: "/admin/payouts", label: "Payouts", icon: Wallet },
   { href: "/admin/support", label: "Support", icon: HelpCircle },
   { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },

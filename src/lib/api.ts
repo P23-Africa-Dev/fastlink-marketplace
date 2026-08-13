@@ -1,6 +1,7 @@
 import axios from "axios";
 
 import type { PaginatedResponse, ApiResponse } from "@/types/api";
+import type { Dispute } from "@/types/disputes";
 import type { ProductFilter, Product } from "@/types/product";
 import type { DashboardStats, ProductReview, SellerCustomer, SellerSettings, SellerStoreProfile } from "@/types/seller";
 import type { Address, User } from "@/types/user";
@@ -24,6 +25,11 @@ import type {
   AdminTrustReportsResponse,
   AdminUserRow,
   AdminVerificationQueue,
+  AdminWebhooksResponse,
+  AdminChargebacksResponse,
+  ChargebackRow,
+  AdminDisputesResponse,
+  DisputeRow,
   LedgerEntryRow,
   MarketplaceConfig,
   TrustReportRow,
@@ -262,6 +268,11 @@ export const sellerProductsApi = {
   remove: async (id: string) => {
     const { data } = await apiClient.delete<ApiResponse<null>>(`/seller/products/${id}`);
     return data;
+  },
+
+  submitForReview: async (id: string) => {
+    const { data } = await apiClient.post<ApiResponse<Product>>(`/seller/products/${id}/submit`);
+    return data.data;
   },
 };
 
@@ -717,6 +728,67 @@ export const adminApi = {
     return data.data;
   },
 
+  disputes: async (params: { status?: string; page?: number; limit?: number } = {}) => {
+    const { data } = await apiClient.get<ApiResponse<AdminDisputesResponse>>("/admin/disputes", {
+      params: compactParams(params),
+    });
+    return data.data;
+  },
+
+  updateDispute: async (
+    id: string,
+    payload: { action: "review" | "resolve"; resolution?: string; admin_note?: string; refund_amount?: number },
+  ) => {
+    const { data } = await apiClient.patch<ApiResponse<DisputeRow>>(`/admin/disputes/${id}`, payload);
+    return data.data;
+  },
+
+  moderationQueue: async () => {
+    const { data } = await apiClient.get<
+      ApiResponse<{ data: Product[]; total: number; pendingCount: number }>
+    >("/admin/products/moderation");
+    return data.data;
+  },
+
+  approveProduct: async (id: string) => {
+    const { data } = await apiClient.post<ApiResponse<Product>>(`/admin/products/${id}/approve`);
+    return data.data;
+  },
+
+  rejectProduct: async (id: string, note?: string) => {
+    const { data } = await apiClient.post<ApiResponse<Product>>(`/admin/products/${id}/reject`, { note });
+    return data.data;
+  },
+
+  webhooks: async (params: { status?: string; page?: number; limit?: number } = {}) => {
+    const { data } = await apiClient.get<ApiResponse<AdminWebhooksResponse>>("/admin/webhooks/paystack", {
+      params: compactParams(params),
+    });
+    return data.data;
+  },
+
+  chargebacks: async (params: { status?: string; page?: number; limit?: number } = {}) => {
+    const { data } = await apiClient.get<ApiResponse<AdminChargebacksResponse>>("/admin/chargebacks", {
+      params: compactParams(params),
+    });
+    return data.data;
+  },
+
+  recordChargeback: async (payload: {
+    payment_id: number;
+    amount: number;
+    reason: string;
+    provider_reference?: string;
+  }) => {
+    const { data } = await apiClient.post<ApiResponse<ChargebackRow>>("/admin/chargebacks", payload);
+    return data.data;
+  },
+
+  updateChargeback: async (id: string, payload: { status: "won" | "lost"; admin_note?: string }) => {
+    const { data } = await apiClient.patch<ApiResponse<ChargebackRow>>(`/admin/chargebacks/${id}`, payload);
+    return data.data;
+  },
+
   malls: async () => {
     const { data } = await apiClient.get<ApiResponse<AdminMall[]>>("/admin/malls");
     return data.data;
@@ -1027,6 +1099,42 @@ export const returnsApi = {
       note,
     });
     return data;
+  },
+};
+
+export const disputesApi = {
+  getForOrder: async (orderId: string) => {
+    const { data } = await apiClient.get<ApiResponse<Dispute | null>>(`/orders/${orderId}/disputes`);
+    return data.data;
+  },
+
+  open: async (
+    orderId: string,
+    payload: { reason: string; type?: string; buyer_evidence?: string },
+  ) => {
+    const { data } = await apiClient.post<ApiResponse<Dispute>>(`/orders/${orderId}/disputes`, payload);
+    return data.data;
+  },
+
+  list: async (params: { status?: string; page?: number; limit?: number } = {}) => {
+    const { data } = await apiClient.get<ApiResponse<PaginatedResponse<Dispute>>>("/disputes", {
+      params: compactParams(params),
+    });
+    return data.data;
+  },
+
+  sellerList: async (params: { status?: string; page?: number; limit?: number } = {}) => {
+    const { data } = await apiClient.get<ApiResponse<PaginatedResponse<Dispute>>>("/seller/disputes", {
+      params: compactParams(params),
+    });
+    return data.data;
+  },
+
+  sellerRespond: async (id: string, response: string) => {
+    const { data } = await apiClient.post<ApiResponse<Dispute>>(`/seller/disputes/${id}/respond`, {
+      response,
+    });
+    return data.data;
   },
 };
 

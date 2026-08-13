@@ -15,6 +15,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class SellerProductController extends Controller
 {
@@ -165,6 +166,25 @@ class SellerProductController extends Controller
         return ApiResponse::success((new ProductResource($product))->resolve($request), 'Stock updated.');
     }
 
+    public function submitForReview(Request $request, Product $product): JsonResponse
+    {
+        $this->authorize('update', $product);
+
+        if (! in_array($product->status, ['draft', 'rejected'], true)) {
+            throw ValidationException::withMessages([
+                'status' => 'Only draft or rejected products can be submitted for review.',
+            ]);
+        }
+
+        $product->update(['status' => 'submitted']);
+        $product->load(['images', 'variants', 'store', 'brand', 'category']);
+
+        return ApiResponse::success(
+            (new ProductResource($product))->resolve($request),
+            'Product submitted for admin review.',
+        );
+    }
+
     private function resolveStore(Request $request): Store
     {
         $user = $request->user();
@@ -195,7 +215,7 @@ class SellerProductController extends Controller
             'compare_at_price' => ['nullable', 'numeric', 'min:0'],
             'cost_price' => ['nullable', 'numeric', 'min:0'],
             'stock' => ['nullable', 'integer', 'min:0'],
-            'status' => ['nullable', Rule::in(['draft', 'active', 'archived'])],
+            'status' => ['nullable', Rule::in(['draft', 'submitted', 'active', 'archived'])],
             'category' => ['nullable', 'string', 'max:120'],
             'category_id' => ['nullable', 'integer', 'exists:categories,id'],
             'brand' => ['nullable', 'string', 'max:120'],

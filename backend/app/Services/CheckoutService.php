@@ -35,7 +35,7 @@ class CheckoutService
                     ->lockForUpdate()
                     ->first();
 
-                if (! $product || $product->status !== 'active') {
+                if (! $product || ! Product::isPublicStatus($product->status)) {
                     throw ValidationException::withMessages([
                         'items' => 'One or more products are unavailable.',
                     ]);

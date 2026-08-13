@@ -29,9 +29,11 @@ import {
   useCreateSellerProduct,
   useDeleteSellerProduct,
   useSellerProducts,
+  useSubmitSellerProduct,
   useUpdateSellerProduct,
 } from "@/hooks/use-seller-products";
-import type { Product } from "@/lib/mock-products";
+import type { Product as ApiProduct } from "@/types/product";
+import type { Product as DashboardProduct } from "@/lib/mock-products";
 
 export default function AllProductsPage() {
   const router = useRouter();
@@ -39,7 +41,10 @@ export default function AllProductsPage() {
   const createProduct = useCreateSellerProduct();
   const updateProduct = useUpdateSellerProduct();
   const deleteProduct = useDeleteSellerProduct();
-  const products = (sellerPage?.data ?? []).map(toDashboardProduct);
+  const submitProduct = useSubmitSellerProduct();
+  const apiProducts = sellerPage?.data ?? [];
+  const catalogStatusById = Object.fromEntries(apiProducts.map((p: ApiProduct) => [p.id, p.status ?? "draft"]));
+  const products = apiProducts.map(toDashboardProduct);
 
   // Search & Filter state
   const [search, setSearch] = useState("");
@@ -50,10 +55,10 @@ export default function AllProductsPage() {
 
   // Dialogs States
   const [activeModal, setActiveModal] = useState<"add" | "edit" | "delete" | null>(null);
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<DashboardProduct | null>(null);
 
   // Add Product Form State
-  const [newProduct, setNewProduct] = useState<Omit<Product, "id">>({
+  const [newProduct, setNewProduct] = useState<Omit<DashboardProduct, "id">>({
     sku: "",
     name: "",
     brand: "",
@@ -82,7 +87,7 @@ export default function AllProductsPage() {
   });
 
   // Edit Product Form State
-  const [editProduct, setEditProduct] = useState<Product | null>(null);
+  const [editProduct, setEditProduct] = useState<DashboardProduct | null>(null);
 
   // Toast notifications state
   const [toast, setToast] = useState("");
@@ -554,6 +559,30 @@ export default function AllProductsPage() {
                           >
                             <Edit2 size={13} />
                           </button>
+
+                          {(catalogStatusById[p.id] === "draft" || catalogStatusById[p.id] === "rejected") && (
+                            <button
+                              onClick={async () => {
+                                try {
+                                  await submitProduct.mutateAsync(p.id);
+                                  triggerToast("Submitted for admin review.");
+                                } catch (err) {
+                                  triggerToast(apiErrorMessage(err, "Could not submit for review."));
+                                }
+                              }}
+                              title="Submit for review"
+                              disabled={submitProduct.isPending}
+                              className="px-2 py-1 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 transition-all text-[10px] font-bold uppercase"
+                            >
+                              Submit
+                            </button>
+                          )}
+
+                          {["submitted", "under_review"].includes(catalogStatusById[p.id] ?? "") && (
+                            <span className="px-2 py-1 rounded-xl bg-slate-100 text-slate-600 text-[10px] font-bold uppercase">
+                              In review
+                            </span>
+                          )}
 
                           <button
                             onClick={() => {

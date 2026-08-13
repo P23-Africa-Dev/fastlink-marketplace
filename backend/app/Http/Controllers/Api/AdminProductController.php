@@ -10,6 +10,7 @@ use App\Support\ApiResponse;
 use App\Support\ProductQuery;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class AdminProductController extends Controller
 {
@@ -55,6 +56,60 @@ class AdminProductController extends Controller
         return ApiResponse::success(
             (new ProductResource($product->fresh(['store', 'category', 'brand', 'images'])))->resolve(),
             'Product unpublished.',
+        );
+    }
+
+    public function moderation(Request $request): JsonResponse
+    {
+        $query = Product::query()
+            ->with(['store', 'category', 'brand', 'images'])
+            ->whereIn('status', ['submitted', 'under_review'])
+            ->orderByDesc('id');
+
+        ['page' => $page, 'limit' => $limit] = ProductQuery::page($request, 30);
+        $total = (clone $query)->count();
+        $products = $query->forPage($page, $limit)->get();
+
+        return ApiResponse::success([
+            'data' => ProductResource::collection($products)->resolve(),
+            'total' => $total,
+            'page' => $page,
+            'limit' => $limit,
+            'pendingCount' => Product::query()->where('status', 'submitted')->count(),
+        ]);
+    }
+
+    public function approveModeration(Request $request, Product $product): JsonResponse
+    {
+        if (! in_array($product->status, ['submitted', 'under_review'], true)) {
+            throw ValidationException::withMessages(['status' => 'Product is not awaiting moderation.']);
+        }
+
+        $product->update(['status' => 'published']);
+        AuditLog::record($request->user(), 'product.approved', $product);
+
+        return ApiResponse::success(
+            (new ProductResource($product->fresh(['store', 'category', 'brand', 'images'])))->resolve(),
+            'Product approved and published.',
+        );
+    }
+
+    public function rejectModeration(Request $request, Product $product): JsonResponse
+    {
+        $validated = $request->validate([
+            'note' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        if (! in_array($product->status, ['submitted', 'under_review'], true)) {
+            throw ValidationException::withMessages(['status' => 'Product is not awaiting moderation.']);
+        }
+
+        $product->update(['status' => 'rejected']);
+        AuditLog::record($request->user(), 'product.rejected', $product, ['note' => $validated['note'] ?? null]);
+
+        return ApiResponse::success(
+            (new ProductResource($product->fresh(['store', 'category', 'brand', 'images'])))->resolve(),
+            'Product rejected.',
         );
     }
 }

@@ -55,6 +55,8 @@ export const QUERY_KEYS = {
     ticket: (id: string) => [...QUERY_KEYS.seller.all, "tickets", id] as const,
     returns: (filters: Record<string, unknown> = {}) =>
       [...QUERY_KEYS.seller.all, "returns", filters] as const,
+    disputes: (filters: Record<string, unknown> = {}) =>
+      [...QUERY_KEYS.seller.all, "disputes", filters] as const,
   },
   orders: {
     all: ["orders"] as const,
@@ -120,6 +122,13 @@ export const QUERY_KEYS = {
     ledger: (filters: Record<string, unknown> = {}) => [...QUERY_KEYS.admin.all, "ledger", filters] as const,
     trustReports: (filters: Record<string, unknown> = {}) =>
       [...QUERY_KEYS.admin.all, "trust-reports", filters] as const,
+    disputes: (filters: Record<string, unknown> = {}) =>
+      [...QUERY_KEYS.admin.all, "disputes", filters] as const,
+    moderation: () => [...QUERY_KEYS.admin.all, "moderation"] as const,
+    webhooks: (filters: Record<string, unknown> = {}) =>
+      [...QUERY_KEYS.admin.all, "webhooks", filters] as const,
+    chargebacks: (filters: Record<string, unknown> = {}) =>
+      [...QUERY_KEYS.admin.all, "chargebacks", filters] as const,
   },
   conversations: {
     all: ["conversations"] as const,
@@ -136,6 +145,11 @@ export const QUERY_KEYS = {
   returns: {
     all: ["returns"] as const,
     order: (orderId: string) => [...QUERY_KEYS.returns.all, "order", orderId] as const,
+  },
+  disputes: {
+    all: ["disputes"] as const,
+    order: (orderId: string) => [...QUERY_KEYS.disputes.all, "order", orderId] as const,
+    list: () => [...QUERY_KEYS.disputes.all, "list"] as const,
   },
   notifications: {
     all: ["notifications"] as const,

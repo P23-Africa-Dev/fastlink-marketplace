@@ -19,7 +19,10 @@ use App\Http\Controllers\Api\BrandController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\CheckoutController;
 use App\Http\Controllers\Api\ConversationController;
-use App\Http\Controllers\Api\DealController;
+use App\Http\Controllers\Api\AdminChargebackController;
+use App\Http\Controllers\Api\AdminDisputeController;
+use App\Http\Controllers\Api\AdminWebhookController;
+use App\Http\Controllers\Api\DisputeController;
 use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\MallController;
 use App\Http\Controllers\Api\NotificationController;
@@ -31,6 +34,7 @@ use App\Http\Controllers\Api\ReturnController;
 use App\Http\Controllers\Api\ReviewController;
 use App\Http\Controllers\Api\RiderController;
 use App\Http\Controllers\Api\SellerDashboardController;
+use App\Http\Controllers\Api\SellerDisputeController;
 use App\Http\Controllers\Api\SellerCustomerController;
 use App\Http\Controllers\Api\SellerOnboardController;
 use App\Http\Controllers\Api\SellerAnalyticsController;
@@ -104,6 +108,11 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::get('/orders/{order}/invoice', [OrderController::class, 'invoice']);
     Route::get('/orders/{order}/returns', [ReturnController::class, 'show']);
     Route::post('/orders/{order}/returns', [ReturnController::class, 'store']);
+    Route::get('/orders/{order}/disputes', [DisputeController::class, 'showForOrder']);
+
+    Route::get('/disputes', [DisputeController::class, 'index']);
+    Route::post('/orders/{order}/disputes', [DisputeController::class, 'store']);
+    Route::get('/disputes/{dispute}', [DisputeController::class, 'show']);
 
     Route::get('/notifications', [NotificationController::class, 'index']);
     Route::patch('/notifications/{notification}/read', [NotificationController::class, 'read']);
@@ -150,6 +159,11 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::get('/seller/returns', [SellerReturnController::class, 'index']);
         Route::patch('/seller/returns/{return}', [SellerReturnController::class, 'update']);
 
+        Route::get('/seller/disputes', [SellerDisputeController::class, 'index']);
+        Route::post('/seller/disputes/{dispute}/respond', [SellerDisputeController::class, 'respond']);
+
+        Route::post('/seller/products/{product}/submit', [SellerProductController::class, 'submitForReview']);
+
         Route::get('/seller/dashboard', [SellerDashboardController::class, 'show']);
         Route::get('/seller/customers', [SellerCustomerController::class, 'index']);
         Route::get('/seller/customers/{customer}', [SellerCustomerController::class, 'show']);
@@ -193,8 +207,11 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::post('/stores/{store}/suspend', [AdminStoreController::class, 'suspend']);
 
         Route::get('/products', [AdminProductController::class, 'index']);
+        Route::get('/products/moderation', [AdminProductController::class, 'moderation']);
         Route::get('/products/{product}', [AdminProductController::class, 'show']);
         Route::patch('/products/{product}/unpublish', [AdminProductController::class, 'unpublish']);
+        Route::post('/products/{product}/approve', [AdminProductController::class, 'approveModeration']);
+        Route::post('/products/{product}/reject', [AdminProductController::class, 'rejectModeration']);
 
         Route::get('/orders', [AdminOrderController::class, 'index']);
         Route::get('/orders/{order}', [AdminOrderController::class, 'show']);
@@ -211,6 +228,12 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::get('/ledger', [AdminLedgerController::class, 'index']);
         Route::get('/trust-reports', [AdminTrustReportController::class, 'index']);
         Route::patch('/trust-reports/{trustReport}', [AdminTrustReportController::class, 'update']);
+        Route::get('/disputes', [AdminDisputeController::class, 'index']);
+        Route::patch('/disputes/{dispute}', [AdminDisputeController::class, 'update']);
+        Route::get('/chargebacks', [AdminChargebackController::class, 'index']);
+        Route::post('/chargebacks', [AdminChargebackController::class, 'store']);
+        Route::patch('/chargebacks/{chargeback}', [AdminChargebackController::class, 'update']);
+        Route::get('/webhooks/paystack', [AdminWebhookController::class, 'index']);
 
         Route::get('/malls', [AdminCatalogController::class, 'malls']);
         Route::get('/malls/{mall}', [AdminCatalogController::class, 'showMall']);

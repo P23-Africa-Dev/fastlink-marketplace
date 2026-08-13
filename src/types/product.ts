@@ -1,3 +1,5 @@
+import type { StoreReputation } from "@/types/admin";
+
 export interface ProductImage {
   id: string;
   url: string;
@@ -54,6 +56,7 @@ export interface Product {
   isNew: boolean;
   isBestseller: boolean;
   status?: string;
+  storeReputation?: StoreReputation;
   costPrice?: number;
   createdAt: string;
   updatedAt: string;

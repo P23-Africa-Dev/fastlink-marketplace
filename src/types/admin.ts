@@ -140,3 +140,81 @@ export interface AdminTrustReportsResponse {
   limit: number;
   openCount: number;
 }
+
+export interface DisputeRow {
+  id: string;
+  type: string;
+  status: string;
+  displayStatus: string;
+  reason: string;
+  buyerEvidence?: string | null;
+  sellerResponse?: string | null;
+  resolution?: string | null;
+  adminNote?: string | null;
+  refundAmount?: number | null;
+  order?: { id: string; reference: string; total: number; status: string } | null;
+  store?: { id: string; name: string } | null;
+  buyer?: { id: string; name: string; email: string } | null;
+  createdAt: string;
+  resolvedAt?: string | null;
+}
+
+export interface AdminDisputesResponse {
+  data: DisputeRow[];
+  total: number;
+  page: number;
+  limit: number;
+  openCount: number;
+}
+
+export interface WebhookEventRow {
+  id: string;
+  event?: string | null;
+  reference?: string | null;
+  status: string;
+  error?: string | null;
+  createdAt: string;
+}
+
+export interface AdminWebhooksResponse {
+  data: WebhookEventRow[];
+  total: number;
+  page: number;
+  limit: number;
+  failedCount: number;
+}
+
+export interface ChargebackRow {
+  id: string;
+  amount: number;
+  providerReference?: string | null;
+  reason: string;
+  status: string;
+  displayStatus: string;
+  adminNote?: string | null;
+  order?: { id: string; reference: string; total: number } | null;
+  store?: { id: string; name: string } | null;
+  payment?: { id: string; reference: string; amount: number; status: string } | null;
+  createdAt: string;
+  resolvedAt?: string | null;
+}
+
+export interface AdminChargebacksResponse {
+  data: ChargebackRow[];
+  total: number;
+  page: number;
+  limit: number;
+  openCount: number;
+}
+
+export interface StoreReputation {
+  score: number;
+  badge: string | null;
+  metrics: {
+    averageRating: number;
+    reviewCount: number;
+    fulfillmentRate: number;
+    cancellationRate: number;
+    totalOrders: number;
+  };
+}

@@ -97,7 +97,25 @@ class Product extends Model
 
     public function scopeActive($query)
     {
-        return $query->where('status', 'active');
+        return $query->whereIn('status', self::publicStatuses());
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function publicStatuses(): array
+    {
+        return ['active', 'published'];
+    }
+
+    public static function isPublicStatus(?string $status): bool
+    {
+        return in_array($status, self::publicStatuses(), true);
+    }
+
+    public function isPubliclyVisible(): bool
+    {
+        return self::isPublicStatus($this->status);
     }
 
     public static function uniqueSlug(string $name): string

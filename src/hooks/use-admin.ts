@@ -301,3 +301,87 @@ export function useUpdateTrustReport() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.admin.trustReports() }),
   });
 }
+
+export function useAdminDisputes(filters: { status?: string } = {}) {
+  return useQuery({
+    queryKey: QUERY_KEYS.admin.disputes(filters),
+    queryFn: () => adminApi.disputes({ ...filters, limit: 30 }),
+  });
+}
+
+export function useUpdateDispute() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      ...payload
+    }: {
+      id: string;
+      action: "review" | "resolve";
+      resolution?: string;
+      admin_note?: string;
+      refund_amount?: number;
+    }) => adminApi.updateDispute(id, payload),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.admin.disputes() }),
+  });
+}
+
+export function useAdminModeration() {
+  return useQuery({
+    queryKey: QUERY_KEYS.admin.moderation(),
+    queryFn: adminApi.moderationQueue,
+  });
+}
+
+export function useAdminProductModerationActions() {
+  const queryClient = useQueryClient();
+  return {
+    approve: useMutation({
+      mutationFn: adminApi.approveProduct,
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.admin.moderation() });
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.admin.products() });
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.all });
+      },
+    }),
+    reject: useMutation({
+      mutationFn: ({ id, note }: { id: string; note?: string }) => adminApi.rejectProduct(id, note),
+      onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.admin.moderation() }),
+    }),
+  };
+}
+
+export function useAdminWebhooks(filters: { status?: string } = {}) {
+  return useQuery({
+    queryKey: QUERY_KEYS.admin.webhooks(filters),
+    queryFn: () => adminApi.webhooks({ ...filters, limit: 50 }),
+  });
+}
+
+export function useAdminChargebacks(filters: { status?: string } = {}) {
+  return useQuery({
+    queryKey: QUERY_KEYS.admin.chargebacks(filters),
+    queryFn: () => adminApi.chargebacks({ ...filters, limit: 30 }),
+  });
+}
+
+export function useRecordChargeback() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: adminApi.recordChargeback,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.admin.chargebacks() });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.admin.ledger() });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.admin.payments() });
+    },
+  });
+}
+
+export function useUpdateChargeback() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, ...payload }: { id: string; status: "won" | "lost"; admin_note?: string }) =>
+      adminApi.updateChargeback(id, payload),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.admin.chargebacks() }),
+  });
+}
