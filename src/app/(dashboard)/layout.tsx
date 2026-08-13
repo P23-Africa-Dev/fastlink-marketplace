@@ -27,21 +27,25 @@ import {
   ShoppingCart,
   Tag,
   Lightbulb,
+  UserCog,
   type LucideIcon,
 } from "lucide-react";
 
 import { useAuthStore } from "@/store/auth-store";
 import { useCartStore } from "@/store/cart-store";
 import { cn } from "@/lib/utils";
+import { canSeller } from "@/lib/seller-access";
 import { useConversations } from "@/hooks/use-conversations";
 import { authApi } from "@/lib/api";
 import { queryClient } from "@/lib/query-client";
 import { PendingStoreBanner } from "@/components/dashboard/pending-store-banner";
+import type { SellerPermission } from "@/types/user";
 
 interface NavItem {
   href: string;
   label: string;
   icon: LucideIcon;
+  perm?: SellerPermission;
   showStar?: boolean;
   hasUnread?: boolean;
 }
@@ -56,32 +60,33 @@ const NAV_SECTIONS: NavSection[] = [
     title: "OVERVIEW",
     items: [
       { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-      { href: "/orders", label: "Order", icon: ShoppingBag },
-      { href: "/returns", label: "Returns", icon: RotateCcw },
-      { href: "/disputes", label: "Disputes", icon: Scale },
-      { href: "/all-products", label: "Products", icon: Package },
-      { href: "/inventory", label: "Inventory", icon: Boxes },
-      { href: "/customers", label: "Customers", icon: Users },
-      { href: "/messages", label: "Messages", icon: MessageSquare, hasUnread: true },
+      { href: "/orders", label: "Order", icon: ShoppingBag, perm: "orders" },
+      { href: "/returns", label: "Returns", icon: RotateCcw, perm: "orders" },
+      { href: "/disputes", label: "Disputes", icon: Scale, perm: "orders" },
+      { href: "/all-products", label: "Products", icon: Package, perm: "inventory" },
+      { href: "/inventory", label: "Inventory", icon: Boxes, perm: "inventory" },
+      { href: "/customers", label: "Customers", icon: Users, perm: "orders" },
+      { href: "/messages", label: "Messages", icon: MessageSquare, hasUnread: true, perm: "support" },
     ],
   },
   {
     title: "FINANCE & GROWTH",
     items: [
-      { href: "/payments", label: "Payments", icon: CreditCard, showStar: true },
-      { href: "/payouts", label: "Payouts", icon: Wallet },
-      { href: "/analytics", label: "Analytics", icon: BarChart3 },
-      { href: "/growth", label: "Growth", icon: Lightbulb },
-      { href: "/promos", label: "Promos", icon: Tag },
-      { href: "/marketing", label: "Marketing", icon: Megaphone },
-      { href: "/reviews", label: "Reviews", icon: Star },
+      { href: "/payments", label: "Payments", icon: CreditCard, showStar: true, perm: "finance" },
+      { href: "/payouts", label: "Payouts", icon: Wallet, perm: "finance" },
+      { href: "/analytics", label: "Analytics", icon: BarChart3, perm: "finance" },
+      { href: "/growth", label: "Growth", icon: Lightbulb, perm: "manage" },
+      { href: "/promos", label: "Promos", icon: Tag, perm: "manage" },
+      { href: "/marketing", label: "Marketing", icon: Megaphone, perm: "manage" },
+      { href: "/reviews", label: "Reviews", icon: Star, perm: "support" },
     ],
   },
   {
     title: "SYSTEM",
     items: [
-      { href: "/settings", label: "Settings", icon: Settings },
-      { href: "/support", label: "Support", icon: HelpCircle },
+      { href: "/settings", label: "Settings", icon: Settings, perm: "manage" },
+      { href: "/team", label: "Team", icon: UserCog, perm: "manage" },
+      { href: "/support", label: "Support", icon: HelpCircle, perm: "support" },
     ],
   },
 ];
@@ -94,7 +99,12 @@ interface SidebarNavProps {
 
 function SidebarNav({ pathname, onItemClick, onLogoutClick }: SidebarNavProps) {
   const { data } = useConversations();
+  const user = useAuthStore((s) => s.user);
   const unreadCount = (data?.data ?? []).reduce((sum, c) => sum + c.unreadCount, 0);
+  const sections = NAV_SECTIONS.map((section) => ({
+    ...section,
+    items: section.items.filter((item) => !item.perm || canSeller(user, item.perm)),
+  })).filter((section) => section.items.length > 0);
 
   const checkIsActive = (href: string) => {
     if (href === "/dashboard") {
@@ -109,7 +119,7 @@ function SidebarNav({ pathname, onItemClick, onLogoutClick }: SidebarNavProps) {
   return (
     <div className="flex flex-col h-full select-none justify-between">
       <nav className="flex-1 overflow-y-auto pr-1 space-y-5">
-        {NAV_SECTIONS.map((section) => (
+        {sections.map((section) => (
           <div key={section.title} className="space-y-1.5">
             <h3 className="px-3.5 text-[10px] font-black uppercase tracking-wider text-purple-900/50">
               {section.title}
@@ -350,6 +360,17 @@ function HeaderTitleContent() {
         </h1>
         <p className="text-purple-200 text-[10px] md:text-xs font-semibold">
           Dashboard &gt; Settings &gt; General
+        </p>
+      </>
+    );
+  }
+
+  if (pathname === "/team") {
+    return (
+      <>
+        <h1 className="text-white font-bold text-xl md:text-2xl leading-tight">Store Team</h1>
+        <p className="text-purple-200 text-[10px] md:text-xs font-semibold">
+          Dashboard &gt; Team &gt; Staff Roles
         </p>
       </>
     );

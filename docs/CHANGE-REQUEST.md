@@ -201,7 +201,7 @@ Wallets, loyalty, gift cards, affiliates, auctions, subscriptions, B2B/RFQ, AI a
 | CR-3.5 | Advanced search | **Partial (13 Aug 2026):** `/search/suggest` autocomplete (LIKE/prefix). Meilisearch still optional |
 | CR-3.6 | Personalization | **Shipped (13 Aug 2026):** `GET /recommendations` from views, purchases, wishlist |
 | CR-3.7 | Seller growth center | **Shipped (13 Aug 2026):** restock / promote insights at `/seller/growth` |
-| CR-3.8 | Seller team permissions | Store staff roles: inventory, orders, finance, support |
+| CR-3.8 | Seller team permissions | **Shipped (13 Aug 2026):** store staff roles inventory / orders / finance / support; owner invites by email |
 
 ---
 
@@ -221,29 +221,29 @@ Wallets, loyalty, gift cards, affiliates, auctions, subscriptions, B2B/RFQ, AI a
 
 ## 10. Feature matrix (25-area comparison)
 
-Status as of Phase 11:
+Status as of 13 Aug 2026 (Tier 3):
 
 | # | Capability | Status |
 |---|------------|--------|
 | 1 | Trust & Safety | Partial |
-| 2 | Dispute resolution | Missing |
+| 2 | Dispute resolution | Shipped |
 | 3 | Seller reputation system | Partial |
 | 4 | Product catalog governance | Partial |
 | 5 | Inventory management | Partial |
 | 6 | Delivery architecture | Partial |
 | 7 | Multi-store cart / order group | Partial (backend built) |
-| 8 | Promotions engine | Missing |
-| 9 | Personalization | Missing |
+| 8 | Promotions engine | Shipped |
+| 9 | Personalization | Shipped |
 | 10 | Modern search | Partial |
 | 11 | AI shopping assistant | Missing (deferred) |
 | 12 | Seller AI assistant | Missing (deferred) |
-| 13 | Seller growth tools | Partial |
+| 13 | Seller growth tools | Shipped |
 | 14 | Seller subscriptions | Missing |
-| 15 | Seller team management | Missing |
+| 15 | Seller team management | Shipped |
 | 16 | Buyer wallet / credits | Missing (deferred) |
-| 17 | Loyalty & rewards | Missing (deferred) |
-| 18 | Referral system | Missing |
-| 19 | Abandoned cart recovery | Missing |
+| 17 | Loyalty & rewards | Shipped |
+| 18 | Referral system | Shipped |
+| 19 | Abandoned cart recovery | Shipped |
 | 20 | Event / activity system | Partial (`page_views` only) |
 | 21 | Feature flags | Missing |
 | 22 | Marketplace config center | Partial (commission only) |

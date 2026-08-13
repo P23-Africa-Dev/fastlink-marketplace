@@ -59,6 +59,7 @@ use App\Http\Controllers\Api\SellerProductController;
 use App\Http\Controllers\Api\SellerReturnController;
 use App\Http\Controllers\Api\SellerReviewController;
 use App\Http\Controllers\Api\SellerSettingsController;
+use App\Http\Controllers\Api\SellerStaffController;
 use App\Http\Controllers\Api\SellerStoreController;
 use App\Http\Controllers\Api\StoreController;
 use App\Http\Controllers\Api\SupportTicketController;
@@ -165,60 +166,71 @@ Route::middleware('auth:sanctum')->group(function (): void {
     });
 
     Route::middleware('role:seller,admin')->group(function (): void {
-        Route::get('/seller/products', [SellerProductController::class, 'index']);
-        Route::post('/seller/products', [SellerProductController::class, 'store']);
-        Route::get('/seller/products/{product}', [SellerProductController::class, 'show']);
-        Route::put('/seller/products/{product}', [SellerProductController::class, 'update']);
-        Route::patch('/seller/products/{product}', [SellerProductController::class, 'update']);
-        Route::delete('/seller/products/{product}', [SellerProductController::class, 'destroy']);
-        Route::post('/seller/products/{product}/images', [SellerProductController::class, 'images']);
-        Route::patch('/seller/products/{product}/stock', [SellerProductController::class, 'stock']);
-        Route::get('/seller/inventory/movements', [SellerInventoryController::class, 'index']);
-        Route::get('/seller/promo-codes', [SellerPromoCodeController::class, 'index']);
-        Route::post('/seller/promo-codes', [SellerPromoCodeController::class, 'store']);
-        Route::patch('/seller/promo-codes/{promoCode}', [SellerPromoCodeController::class, 'update']);
-        Route::get('/seller/growth', [SellerGrowthController::class, 'show']);
-        Route::get('/seller/documents', [SellerDocumentController::class, 'index']);
-        Route::post('/seller/documents', [SellerDocumentController::class, 'store']);
-
-        Route::get('/seller/orders', [SellerOrderController::class, 'index']);
-        Route::get('/seller/orders/{order}', [SellerOrderController::class, 'show']);
-        Route::patch('/seller/orders/{order}/status', [SellerOrderController::class, 'updateStatus']);
-
-        Route::get('/seller/returns', [SellerReturnController::class, 'index']);
-        Route::patch('/seller/returns/{return}', [SellerReturnController::class, 'update']);
-
-        Route::get('/seller/disputes', [SellerDisputeController::class, 'index']);
-        Route::post('/seller/disputes/{dispute}/respond', [SellerDisputeController::class, 'respond']);
-
-        Route::post('/seller/products/{product}/submit', [SellerProductController::class, 'submitForReview']);
-
         Route::get('/seller/dashboard', [SellerDashboardController::class, 'show']);
-        Route::get('/seller/customers', [SellerCustomerController::class, 'index']);
-        Route::get('/seller/customers/{customer}', [SellerCustomerController::class, 'show']);
         Route::get('/seller/store', [SellerStoreController::class, 'show']);
-        Route::patch('/seller/store', [SellerStoreController::class, 'update']);
-        Route::get('/seller/settings', [SellerSettingsController::class, 'show']);
-        Route::patch('/seller/settings', [SellerSettingsController::class, 'update']);
-        Route::get('/seller/reviews', [SellerReviewController::class, 'index']);
-        Route::post('/seller/reviews/{review}/reply', [SellerReviewController::class, 'reply']);
-        Route::patch('/seller/reviews/{review}', [SellerReviewController::class, 'update']);
 
-        Route::get('/seller/payments', [SellerPaymentController::class, 'index']);
-        Route::get('/seller/payouts', [SellerPayoutController::class, 'index']);
-        Route::post('/seller/payouts', [SellerPayoutController::class, 'store']);
-        Route::get('/seller/payout-accounts', [SellerPayoutController::class, 'accounts']);
-        Route::post('/seller/payout-accounts', [SellerPayoutController::class, 'updateAccount']);
+        Route::middleware('seller.perm:inventory')->group(function (): void {
+            Route::get('/seller/products', [SellerProductController::class, 'index']);
+            Route::post('/seller/products', [SellerProductController::class, 'store']);
+            Route::get('/seller/products/{product}', [SellerProductController::class, 'show']);
+            Route::put('/seller/products/{product}', [SellerProductController::class, 'update']);
+            Route::patch('/seller/products/{product}', [SellerProductController::class, 'update']);
+            Route::delete('/seller/products/{product}', [SellerProductController::class, 'destroy']);
+            Route::post('/seller/products/{product}/images', [SellerProductController::class, 'images']);
+            Route::patch('/seller/products/{product}/stock', [SellerProductController::class, 'stock']);
+            Route::post('/seller/products/{product}/submit', [SellerProductController::class, 'submitForReview']);
+            Route::get('/seller/inventory/movements', [SellerInventoryController::class, 'index']);
+        });
 
-        Route::get('/seller/analytics', [SellerAnalyticsController::class, 'show']);
-        Route::get('/seller/marketing/campaigns', [SellerCampaignController::class, 'index']);
-        Route::post('/seller/marketing/campaigns', [SellerCampaignController::class, 'store']);
-        Route::patch('/seller/marketing/campaigns/{campaign}', [SellerCampaignController::class, 'update']);
+        Route::middleware('seller.perm:orders')->group(function (): void {
+            Route::get('/seller/orders', [SellerOrderController::class, 'index']);
+            Route::get('/seller/orders/{order}', [SellerOrderController::class, 'show']);
+            Route::patch('/seller/orders/{order}/status', [SellerOrderController::class, 'updateStatus']);
+            Route::get('/seller/returns', [SellerReturnController::class, 'index']);
+            Route::patch('/seller/returns/{return}', [SellerReturnController::class, 'update']);
+            Route::get('/seller/disputes', [SellerDisputeController::class, 'index']);
+            Route::post('/seller/disputes/{dispute}/respond', [SellerDisputeController::class, 'respond']);
+            Route::get('/seller/customers', [SellerCustomerController::class, 'index']);
+            Route::get('/seller/customers/{customer}', [SellerCustomerController::class, 'show']);
+        });
 
-        Route::get('/seller/support/tickets', [SupportTicketController::class, 'index']);
-        Route::post('/seller/support/tickets', [SupportTicketController::class, 'store']);
-        Route::get('/seller/support/tickets/{ticket}', [SupportTicketController::class, 'show']);
-        Route::post('/seller/support/tickets/{ticket}/messages', [SupportTicketController::class, 'message']);
+        Route::middleware('seller.perm:finance')->group(function (): void {
+            Route::get('/seller/payments', [SellerPaymentController::class, 'index']);
+            Route::get('/seller/payouts', [SellerPayoutController::class, 'index']);
+            Route::post('/seller/payouts', [SellerPayoutController::class, 'store']);
+            Route::get('/seller/analytics', [SellerAnalyticsController::class, 'show']);
+        });
+
+        Route::middleware('seller.perm:support')->group(function (): void {
+            Route::get('/seller/reviews', [SellerReviewController::class, 'index']);
+            Route::post('/seller/reviews/{review}/reply', [SellerReviewController::class, 'reply']);
+            Route::patch('/seller/reviews/{review}', [SellerReviewController::class, 'update']);
+            Route::get('/seller/support/tickets', [SupportTicketController::class, 'index']);
+            Route::post('/seller/support/tickets', [SupportTicketController::class, 'store']);
+            Route::get('/seller/support/tickets/{ticket}', [SupportTicketController::class, 'show']);
+            Route::post('/seller/support/tickets/{ticket}/messages', [SupportTicketController::class, 'message']);
+        });
+
+        Route::middleware('seller.perm:manage')->group(function (): void {
+            Route::patch('/seller/store', [SellerStoreController::class, 'update']);
+            Route::get('/seller/settings', [SellerSettingsController::class, 'show']);
+            Route::patch('/seller/settings', [SellerSettingsController::class, 'update']);
+            Route::get('/seller/documents', [SellerDocumentController::class, 'index']);
+            Route::post('/seller/documents', [SellerDocumentController::class, 'store']);
+            Route::get('/seller/promo-codes', [SellerPromoCodeController::class, 'index']);
+            Route::post('/seller/promo-codes', [SellerPromoCodeController::class, 'store']);
+            Route::patch('/seller/promo-codes/{promoCode}', [SellerPromoCodeController::class, 'update']);
+            Route::get('/seller/growth', [SellerGrowthController::class, 'show']);
+            Route::get('/seller/marketing/campaigns', [SellerCampaignController::class, 'index']);
+            Route::post('/seller/marketing/campaigns', [SellerCampaignController::class, 'store']);
+            Route::patch('/seller/marketing/campaigns/{campaign}', [SellerCampaignController::class, 'update']);
+            Route::get('/seller/payout-accounts', [SellerPayoutController::class, 'accounts']);
+            Route::post('/seller/payout-accounts', [SellerPayoutController::class, 'updateAccount']);
+            Route::get('/seller/staff', [SellerStaffController::class, 'index']);
+            Route::post('/seller/staff', [SellerStaffController::class, 'store']);
+            Route::patch('/seller/staff/{staff}', [SellerStaffController::class, 'update']);
+            Route::delete('/seller/staff/{staff}', [SellerStaffController::class, 'destroy']);
+        });
     });
 
     Route::middleware('role:admin')->prefix('admin')->group(function (): void {

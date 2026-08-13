@@ -4,6 +4,7 @@ namespace App\Policies;
 
 use App\Models\Order;
 use App\Models\User;
+use App\Support\SellerContext;
 
 class OrderPolicy
 {
@@ -18,7 +19,7 @@ class OrderPolicy
             return true;
         }
 
-        return $order->store?->owner_id === $user->id;
+        return SellerContext::storeIds($user)->contains($order->store_id);
     }
 
     public function update(User $user, Order $order): bool
@@ -27,6 +28,6 @@ class OrderPolicy
             return true;
         }
 
-        return $order->store?->owner_id === $user->id;
+        return SellerContext::storeIds($user)->contains($order->store_id);
     }
 }

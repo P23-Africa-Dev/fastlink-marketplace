@@ -31,7 +31,7 @@ class SellerProductController extends Controller
             ->orderByDesc('id');
 
         if ($request->user()->role !== 'admin') {
-            $query->whereIn('store_id', $request->user()->stores()->pluck('id'));
+            $query->whereIn('store_id', \App\Support\SellerContext::storeIds($request->user()));
         }
 
         if (! $request->filled('status') || $request->query('status') === 'All') {
@@ -218,12 +218,7 @@ class SellerProductController extends Controller
             return Store::query()->findOrFail($request->input('store_id'));
         }
 
-        $store = $user->store;
-        if (! $store) {
-            abort(422, 'Create a store before adding products.');
-        }
-
-        return $store;
+        return \App\Support\SellerContext::storeOrFail($user);
     }
 
     /**

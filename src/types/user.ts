@@ -7,8 +7,17 @@ export interface User {
   status?: "active" | "pending" | "suspended";
   phone?: string | null;
   loyaltyPoints?: number;
+  sellerAccess?: SellerAccess | null;
   createdAt: string;
   addresses?: Address[];
+}
+
+export type SellerPermission = "inventory" | "orders" | "finance" | "support" | "manage";
+
+export interface SellerAccess {
+  isOwner: boolean;
+  staffRole: string | null;
+  permissions: SellerPermission[];
 }
 
 export interface Address {

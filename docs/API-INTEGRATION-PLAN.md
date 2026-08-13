@@ -999,7 +999,13 @@ Seller:
 
 - `GET /recommendations` (optional Sanctum): `forYou` from views + wishlist + purchases; `recentlyViewed`. Home “For you” rail.
 
-Still deferred: Meilisearch typo engine (CR-3.5 remainder), seller staff roles (CR-3.8).
+**Seller team (CR-3.8)**
+
+- `store_staff` with roles `inventory`, `orders`, `finance`, `support`. Owner invites an existing account by email (`POST /seller/staff`).
+- `SellerContext` unions owned + staffed stores. Middleware `seller.perm:*` gates seller routes. `/auth/me` includes `sellerAccess`.
+- Dashboard `/team` UI; sidebar hides sections the staff role cannot access.
+
+Still deferred: Meilisearch typo engine (CR-3.5 remainder).
 
 ---
 

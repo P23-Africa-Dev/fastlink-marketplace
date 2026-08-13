@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnsureSellerPermission;
 use App\Http\Middleware\EnsureUserHasRole;
 use App\Support\ApiResponse;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -23,6 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'role' => EnsureUserHasRole::class,
+            'seller.perm' => EnsureSellerPermission::class,
         ]);
         $middleware->validateCsrfTokens(except: [
             'api/webhooks/paystack',

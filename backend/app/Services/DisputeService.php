@@ -63,7 +63,7 @@ class DisputeService
 
     public function respond(User $seller, Dispute $dispute, string $response): Dispute
     {
-        $storeIds = $seller->stores()->pluck('id');
+        $storeIds = \App\Support\SellerContext::storeIds($seller);
         if (! $storeIds->contains($dispute->store_id)) {
             abort(403);
         }

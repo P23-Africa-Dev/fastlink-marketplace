@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { cartApi, loyaltyApi, promoApi, referralsApi, sellerGrowthApi, sellerPromoCodesApi } from "@/lib/api";
+import { cartApi, loyaltyApi, promoApi, referralsApi, sellerGrowthApi, sellerPromoCodesApi, sellerStaffApi } from "@/lib/api";
 import { QUERY_KEYS } from "@/lib/query-client";
 import { useAuthStore } from "@/store/auth-store";
 import { useCartStore } from "@/store/cart-store";
@@ -59,6 +59,33 @@ export function useSellerPromoCodes() {
     queryKey: QUERY_KEYS.seller.promoCodes(),
     queryFn: sellerPromoCodesApi.list,
   });
+}
+
+export function useSellerStaff() {
+  return useQuery({
+    queryKey: QUERY_KEYS.seller.staff(),
+    queryFn: sellerStaffApi.list,
+  });
+}
+
+export function useSellerStaffActions() {
+  const queryClient = useQueryClient();
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.seller.staff() });
+  return {
+    invite: useMutation({
+      mutationFn: sellerStaffApi.invite,
+      onSuccess: invalidate,
+    }),
+    update: useMutation({
+      mutationFn: ({ id, ...payload }: { id: string; role?: string; status?: string }) =>
+        sellerStaffApi.update(id, payload),
+      onSuccess: invalidate,
+    }),
+    remove: useMutation({
+      mutationFn: sellerStaffApi.remove,
+      onSuccess: invalidate,
+    }),
+  };
 }
 
 export function useSellerPromoCodeActions() {

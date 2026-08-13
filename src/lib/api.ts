@@ -46,7 +46,7 @@ import type {
 } from "@/types/inbox";
 import type { NotificationListResult } from "@/types/notifications";
 import type { ApiReturnRequest } from "@/types/returns";
-import type { GrowthInsight, LoyaltySummary, PromoCodeRow, PromoPreview, ReferralSummary, SearchSuggestResult } from "@/types/growth";
+import type { GrowthInsight, LoyaltySummary, PromoCodeRow, PromoPreview, ReferralSummary, SearchSuggestResult, StoreTeam, StoreStaffMember } from "@/types/growth";
 import type {
   BrandPartner,
   DealProduct,
@@ -1197,6 +1197,25 @@ export const sellerPromoCodesApi = {
   update: async (id: string, payload: Partial<{ is_active: boolean; value: number; ends_at: string | null }>) => {
     const { data } = await apiClient.patch<ApiResponse<PromoCodeRow>>(`/seller/promo-codes/${id}`, payload);
     return data.data;
+  },
+};
+
+export const sellerStaffApi = {
+  list: async () => {
+    const { data } = await apiClient.get<ApiResponse<StoreTeam>>("/seller/staff");
+    return data.data;
+  },
+  invite: async (payload: { email: string; role: "inventory" | "orders" | "finance" | "support" }) => {
+    const { data } = await apiClient.post<ApiResponse<StoreStaffMember>>("/seller/staff", payload);
+    return data.data;
+  },
+  update: async (id: string, payload: { role?: string; status?: string }) => {
+    const { data } = await apiClient.patch<ApiResponse<StoreStaffMember>>(`/seller/staff/${id}`, payload);
+    return data.data;
+  },
+  remove: async (id: string) => {
+    const { data } = await apiClient.delete<ApiResponse<null>>(`/seller/staff/${id}`);
+    return data;
   },
 };
 

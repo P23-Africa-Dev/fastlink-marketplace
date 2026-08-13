@@ -28,7 +28,9 @@ class ConversationController extends Controller
 
         if ($user->role === 'seller' || $user->role === 'admin') {
             $storeIds = SellerContext::storeIds($user);
-            if ($storeIds->isNotEmpty() && $user->role === 'seller') {
+            if ($user->role === 'seller' && ! SellerContext::can($user, 'support')) {
+                $query->whereRaw('1 = 0');
+            } elseif ($storeIds->isNotEmpty() && $user->role === 'seller') {
                 $query->whereIn('store_id', $storeIds);
             } elseif ($user->role === 'seller') {
                 $query->whereRaw('1 = 0');
@@ -197,7 +199,8 @@ class ConversationController extends Controller
             return;
         }
 
-        $ownsStore = SellerContext::storeIds($user)->contains($conversation->store_id);
+        $ownsStore = SellerContext::storeIds($user)->contains($conversation->store_id)
+            && ($user->role !== 'seller' || SellerContext::can($user, 'support'));
         $isBuyer = $conversation->buyer_id === $user->id;
 
         if ($sellerOnly && ! $ownsStore) {

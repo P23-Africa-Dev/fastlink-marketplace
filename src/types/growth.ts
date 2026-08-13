@@ -51,3 +51,20 @@ export interface SearchSuggestResult {
   brands: SearchSuggestion[];
   stores: SearchSuggestion[];
 }
+
+export type StoreStaffRole = "inventory" | "orders" | "finance" | "support";
+
+export interface StoreStaffMember {
+  id: string;
+  userId: string;
+  name: string;
+  email: string;
+  role: StoreStaffRole | string;
+  status: "active" | "revoked" | string;
+  createdAt?: string | null;
+}
+
+export interface StoreTeam {
+  owner: { id: string; name: string; email: string; role: "owner" } | null;
+  staff: StoreStaffMember[];
+}

@@ -41,6 +41,11 @@ class User extends Authenticatable
         return $this->hasMany(Store::class, 'owner_id');
     }
 
+    public function staffMemberships(): HasMany
+    {
+        return $this->hasMany(StoreStaff::class);
+    }
+
     public function addresses(): HasMany
     {
         return $this->hasMany(Address::class);

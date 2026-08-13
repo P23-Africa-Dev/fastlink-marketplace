@@ -64,6 +64,7 @@ export const QUERY_KEYS = {
     documents: () => [...QUERY_KEYS.seller.all, "documents"] as const,
     promoCodes: () => [...QUERY_KEYS.seller.all, "promo-codes"] as const,
     growth: () => [...QUERY_KEYS.seller.all, "growth"] as const,
+    staff: () => [...QUERY_KEYS.seller.all, "staff"] as const,
   },
   orders: {
     all: ["orders"] as const,

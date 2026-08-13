@@ -15,6 +15,11 @@ export const SELLER_PATH_PREFIXES = [
   "/returns",
   "/settings",
   "/support",
+  "/growth",
+  "/promos",
+  "/inventory",
+  "/disputes",
+  "/team",
 ];
 
 export function writeAuthCookies(token: string, role: string): void {

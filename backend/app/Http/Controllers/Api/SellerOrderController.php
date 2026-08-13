@@ -27,7 +27,7 @@ class SellerOrderController extends Controller
             ->orderByDesc('id');
 
         if ($request->user()->role !== 'admin') {
-            $query->whereIn('store_id', $request->user()->stores()->pluck('id'));
+            $query->whereIn('store_id', \App\Support\SellerContext::storeIds($request->user()));
         }
 
         if ($request->filled('status') && $request->query('status') !== 'All') {

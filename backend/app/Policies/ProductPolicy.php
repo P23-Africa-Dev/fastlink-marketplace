@@ -3,7 +3,9 @@
 namespace App\Policies;
 
 use App\Models\Product;
+use App\Models\Store;
 use App\Models\User;
+use App\Support\SellerContext;
 
 class ProductPolicy
 {
@@ -23,7 +25,7 @@ class ProductPolicy
 
     public function view(User $user, Product $product): bool
     {
-        return $product->store?->owner_id === $user->id;
+        return SellerContext::storeIds($user)->contains($product->store_id);
     }
 
     public function create(User $user): bool
@@ -32,14 +34,14 @@ class ProductPolicy
             return false;
         }
 
-        $store = $user->store;
+        $store = $user->store ?? Store::query()->whereIn('id', SellerContext::storeIds($user))->first();
 
         return $store !== null && $store->status === 'approved';
     }
 
     public function update(User $user, Product $product): bool
     {
-        if ($product->store?->owner_id !== $user->id) {
+        if (! SellerContext::storeIds($user)->contains($product->store_id)) {
             return false;
         }
 

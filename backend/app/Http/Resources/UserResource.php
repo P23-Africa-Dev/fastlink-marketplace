@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Support\SellerContext;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -22,6 +23,9 @@ class UserResource extends JsonResource
             'status' => $this->status,
             'phone' => $this->phone,
             'loyaltyPoints' => (int) ($this->loyalty_points ?? 0),
+            'sellerAccess' => in_array($this->role, ['seller', 'admin'], true)
+                ? SellerContext::accessPayload($this->resource)
+                : null,
             'createdAt' => $this->created_at?->toIso8601String(),
         ];
     }
