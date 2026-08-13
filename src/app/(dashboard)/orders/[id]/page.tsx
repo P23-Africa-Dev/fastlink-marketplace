@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, use } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -30,7 +30,8 @@ const STATUS_STYLES: Record<string, string> = {
   Refunded: "bg-rose-50 text-rose-700 border-rose-200",
 };
 
-export default function OrderDetailsPage({ params }: { params: { id: string } }) {
+export default function OrderDetailsPage(props: { params: Promise<{ id: string }> }) {
+  const params = use(props.params);
   const { id } = params;
   const { getOrderById, updateOrderStatus } = useOrdersStore();
   const order = getOrderById(id);

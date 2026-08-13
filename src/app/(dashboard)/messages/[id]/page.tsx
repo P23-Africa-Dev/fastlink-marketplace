@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, use } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -25,17 +25,18 @@ const STATUS_PILL_STYLES = {
   Resolved: "bg-green-100 text-green-700 border-green-200"
 };
 
-export default function MessageDetailPage({ params }: { params: { id: string } }) {
+export default function MessageDetailPage(props: { params: Promise<{ id: string }> }) {
+  const params = use(props.params);
   const { conversations, replyToConversation, updateConversationStatus } = useMessagesStore();
   const conversation = conversations.find((c) => c.id === params.id) || null;
 
   // Input states
   const [replyText, setReplyText] = useState("");
   const [toastMessage, setToastMessage] = useState("");
-  
+
   // Interactive mock dialogs states
   const [activeModal, setActiveModal] = useState<"call" | "email" | "externalMsg" | "whatsapp" | "editSubject" | null>(null);
-  
+
   // Custom states for dialogs
   const [subjectText, setSubjectText] = useState(conversation?.subject || "");
   const [customEmailSubject, setCustomEmailSubject] = useState("");
@@ -88,7 +89,7 @@ export default function MessageDetailPage({ params }: { params: { id: string } }
 
   return (
     <div className="space-y-6 max-w-[1600px] mx-auto font-sans relative">
-      
+
       {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed top-24 right-8 z-50 bg-[#7a3dbf] text-white font-bold text-sm px-6 py-4 rounded-xl shadow-2xl flex items-center gap-2 animate-bounce">

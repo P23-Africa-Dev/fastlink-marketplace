@@ -12,11 +12,13 @@ import {
 import { DynamicHero } from "@/components/marketplace/dynamic-hero";
 
 interface PageProps {
-  params: { slug: string };
-  searchParams: { category?: string };
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<{ category?: string }>;
 }
 
-export default function BrandDetailPage({ params, searchParams }: PageProps) {
+export default async function BrandDetailPage(props: PageProps) {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
   const brand = getBrandBySlug(params.slug);
   const selectedCategory = searchParams?.category;
 

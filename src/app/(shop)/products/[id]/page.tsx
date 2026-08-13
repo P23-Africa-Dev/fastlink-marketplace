@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, use } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -38,7 +38,7 @@ import { MOCK_PRODUCTS } from "@/mocks/data";
 import type { Product } from "@/types/product";
 
 interface ProductDetailPageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 function getDistinctProducts(
@@ -58,7 +58,8 @@ function getDistinctProducts(
   return Array.from(map.values()).slice(0, count);
 }
 
-export default function ProductDetailPage({ params }: ProductDetailPageProps) {
+export default function ProductDetailPage(props: ProductDetailPageProps) {
+  const params = use(props.params);
   const router = useRouter();
   const { data, isLoading, isError } = useProduct(params.id);
   const { addItem } = useCartStore();

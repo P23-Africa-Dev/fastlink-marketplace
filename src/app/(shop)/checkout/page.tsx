@@ -20,6 +20,7 @@ const STEPS: { id: Step; label: string }[] = [
 export default function CheckoutPage() {
   const [currentStep, setCurrentStep] = useState<Step>("contact");
   const [orderPlaced, setOrderPlaced] = useState(false);
+  const [orderRef, setOrderRef] = useState("");
   const { items, subtotal, shipping, tax, total, clearCart } = useCartStore();
 
   const [form, setForm] = useState({
@@ -45,6 +46,7 @@ export default function CheckoutPage() {
   }
 
   function placeOrder() {
+    setOrderRef(Math.random().toString(36).slice(2, 8).toUpperCase());
     clearCart();
     setOrderPlaced(true);
   }
@@ -63,7 +65,7 @@ export default function CheckoutPage() {
             Thank you for your purchase. We&apos;ve received your order and sent a receipt to your email.
           </p>
           <p className="mb-8 text-xs font-bold text-[#6D349F] bg-white/60 inline-block px-4 py-2 rounded-xl border border-white/80">
-            Order Reference: #FLK-{Math.random().toString(36).slice(2, 8).toUpperCase()}
+            Order Reference: #FLK-{orderRef}
           </p>
 
           <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
