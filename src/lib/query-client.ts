@@ -57,6 +57,9 @@ export const QUERY_KEYS = {
       [...QUERY_KEYS.seller.all, "returns", filters] as const,
     disputes: (filters: Record<string, unknown> = {}) =>
       [...QUERY_KEYS.seller.all, "disputes", filters] as const,
+    inventory: (filters: Record<string, unknown> = {}) =>
+      [...QUERY_KEYS.seller.all, "inventory", filters] as const,
+    documents: () => [...QUERY_KEYS.seller.all, "documents"] as const,
   },
   orders: {
     all: ["orders"] as const,
@@ -129,6 +132,7 @@ export const QUERY_KEYS = {
       [...QUERY_KEYS.admin.all, "webhooks", filters] as const,
     chargebacks: (filters: Record<string, unknown> = {}) =>
       [...QUERY_KEYS.admin.all, "chargebacks", filters] as const,
+    deliveryZones: () => [...QUERY_KEYS.admin.all, "delivery-zones"] as const,
   },
   conversations: {
     all: ["conversations"] as const,

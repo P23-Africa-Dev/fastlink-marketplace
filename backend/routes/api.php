@@ -16,11 +16,15 @@ use App\Http\Controllers\Api\AdminStoreController;
 use App\Http\Controllers\Api\AdminUserController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BrandController;
+use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\CheckoutController;
 use App\Http\Controllers\Api\ConversationController;
+use App\Http\Controllers\Api\DealController;
+use App\Http\Controllers\Api\AdminDeliveryZoneController;
 use App\Http\Controllers\Api\AdminChargebackController;
 use App\Http\Controllers\Api\AdminDisputeController;
+use App\Http\Controllers\Api\AdminPromoCodeController;
 use App\Http\Controllers\Api\AdminWebhookController;
 use App\Http\Controllers\Api\DisputeController;
 use App\Http\Controllers\Api\HealthController;
@@ -30,11 +34,18 @@ use App\Http\Controllers\Api\NotificationPreferenceController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\PaystackWebhookController;
 use App\Http\Controllers\Api\ProductController;
+use App\Http\Controllers\Api\PromoController;
+use App\Http\Controllers\Api\ReferralController;
 use App\Http\Controllers\Api\ReturnController;
 use App\Http\Controllers\Api\ReviewController;
+use App\Http\Controllers\Api\RiderDocumentController;
 use App\Http\Controllers\Api\RiderController;
 use App\Http\Controllers\Api\SellerDashboardController;
 use App\Http\Controllers\Api\SellerDisputeController;
+use App\Http\Controllers\Api\SellerDocumentController;
+use App\Http\Controllers\Api\SellerGrowthController;
+use App\Http\Controllers\Api\SellerInventoryController;
+use App\Http\Controllers\Api\SellerPromoCodeController;
 use App\Http\Controllers\Api\SellerCustomerController;
 use App\Http\Controllers\Api\SellerOnboardController;
 use App\Http\Controllers\Api\SellerAnalyticsController;
@@ -100,9 +111,13 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::patch('/addresses/{address}/default', [AddressController::class, 'makeDefault']);
 
     Route::post('/checkout', [CheckoutController::class, 'store']);
+    Route::post('/checkout/quote', [CheckoutController::class, 'quote']);
     Route::post('/checkout/initialize', [CheckoutController::class, 'initialize']);
     Route::post('/checkout/verify', [CheckoutController::class, 'verify']);
     Route::post('/checkout/confirm', [CheckoutController::class, 'confirm']);
+    Route::post('/promo/preview', [PromoController::class, 'preview']);
+    Route::post('/cart/sync', [CartController::class, 'sync']);
+    Route::get('/referrals/me', [ReferralController::class, 'me']);
     Route::get('/orders', [OrderController::class, 'index']);
     Route::get('/orders/{order}', [OrderController::class, 'show']);
     Route::get('/orders/{order}/invoice', [OrderController::class, 'invoice']);
@@ -140,6 +155,8 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::middleware('role:rider')->group(function (): void {
         Route::get('/rider/me', [RiderController::class, 'me']);
         Route::get('/rider/orders', [RiderController::class, 'orders']);
+        Route::get('/rider/documents', [RiderDocumentController::class, 'index']);
+        Route::post('/rider/documents', [RiderDocumentController::class, 'store']);
     });
 
     Route::middleware('role:seller,admin')->group(function (): void {
@@ -151,6 +168,13 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::delete('/seller/products/{product}', [SellerProductController::class, 'destroy']);
         Route::post('/seller/products/{product}/images', [SellerProductController::class, 'images']);
         Route::patch('/seller/products/{product}/stock', [SellerProductController::class, 'stock']);
+        Route::get('/seller/inventory/movements', [SellerInventoryController::class, 'index']);
+        Route::get('/seller/promo-codes', [SellerPromoCodeController::class, 'index']);
+        Route::post('/seller/promo-codes', [SellerPromoCodeController::class, 'store']);
+        Route::patch('/seller/promo-codes/{promoCode}', [SellerPromoCodeController::class, 'update']);
+        Route::get('/seller/growth', [SellerGrowthController::class, 'show']);
+        Route::get('/seller/documents', [SellerDocumentController::class, 'index']);
+        Route::post('/seller/documents', [SellerDocumentController::class, 'store']);
 
         Route::get('/seller/orders', [SellerOrderController::class, 'index']);
         Route::get('/seller/orders/{order}', [SellerOrderController::class, 'show']);
@@ -234,6 +258,12 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::post('/chargebacks', [AdminChargebackController::class, 'store']);
         Route::patch('/chargebacks/{chargeback}', [AdminChargebackController::class, 'update']);
         Route::get('/webhooks/paystack', [AdminWebhookController::class, 'index']);
+        Route::get('/delivery-zones', [AdminDeliveryZoneController::class, 'index']);
+        Route::post('/delivery-zones', [AdminDeliveryZoneController::class, 'store']);
+        Route::patch('/delivery-zones/{zone}', [AdminDeliveryZoneController::class, 'update']);
+        Route::get('/promo-codes', [AdminPromoCodeController::class, 'index']);
+        Route::post('/promo-codes', [AdminPromoCodeController::class, 'store']);
+        Route::patch('/promo-codes/{promoCode}', [AdminPromoCodeController::class, 'update']);
 
         Route::get('/malls', [AdminCatalogController::class, 'malls']);
         Route::get('/malls/{mall}', [AdminCatalogController::class, 'showMall']);

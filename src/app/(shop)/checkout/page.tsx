@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -11,7 +11,8 @@ import { useAuthStore } from "@/store/auth-store";
 import { formatPrice, cn } from "@/lib/utils";
 import { apiErrorMessage, checkoutApi } from "@/lib/api";
 import { useMe } from "@/hooks/use-auth";
-import { useCheckout, useCreateAddress, useInitializeCheckout } from "@/hooks/use-orders";
+import { useCheckout, useCreateAddress, useCheckoutQuote, useInitializeCheckout } from "@/hooks/use-orders";
+import type { ApiOrder, CheckoutQuote } from "@/types/order";
 
 type Step = "contact" | "shipping" | "payment" | "review";
 
@@ -28,16 +29,37 @@ export default function CheckoutPage() {
   const { data: me } = useMe();
   const createAddress = useCreateAddress();
   const checkout = useCheckout();
+  const checkoutQuote = useCheckoutQuote();
   const initializeCheckout = useInitializeCheckout();
 
   const [currentStep, setCurrentStep] = useState<Step>("contact");
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [orderRef, setOrderRef] = useState("");
+  const [placedOrders, setPlacedOrders] = useState<ApiOrder[]>([]);
   const [trackingNumber, setTrackingNumber] = useState("");
   const [submitError, setSubmitError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [pendingGroupId, setPendingGroupId] = useState<string | null>(null);
+  const [shippingAddressId, setShippingAddressId] = useState<number | null>(null);
+  const [quote, setQuote] = useState<CheckoutQuote | null>(null);
   const { items, subtotal, shipping, tax, total, clearCart } = useCartStore();
+
+  const storeGroups = useMemo(() => {
+    const map = new Map<string, { storeName: string; items: typeof items }>();
+    for (const item of items) {
+      const storeId = item.product.store?.id ?? item.product.seller?.id ?? "unknown";
+      const storeName = item.product.store?.name ?? item.product.seller?.name ?? "Seller";
+      const existing = map.get(storeId);
+      if (existing) existing.items.push(item);
+      else map.set(storeId, { storeName, items: [item] });
+    }
+    return Array.from(map.entries()).map(([storeId, group]) => ({ storeId, ...group }));
+  }, [items]);
+
+  const displaySubtotal = quote?.subtotal ?? subtotal;
+  const displayShipping = quote?.shipping ?? shipping;
+  const displayTax = quote?.tax ?? tax;
+  const displayTotal = quote?.total ?? total;
 
   const [form, setForm] = useState({
     email: "",
@@ -83,6 +105,45 @@ export default function CheckoutPage() {
     if (idx < STEPS.length - 1) setCurrentStep(STEPS[idx + 1].id);
   }
 
+  async function ensureAddressAndQuote() {
+    let addressId = shippingAddressId;
+    if (!addressId) {
+      const address = await createAddress.mutateAsync({
+        label: "Shipping",
+        street: form.street,
+        city: form.city,
+        state: form.state,
+        postalCode: form.postalCode,
+        country: form.country,
+        phone: form.phone,
+        isDefault: true,
+      });
+      addressId = Number(address.data.id);
+      setShippingAddressId(addressId);
+    }
+
+    const quoted = await checkoutQuote.mutateAsync({
+      address_id: addressId,
+      items: items.map((item) => ({
+        product_id: item.productId,
+        quantity: item.quantity,
+        variants: item.selectedVariants,
+      })),
+    });
+    setQuote(quoted);
+    return addressId;
+  }
+
+  async function continueFromShipping() {
+    setSubmitError("");
+    try {
+      await ensureAddressAndQuote();
+      setCurrentStep("payment");
+    } catch (error) {
+      setSubmitError(apiErrorMessage(error, "Could not calculate delivery for your address."));
+    }
+  }
+
   async function placeOrder() {
     setSubmitError("");
     setIsSubmitting(true);
@@ -91,19 +152,10 @@ export default function CheckoutPage() {
       let groupId = pendingGroupId;
 
       if (!groupId) {
-        const address = await createAddress.mutateAsync({
-          label: "Shipping",
-          street: form.street,
-          city: form.city,
-          state: form.state,
-          postalCode: form.postalCode,
-          country: form.country,
-          phone: form.phone,
-          isDefault: true,
-        });
+        const addressId = shippingAddressId ?? (await ensureAddressAndQuote());
 
         const placed = await checkout.mutateAsync({
-          address_id: Number(address.data.id),
+          address_id: addressId,
           delivery_method: "standard",
           payment_method: "paystack",
           items: items.map((item) => ({
@@ -125,9 +177,10 @@ export default function CheckoutPage() {
         clearCart();
         if (initialized.data.reference) {
           const verified = await checkoutApi.verify(initialized.data.reference);
-          const first = verified.data.orders[0];
-          setOrderRef(first?.reference ?? "");
-          setTrackingNumber(first?.trackingNumber ?? "");
+          const orders = verified.data.orders;
+          setPlacedOrders(orders);
+          setOrderRef(orders[0]?.reference ?? "");
+          setTrackingNumber(orders[0]?.trackingNumber ?? "");
         }
         setOrderPlaced(true);
         return;
@@ -162,11 +215,26 @@ export default function CheckoutPage() {
             Order Confirmed!
           </h1>
           <p className="mb-2 text-[#8A79A5] font-medium">
-            Payment received. Your order is confirmed and the seller can fulfil it.
+            Payment received.
+            {placedOrders.length > 1
+              ? ` ${placedOrders.length} separate orders were created — one per seller.`
+              : " Your order is confirmed and the seller can fulfil it."}
           </p>
-          <p className="mb-8 text-xs font-bold text-[#6D349F] bg-white/60 inline-block px-4 py-2 rounded-xl border border-white/80">
-            Order Reference: {displayRef}
-          </p>
+          {placedOrders.length > 1 ? (
+            <ul className="mb-6 space-y-2 text-left max-w-md mx-auto">
+              {placedOrders.map((order) => (
+                <li key={order.id} className="rounded-xl bg-white/70 border border-white/80 px-4 py-2 text-sm">
+                  <span className="font-bold text-[#6D349F]">{order.store?.name ?? "Store"}</span>
+                  <span className="text-[#8A79A5]"> · #{order.reference.replace(/^#/, "")}</span>
+                  <span className="block text-xs font-semibold text-[#3B1C5A]">{formatPrice(order.total)}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mb-8 text-xs font-bold text-[#6D349F] bg-white/60 inline-block px-4 py-2 rounded-xl border border-white/80">
+              Order Reference: {displayRef}
+            </p>
+          )}
 
           <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
             <Link
@@ -357,11 +425,11 @@ export default function CheckoutPage() {
                   />
                 </div>
                 <button
-                  onClick={nextStep}
-                  disabled={!form.street.trim() || !form.city.trim() || !form.state.trim()}
+                  onClick={continueFromShipping}
+                  disabled={!form.street.trim() || !form.city.trim() || !form.state.trim() || checkoutQuote.isPending}
                   className="flex items-center justify-center gap-2 w-full rounded-xl bg-[#7E37C9] hover:bg-[#6C2CB5] disabled:opacity-50 text-white font-bold py-3.5 px-6 shadow-md transition-all mt-4"
                 >
-                  <span>Continue to Payment</span>
+                  <span>{checkoutQuote.isPending ? "Calculating delivery…" : "Continue to Payment"}</span>
                   <ChevronRight size={16} />
                 </button>
               </div>
@@ -381,8 +449,11 @@ export default function CheckoutPage() {
                 <div className="rounded-xl border border-[#D8C2EF] bg-white p-4 space-y-2">
                   <p className="text-sm font-bold text-[#3B1C5A]">Paystack checkout</p>
                   <p className="text-xs text-[#8A79A5] font-medium">
-                    Amount due: <span className="font-extrabold text-[#6D349F]">{formatPrice(total)}</span>
+                    Amount due: <span className="font-extrabold text-[#6D349F]">{formatPrice(displayTotal)}</span>
                   </p>
+                  {quote?.deliveryZone && (
+                    <p className="text-[10px] text-[#8A79A5]">Delivery zone: {quote.deliveryZone.name}</p>
+                  )}
                 </div>
                 <button
                   onClick={nextStep}
@@ -432,7 +503,7 @@ export default function CheckoutPage() {
                   className="flex items-center justify-center gap-2 w-full rounded-xl bg-[#6D349F] hover:bg-[#52237A] disabled:opacity-60 text-white font-extrabold py-4 px-6 shadow-lg transition-all mt-4 font-montserrat text-base"
                 >
                   {isSubmitting ? <Loader2 size={16} className="animate-spin" /> : <Lock size={16} />}
-                  <span>{isSubmitting ? "Redirecting to Paystack…" : `Pay · ${formatPrice(total)}`}</span>
+                  <span>{isSubmitting ? "Redirecting to Paystack…" : `Pay · ${formatPrice(displayTotal)}`}</span>
                 </button>
               </div>
             )}
@@ -443,55 +514,70 @@ export default function CheckoutPage() {
             <h3 className="text-xl font-bold text-[#6D349F] font-montserrat border-b border-[#D8C2EF] pb-3">
               Order Summary
             </h3>
-            <ul className="divide-y divide-[#E4D1F7]/60">
-              {items.map((item) => (
-                <li key={item.productId} className="flex items-center gap-3 py-3">
-                  <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-lg bg-purple-100">
-                    <Image
-                      src={item.product.images[0]?.url ?? ""}
-                      alt={item.product.name}
-                      fill
-                      className="object-cover"
-                    />
-                    <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#6D349F] text-[10px] font-bold text-white">
-                      {item.quantity}
-                    </span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-bold text-[#6D349F] truncate">
-                      {item.product.name}
+
+            {(quote?.groupPreview || storeGroups.length > 1) && (
+              <p className="text-xs font-semibold text-[#6D349F] bg-white/70 rounded-xl px-3 py-2 border border-[#D8C2EF]/80">
+                You&apos;ll receive {quote?.orderCount ?? storeGroups.length} separate orders — one per seller — after payment.
+              </p>
+            )}
+
+            {storeGroups.map((group) => {
+              const quoted = quote?.stores.find((s) => s.storeName === group.storeName);
+              return (
+                <div key={group.storeId} className="space-y-2">
+                  <p className="text-[10px] font-black uppercase tracking-wider text-[#8A79A5]">{group.storeName}</p>
+                  <ul className="divide-y divide-[#E4D1F7]/60">
+                    {group.items.map((item) => (
+                      <li key={item.productId} className="flex items-center gap-3 py-3">
+                        <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-lg bg-purple-100">
+                          <Image
+                            src={item.product.images[0]?.url ?? ""}
+                            alt={item.product.name}
+                            fill
+                            className="object-cover"
+                          />
+                          <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#6D349F] text-[10px] font-bold text-white">
+                            {item.quantity}
+                          </span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-bold text-[#6D349F] truncate">{item.product.name}</p>
+                        </div>
+                        <p className="text-xs font-bold text-[#6D349F]">
+                          {formatPrice(item.product.price * item.quantity)}
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                  {quoted && (
+                    <p className="text-[10px] font-bold text-[#8A79A5] text-right">
+                      Store total (incl. shipping): {formatPrice(quoted.total)}
                     </p>
-                    <p className="text-[10px] text-[#8A79A5] truncate">
-                      {item.product.seller.name}
-                    </p>
-                  </div>
-                  <p className="text-xs font-bold text-[#6D349F]">
-                    {formatPrice(item.product.price * item.quantity)}
-                  </p>
-                </li>
-              ))}
-            </ul>
+                  )}
+                </div>
+              );
+            })}
 
             <div className="space-y-2 text-xs pt-2 border-t border-[#D8C2EF]">
               <div className="flex justify-between text-[#8A79A5] font-medium">
                 <span>Subtotal</span>
-                <span className="font-bold text-[#6D349F]">{formatPrice(subtotal)}</span>
+                <span className="font-bold text-[#6D349F]">{formatPrice(displaySubtotal)}</span>
               </div>
               <div className="flex justify-between text-[#8A79A5] font-medium">
                 <span>Shipping</span>
                 <span className="font-bold text-emerald-600">
-                  {shipping === 0 ? "Free" : formatPrice(shipping)}
+                  {displayShipping === 0 ? "Free" : formatPrice(displayShipping)}
                 </span>
               </div>
               <div className="flex justify-between text-[#8A79A5] font-medium">
                 <span>Estimated Tax</span>
-                <span className="font-bold text-[#6D349F]">{formatPrice(tax)}</span>
+                <span className="font-bold text-[#6D349F]">{formatPrice(displayTax)}</span>
               </div>
 
               <div className="border-t border-[#D8C2EF] my-2 pt-3 flex justify-between items-center">
                 <span className="text-sm font-bold text-[#6D349F]">Total</span>
                 <span className="text-xl font-extrabold text-[#6D349F] font-montserrat">
-                  {formatPrice(total)}
+                  {formatPrice(displayTotal)}
                 </span>
               </div>
             </div>

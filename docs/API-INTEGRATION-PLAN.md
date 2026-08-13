@@ -935,6 +935,35 @@ Seller:
 
 ---
 
+### Phase 14 — Commerce depth (CR-Tier 2, partial)
+
+**Delivery zones (CR-2.2)**
+
+- `delivery_zones` table with seeded Lagos, Abuja FCT, Kano, and national fallback.
+- `DeliveryZoneService` resolves zone from buyer address; per-store shipping at checkout.
+- Admin `GET/POST/PATCH /admin/delivery-zones` + `/admin/delivery-zones` UI (city overrides state).
+
+**Inventory engine (CR-2.1, partial)**
+
+- Append-only `inventory_movements` audit trail on checkout sale, return restore, manual stock edits.
+- Low-stock seller notifications (threshold ≤ 5 units).
+- Seller `GET /seller/inventory/movements` + `/inventory` UI (restock / damaged / write-off).
+- `PATCH /seller/products/{id}/stock` accepts `quantity_delta` + `type`.
+
+**Multi-store checkout UX (CR-2.3)**
+
+- `POST /checkout/quote` returns grouped preview (N store orders, totals, delivery zone).
+- Checkout UI groups cart by seller, shows “N separate orders” banner, server-priced totals after address.
+
+**KYC document storage (CR-2.4, partial)**
+
+- `store_documents` + `rider_documents` tables; secure upload to `storage/app/public/kyc/`.
+- Seller `POST /seller/documents`; rider `POST /rider/documents`.
+- Vendor register KYC step accepts CAC + ID files after store creation.
+- Admin verification queue includes uploaded store documents.
+
+---
+
 ## 6. MVP add list
 
 This is the product cut for the first shippable marketplace. Fastlink already has most **buyer browse** and **seller dashboard** screens. MVP is not the full 13-section marketplace catalog — it is the glue that makes those screens real: identity, ownership, money, and an admin.

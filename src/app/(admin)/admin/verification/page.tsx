@@ -88,6 +88,21 @@ export default function AdminVerificationPage() {
               <p>Phone: {store.owner?.phone ?? "—"}</p>
               {store.createdAt && <p>Applied: {formatOrderDate(store.createdAt)}</p>}
             </div>
+            {store.documents && store.documents.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {store.documents.map((doc) => (
+                  <a
+                    key={doc.id}
+                    href={doc.fileUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-[10px] font-bold uppercase text-[#7a3dbf] underline"
+                  >
+                    {doc.type.replace(/_/g, " ")}
+                  </a>
+                ))}
+              </div>
+            )}
             {mallOptions.length > 0 && (
               <select
                 value={mallPick[store.id] ?? ""}

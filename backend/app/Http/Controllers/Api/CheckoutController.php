@@ -31,6 +31,7 @@ class CheckoutController extends Controller
             'items.*.product_id' => ['required'],
             'items.*.quantity' => ['required', 'integer', 'min:1'],
             'items.*.variants' => ['nullable', 'array'],
+            'coupon_code' => ['nullable', 'string', 'max:40'],
         ]);
 
         $address = Address::query()->findOrFail($validated['address_id']);
@@ -40,6 +41,7 @@ class CheckoutController extends Controller
             $validated['items'],
             $validated['delivery_method'] ?? 'standard',
             $validated['payment_method'] ?? 'demo',
+            $this->couponCode($validated),
         );
 
         return ApiResponse::success([
@@ -88,5 +90,37 @@ class CheckoutController extends Controller
             'groupId' => $validated['group_id'],
             'orders' => OrderResource::collection($orders)->resolve(),
         ], 'Demo payment recorded. Order confirmed.');
+    }
+
+    public function quote(Request $request, CheckoutService $checkout): JsonResponse
+    {
+        $validated = $request->validate([
+            'address_id' => ['required', 'integer', 'exists:addresses,id'],
+            'items' => ['required', 'array', 'min:1'],
+            'items.*.product_id' => ['required'],
+            'items.*.quantity' => ['required', 'integer', 'min:1'],
+            'items.*.variants' => ['nullable', 'array'],
+            'coupon_code' => ['nullable', 'string', 'max:40'],
+        ]);
+
+        $address = Address::query()->findOrFail($validated['address_id']);
+        $quote = $checkout->quote(
+            $request->user(),
+            $address,
+            $validated['items'],
+            $this->couponCode($validated),
+        );
+
+        return ApiResponse::success($quote);
+    }
+
+    /**
+     * @param  array<string, mixed>  $validated
+     */
+    private function couponCode(array $validated): ?string
+    {
+        $code = isset($validated['coupon_code']) ? trim((string) $validated['coupon_code']) : '';
+
+        return $code !== '' ? $code : null;
     }
 }

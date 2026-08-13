@@ -7,6 +7,7 @@ use App\Http\Resources\RiderResource;
 use App\Http\Resources\StoreResource;
 use App\Models\Rider;
 use App\Models\Store;
+use App\Models\StoreDocument;
 use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
 
@@ -31,6 +32,18 @@ class AdminVerificationController extends Controller
                 'bankName' => $store->bank_name,
                 'bankAccountNumber' => $store->bank_account_number,
                 'bankAccountName' => $store->bank_account_name,
+                'documents' => StoreDocument::query()
+                    ->where('store_id', $store->id)
+                    ->orderByDesc('id')
+                    ->get()
+                    ->map(fn (StoreDocument $doc) => [
+                        'id' => (string) $doc->id,
+                        'type' => $doc->type,
+                        'fileUrl' => $doc->file_url,
+                        'status' => $doc->status,
+                    ])
+                    ->values()
+                    ->all(),
                 'createdAt' => $store->created_at?->toIso8601String(),
             ]);
 

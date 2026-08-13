@@ -1,7 +1,7 @@
 # Fastlink Marketplace — Change Request (CR-1)
 
 **Document ID:** CR-1  
-**Status:** Shipped (Tier 0 — 13 August 2026) · Tier 1 complete (ledger, trust, config, disputes, moderation, reputation, webhooks, chargebacks, partial refunds — 13 August 2026)  
+**Status:** Shipped (Tier 0 — 13 August 2026) · Tier 1 complete (13 August 2026) · Tier 2 largely shipped (zones, inventory, checkout quote, KYC — 13 August 2026)  
 **Audience:** Product, engineering, design  
 **Last updated:** 13 August 2026  
 **Related docs:** [`API-INTEGRATION-PLAN.md`](./API-INTEGRATION-PLAN.md) · [`API-CATALOG.md`](./API-CATALOG.md) · [`BACKLOG.md`](./BACKLOG.md)

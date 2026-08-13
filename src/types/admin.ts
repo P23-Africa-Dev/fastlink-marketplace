@@ -25,6 +25,13 @@ export interface AdminUserRow {
   store?: { id: string; name: string; status: string } | null;
 }
 
+export interface KycDocumentRow {
+  id: string;
+  type: string;
+  fileUrl: string;
+  status: string;
+}
+
 export interface AdminStoreRow {
   id: string;
   name: string;
@@ -37,7 +44,29 @@ export interface AdminStoreRow {
   bankName?: string | null;
   bankAccountNumber?: string | null;
   bankAccountName?: string | null;
+  documents?: KycDocumentRow[];
   createdAt?: string;
+}
+
+export interface DeliveryZoneRow {
+  id: string;
+  name: string;
+  state?: string | null;
+  city?: string | null;
+  fee: number;
+  freeAbove?: number | null;
+  isActive: boolean;
+  sortOrder: number;
+}
+
+export interface InventoryMovementRow {
+  id: string;
+  type: string;
+  quantityDelta: number;
+  quantityAfter: number;
+  note?: string | null;
+  product?: { id: string; name: string; sku?: string | null } | null;
+  createdAt?: string | null;
 }
 
 export interface AdminMallDetail {

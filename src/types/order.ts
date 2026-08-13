@@ -133,6 +133,33 @@ export interface CheckoutResult {
   orders: ApiOrder[];
 }
 
+export interface CheckoutQuoteStore {
+  storeId: string;
+  storeName: string;
+  items: Array<{
+    productId: string;
+    name: string;
+    quantity: number;
+    unitPrice: number;
+    lineTotal: number;
+  }>;
+  subtotal: number;
+  shipping: number;
+  tax: number;
+  total: number;
+}
+
+export interface CheckoutQuote {
+  groupPreview: boolean;
+  orderCount: number;
+  stores: CheckoutQuoteStore[];
+  subtotal: number;
+  shipping: number;
+  tax: number;
+  total: number;
+  deliveryZone?: { id: string; name: string; fee: number } | null;
+}
+
 export interface AddressPayload {
   label?: string;
   street: string;

@@ -5,10 +5,12 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\UserResource;
 use App\Models\User;
+use App\Services\ReferralService;
 use App\Support\ApiResponse;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
@@ -24,15 +26,25 @@ class AuthController extends Controller
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'confirmed', PasswordRule::min(8)],
             'role' => ['sometimes', 'in:buyer,seller'],
+            'referral_code' => ['nullable', 'string', 'max:32'],
         ]);
 
-        $user = User::query()->create([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'password' => $validated['password'],
-            'role' => $validated['role'] ?? 'buyer',
-            'status' => 'active',
-        ]);
+        $user = DB::transaction(function () use ($validated) {
+            $user = User::query()->create([
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'password' => $validated['password'],
+                'role' => $validated['role'] ?? 'buyer',
+                'status' => 'active',
+            ]);
+
+            app(ReferralService::class)->attribute(
+                $user,
+                isset($validated['referral_code']) ? trim((string) $validated['referral_code']) : null,
+            );
+
+            return $user;
+        });
 
         $token = $user->createToken('auth')->plainTextToken;
 

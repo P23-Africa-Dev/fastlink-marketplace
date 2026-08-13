@@ -5,7 +5,7 @@ import type { Dispute } from "@/types/disputes";
 import type { ProductFilter, Product } from "@/types/product";
 import type { DashboardStats, ProductReview, SellerCustomer, SellerSettings, SellerStoreProfile } from "@/types/seller";
 import type { Address, User } from "@/types/user";
-import type { AddressPayload, ApiOrder, CheckoutResult } from "@/types/order";
+import type { AddressPayload, ApiOrder, CheckoutQuote, CheckoutResult } from "@/types/order";
 import type {
   ApiPayment,
   ApiPayout,
@@ -33,6 +33,9 @@ import type {
   LedgerEntryRow,
   MarketplaceConfig,
   TrustReportRow,
+  DeliveryZoneRow,
+  KycDocumentRow,
+  InventoryMovementRow,
 } from "@/types/admin";
 import type {
   ApiCampaign,
@@ -66,6 +69,9 @@ apiClient.interceptors.request.use((config) => {
   if (typeof window !== "undefined") {
     const token = localStorage.getItem("auth_token");
     if (token) config.headers.Authorization = `Bearer ${token}`;
+  }
+  if (typeof FormData !== "undefined" && config.data instanceof FormData) {
+    delete config.headers["Content-Type"];
   }
   return config;
 });
@@ -274,6 +280,14 @@ export const sellerProductsApi = {
     const { data } = await apiClient.post<ApiResponse<Product>>(`/seller/products/${id}/submit`);
     return data.data;
   },
+
+  adjustStock: async (
+    id: string,
+    payload: { stock?: number; quantity_delta?: number; type?: string; note?: string },
+  ) => {
+    const { data } = await apiClient.patch<ApiResponse<Product>>(`/seller/products/${id}/stock`, payload);
+    return data.data;
+  },
 };
 
 export const authApi = {
@@ -360,6 +374,31 @@ export const sellerApi = {
       }>
     >("/seller/onboard", payload);
     return data;
+  },
+};
+
+export const sellerDocumentsApi = {
+  list: async () => {
+    const { data } = await apiClient.get<ApiResponse<KycDocumentRow[]>>("/seller/documents");
+    return data.data;
+  },
+
+  upload: async (type: string, file: File) => {
+    const form = new FormData();
+    form.append("type", type);
+    form.append("document", file);
+    const { data } = await apiClient.post<ApiResponse<KycDocumentRow>>("/seller/documents", form);
+    return data.data;
+  },
+};
+
+export const sellerInventoryApi = {
+  movements: async (params: { product_id?: string; page?: number; limit?: number } = {}) => {
+    const { data } = await apiClient.get<ApiResponse<PaginatedResponse<InventoryMovementRow>>>(
+      "/seller/inventory/movements",
+      { params: compactParams(params) },
+    );
+    return data.data;
   },
 };
 
@@ -495,6 +534,14 @@ export const checkoutApi = {
       reference,
     });
     return data;
+  },
+
+  quote: async (payload: {
+    address_id: number;
+    items: Array<{ product_id: string; quantity: number; variants?: Record<string, unknown> }>;
+  }) => {
+    const { data } = await apiClient.post<ApiResponse<CheckoutQuote>>("/checkout/quote", payload);
+    return data.data;
   },
 };
 
@@ -787,6 +834,40 @@ export const adminApi = {
   updateChargeback: async (id: string, payload: { status: "won" | "lost"; admin_note?: string }) => {
     const { data } = await apiClient.patch<ApiResponse<ChargebackRow>>(`/admin/chargebacks/${id}`, payload);
     return data.data;
+  },
+
+  deliveryZones: async () => {
+    const { data } = await apiClient.get<ApiResponse<DeliveryZoneRow[]>>("/admin/delivery-zones");
+    return data.data;
+  },
+
+  createDeliveryZone: async (payload: {
+    name: string;
+    state?: string;
+    city?: string;
+    fee: number;
+    free_above?: number | null;
+    is_active?: boolean;
+    sort_order?: number;
+  }) => {
+    const { data } = await apiClient.post<ApiResponse<{ id: string }>>("/admin/delivery-zones", payload);
+    return data.data;
+  },
+
+  updateDeliveryZone: async (
+    id: string,
+    payload: Partial<{
+      name: string;
+      state: string | null;
+      city: string | null;
+      fee: number;
+      free_above: number | null;
+      is_active: boolean;
+      sort_order: number;
+    }>,
+  ) => {
+    const { data } = await apiClient.patch<ApiResponse<null>>(`/admin/delivery-zones/${id}`, payload);
+    return data;
   },
 
   malls: async () => {

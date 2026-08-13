@@ -8,6 +8,7 @@ use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\Store;
+use App\Services\InventoryService;
 use App\Support\ApiResponse;
 use App\Support\ProductQuery;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -157,10 +158,34 @@ class SellerProductController extends Controller
         $this->authorize('update', $product);
 
         $validated = $request->validate([
-            'stock' => ['required', 'integer', 'min:0'],
+            'stock' => ['nullable', 'integer', 'min:0'],
+            'quantity_delta' => ['nullable', 'integer'],
+            'type' => ['nullable', Rule::in(['adjustment', 'restock', 'damaged', 'write_off'])],
+            'note' => ['nullable', 'string', 'max:255'],
         ]);
 
-        $product->update(['stock' => $validated['stock']]);
+        $inventory = app(InventoryService::class);
+        $type = $validated['type'] ?? 'adjustment';
+
+        if (isset($validated['quantity_delta'])) {
+            $inventory->applyDelta(
+                $product,
+                (int) $validated['quantity_delta'],
+                $type,
+                $validated['note'] ?? null,
+            );
+        } elseif (isset($validated['stock'])) {
+            $inventory->adjustStock(
+                $product,
+                (int) $validated['stock'],
+                $type,
+                note: $validated['note'] ?? 'Manual stock update',
+            );
+        } else {
+            throw ValidationException::withMessages([
+                'stock' => 'Provide stock or quantity_delta.',
+            ]);
+        }
         $product->load(['images', 'variants', 'store', 'brand', 'category']);
 
         return ApiResponse::success((new ProductResource($product))->resolve($request), 'Stock updated.');

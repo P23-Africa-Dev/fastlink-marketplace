@@ -38,6 +38,8 @@ class Order extends Model
         'subtotal',
         'shipping',
         'tax',
+        'discount',
+        'promo_code',
         'total',
         'buyer_email',
         'buyer_name',
@@ -60,6 +62,7 @@ class Order extends Model
             'subtotal' => 'decimal:2',
             'shipping' => 'decimal:2',
             'tax' => 'decimal:2',
+            'discount' => 'decimal:2',
             'total' => 'decimal:2',
             'paid_at' => 'datetime',
         ];

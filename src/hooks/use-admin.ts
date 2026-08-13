@@ -385,3 +385,36 @@ export function useUpdateChargeback() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.admin.chargebacks() }),
   });
 }
+
+export function useAdminDeliveryZones() {
+  return useQuery({
+    queryKey: QUERY_KEYS.admin.deliveryZones(),
+    queryFn: adminApi.deliveryZones,
+  });
+}
+
+export function useAdminDeliveryZoneActions() {
+  const queryClient = useQueryClient();
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.admin.deliveryZones() });
+  return {
+    create: useMutation({
+      mutationFn: adminApi.createDeliveryZone,
+      onSuccess: invalidate,
+    }),
+    update: useMutation({
+      mutationFn: ({
+        id,
+        ...payload
+      }: {
+        id: string;
+        name?: string;
+        state?: string | null;
+        city?: string | null;
+        fee?: number;
+        free_above?: number | null;
+        is_active?: boolean;
+      }) => adminApi.updateDeliveryZone(id, payload),
+      onSuccess: invalidate,
+    }),
+  };
+}

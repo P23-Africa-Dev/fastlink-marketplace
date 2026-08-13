@@ -29,6 +29,7 @@ import {
   AlertTriangle,
   PackageCheck,
   Webhook,
+  MapPin,
   type LucideIcon,
 } from "lucide-react";
 
@@ -55,6 +56,7 @@ const NAV: { href: string; label: string; icon: LucideIcon }[] = [
   { href: "/admin/ledger", label: "Ledger", icon: BookOpen },
   { href: "/admin/webhooks", label: "Webhooks", icon: Webhook },
   { href: "/admin/payouts", label: "Payouts", icon: Wallet },
+  { href: "/admin/delivery-zones", label: "Delivery zones", icon: MapPin },
   { href: "/admin/support", label: "Support", icon: HelpCircle },
   { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/admin/catalog", label: "Catalog CMS", icon: Landmark },

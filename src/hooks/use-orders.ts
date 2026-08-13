@@ -37,6 +37,12 @@ export function useCheckout() {
   });
 }
 
+export function useCheckoutQuote() {
+  return useMutation({
+    mutationFn: checkoutApi.quote,
+  });
+}
+
 export function useInitializeCheckout() {
   const queryClient = useQueryClient();
 

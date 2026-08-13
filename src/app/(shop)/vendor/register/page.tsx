@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { Loader2, Store, ChevronLeft, ChevronRight } from "lucide-react";
 
 import { useMalls, useCategories } from "@/hooks/use-catalog";
-import { apiErrorMessage, sellerApi } from "@/lib/api";
+import { apiErrorMessage, sellerApi, sellerDocumentsApi } from "@/lib/api";
 import { useAuthStore } from "@/store/auth-store";
 import { QUERY_KEYS, queryClient } from "@/lib/query-client";
 import { cn } from "@/lib/utils";
@@ -45,6 +45,8 @@ export default function VendorRegisterPage() {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [cacFile, setCacFile] = useState<File | null>(null);
+  const [idFile, setIdFile] = useState<File | null>(null);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -83,6 +85,12 @@ export default function VendorRegisterPage() {
         const nextUser = { ...user, role: "seller" as const, phone: form.phone };
         setUser(nextUser, token);
         queryClient.setQueryData(QUERY_KEYS.auth.user(), nextUser);
+      }
+      try {
+        if (cacFile) await sellerDocumentsApi.upload("cac", cacFile);
+        if (idFile) await sellerDocumentsApi.upload("id_card", idFile);
+      } catch {
+        // Store is already created; documents can be uploaded later from settings.
       }
       if (data.store.status === "approved") {
         router.push("/dashboard");
@@ -246,6 +254,25 @@ export default function VendorRegisterPage() {
                   />
                 </label>
               ))}
+              <p className="text-sm text-[#8A79A5] pt-2">Optional KYC files (PDF or image, max 8MB).</p>
+              <label className="block space-y-1">
+                <span className="text-xs font-bold text-[#6D349F]">CAC certificate</span>
+                <input
+                  type="file"
+                  accept=".pdf,image/*"
+                  onChange={(e) => setCacFile(e.target.files?.[0] ?? null)}
+                  className="w-full text-xs"
+                />
+              </label>
+              <label className="block space-y-1">
+                <span className="text-xs font-bold text-[#6D349F]">Government ID</span>
+                <input
+                  type="file"
+                  accept=".pdf,image/*"
+                  onChange={(e) => setIdFile(e.target.files?.[0] ?? null)}
+                  className="w-full text-xs"
+                />
+              </label>
             </div>
           )}
 
@@ -270,6 +297,11 @@ export default function VendorRegisterPage() {
                 After submission your store will be <strong>pending</strong> until an admin approves it. You cannot
                 publish products until then.
               </p>
+              {(cacFile || idFile) && (
+                <p className="text-xs font-semibold text-[#6D349F]">
+                  Documents attached: {[cacFile && "CAC", idFile && "ID"].filter(Boolean).join(", ")}
+                </p>
+              )}
             </div>
           )}
 
