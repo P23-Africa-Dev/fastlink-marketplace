@@ -19,8 +19,10 @@ import {
   RotateCcw,
   X,
 } from "lucide-react";
-import { useOrdersStore, Order } from "@/store/orders-store";
+import { toDashboardOrder, type Order } from "@/lib/order-map";
+import { apiErrorMessage } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { useSellerOrder, useUpdateOrderStatus } from "@/hooks/use-orders";
 
 const STATUS_STYLES: Record<string, string> = {
   Successful: "bg-emerald-50 text-emerald-700 border-emerald-200",
@@ -33,17 +35,24 @@ const STATUS_STYLES: Record<string, string> = {
 export default function OrderDetailsPage(props: { params: Promise<{ id: string }> }) {
   const params = use(props.params);
   const { id } = params;
-  const { getOrderById, updateOrderStatus } = useOrdersStore();
-  const order = getOrderById(id);
+  const { data, isLoading, isError } = useSellerOrder(decodeURIComponent(id));
+  const updateStatus = useUpdateOrderStatus();
+  const order = data?.data ? toDashboardOrder(data.data) : undefined;
 
-  // Status modal state
   const [showStatusModal, setShowStatusModal] = useState(false);
-  const [selectedStatus, setSelectedStatus] = useState<Order["status"]>(
-    order?.status ?? "Successful"
-  );
+  const [selectedStatus, setSelectedStatus] = useState<Order["status"]>("Successful");
   const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState("Order status updated successfully!");
 
-  if (!order) {
+  if (isLoading) {
+    return (
+      <div className="max-w-[1200px] mx-auto py-16 text-center text-slate-500 text-sm font-sans">
+        Loading order…
+      </div>
+    );
+  }
+
+  if (isError || !order) {
     return (
       <div className="max-w-[1200px] mx-auto py-16 text-center space-y-4 font-sans">
         <div className="h-16 w-16 bg-[#faf6ff] text-[#7a3dbf] rounded-2xl flex items-center justify-center mx-auto border border-[#ebd7fa]">
@@ -64,16 +73,23 @@ export default function OrderDetailsPage(props: { params: Promise<{ id: string }
     );
   }
 
-  const handleUpdateStatusConfirm = () => {
-    updateOrderStatus(order.id, selectedStatus);
-    setShowStatusModal(false);
-    setShowToast(true);
-    setTimeout(() => setShowToast(false), 4000);
+  const handleUpdateStatusConfirm = async () => {
+    try {
+      await updateStatus.mutateAsync({ id: order.rawId, status: selectedStatus });
+      setShowStatusModal(false);
+      setToastMessage(`Order status updated to "${selectedStatus}" successfully!`);
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 4000);
+    } catch (error) {
+      setToastMessage(apiErrorMessage(error, "Could not update order status."));
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 4000);
+    }
   };
 
-  const subtotal = order.items.reduce((acc, item) => acc + item.price * item.quantity, 0);
-  const shippingFee = 2500;
-  const grandTotal = subtotal + shippingFee;
+  const subtotal = order.subtotal;
+  const shippingFee = order.shipping;
+  const grandTotal = order.amount;
 
   return (
     <div className="space-y-8 max-w-[1400px] mx-auto font-sans pb-12">
@@ -83,7 +99,7 @@ export default function OrderDetailsPage(props: { params: Promise<{ id: string }
         <div className="fixed top-6 right-6 z-50 bg-emerald-700 text-white px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300">
           <CheckCircle2 size={20} className="text-emerald-200" />
           <span className="text-xs font-semibold">
-            Order status updated to &quot;{order.status}&quot; successfully!
+            {toastMessage}
           </span>
         </div>
       )}
@@ -232,12 +248,14 @@ export default function OrderDetailsPage(props: { params: Promise<{ id: string }
                   <td className="py-4 px-4 whitespace-nowrap">
                     <div className="flex items-center gap-3">
                       <div className="relative h-12 w-12 rounded-xl overflow-hidden bg-white shrink-0 border border-slate-200 shadow-sm">
-                        <Image
-                          src={item.image}
-                          alt={item.title}
-                          fill
-                          className="object-cover"
-                        />
+                        {item.image ? (
+                          <Image
+                            src={item.image}
+                            alt={item.title}
+                            fill
+                            className="object-cover"
+                          />
+                        ) : null}
                       </div>
                       <span className="font-semibold text-slate-800 text-xs sm:text-sm">{item.title}</span>
                     </div>
@@ -268,6 +286,10 @@ export default function OrderDetailsPage(props: { params: Promise<{ id: string }
             <div className="flex justify-between text-slate-600 font-normal">
               <span>Shipping & Delivery:</span>
               <span className="font-semibold text-slate-800">₦{shippingFee.toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between text-slate-600 font-normal">
+              <span>Tax:</span>
+              <span className="font-semibold text-slate-800">₦{order.tax.toLocaleString()}</span>
             </div>
             <div className="border-t border-[#ebd7fa] pt-3 flex justify-between text-sm font-semibold text-slate-900">
               <span>Grand Total:</span>
@@ -338,9 +360,10 @@ export default function OrderDetailsPage(props: { params: Promise<{ id: string }
               </button>
               <button
                 onClick={handleUpdateStatusConfirm}
-                className="flex-1 py-2.5 bg-[#7a3dbf] hover:bg-[#682fad] text-white text-xs font-semibold rounded-xl transition-all shadow-md shadow-purple-600/20"
+                disabled={updateStatus.isPending}
+                className="flex-1 py-2.5 bg-[#7a3dbf] hover:bg-[#682fad] disabled:opacity-60 text-white text-xs font-semibold rounded-xl transition-all shadow-md shadow-purple-600/20"
               >
-                Confirm Update
+                {updateStatus.isPending ? "Updating…" : "Confirm Update"}
               </button>
             </div>
           </div>

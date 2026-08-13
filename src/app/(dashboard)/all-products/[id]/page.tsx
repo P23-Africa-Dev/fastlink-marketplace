@@ -18,7 +18,8 @@ import {
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { MOCK_PRODUCTS } from "@/lib/mock-products";
+import { toDashboardProduct } from "@/lib/product-map";
+import { useSellerProducts } from "@/hooks/use-seller-products";
 import type { Product } from "@/lib/mock-products";
 
 const TAG_COLORS = [
@@ -35,18 +36,15 @@ export default function ViewProductPage() {
   const params = useParams();
   const id = params?.id as string;
 
-  const [product, setProduct] = useState<Product | null>(null);
+  const { data: sellerPage, isLoading } = useSellerProducts();
+  const product =
+    (sellerPage?.data ?? [])
+      .map(toDashboardProduct)
+      .find((item) => item.id === id) ?? null;
   const [activeSection, setActiveSection] = useState("basic-info");
   const [isPreviewCollapsed, setIsPreviewCollapsed] = useState(false);
   const [previewMode, setPreviewMode] = useState<"desktop" | "mobile">("desktop");
   const [selectedVariantImage] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (id) {
-      const found = MOCK_PRODUCTS.find((p) => p.id === id);
-      setProduct(found || null);
-    }
-  }, [id]);
 
   useEffect(() => {
     const sections = ["basic-info", "media", "pricing", "variants", "shipping"];
@@ -64,6 +62,15 @@ export default function ViewProductPage() {
       observers.forEach((obs) => { if (obs) obs.observer.unobserve(obs.el); });
     };
   }, [product]);
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
+        <Package size={48} className="text-slate-300 animate-pulse" />
+        <p className="text-sm font-semibold text-slate-500">Loading product...</p>
+      </div>
+    );
+  }
 
   if (!product) {
     return (

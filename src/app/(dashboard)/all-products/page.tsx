@@ -21,14 +21,25 @@ import {
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { apiErrorMessage } from "@/lib/api";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { Pagination } from "@/components/dashboard/pagination";
-import { MOCK_PRODUCTS } from "@/lib/mock-products";
+import { toDashboardProduct } from "@/lib/product-map";
+import {
+  useCreateSellerProduct,
+  useDeleteSellerProduct,
+  useSellerProducts,
+  useUpdateSellerProduct,
+} from "@/hooks/use-seller-products";
 import type { Product } from "@/lib/mock-products";
 
 export default function AllProductsPage() {
   const router = useRouter();
-  const [products, setProducts] = useState<Product[]>(MOCK_PRODUCTS);
+  const { data: sellerPage } = useSellerProducts();
+  const createProduct = useCreateSellerProduct();
+  const updateProduct = useUpdateSellerProduct();
+  const deleteProduct = useDeleteSellerProduct();
+  const products = (sellerPage?.data ?? []).map(toDashboardProduct);
 
   // Search & Filter state
   const [search, setSearch] = useState("");
@@ -168,26 +179,34 @@ export default function AllProductsPage() {
   };
 
   // Add Product Handler
-  const handleAddProductSubmit = (e: React.FormEvent) => {
+  const handleAddProductSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newProduct.sku.trim() || !newProduct.name.trim() || !newProduct.category.trim()) {
       triggerToast("Please fill all required fields.");
       return;
     }
-    const skuExists = products.some((p) => p.sku.toLowerCase() === newProduct.sku.toLowerCase());
-    if (skuExists) {
-      triggerToast("Product SKU already exists. Please use a unique SKU.");
+
+    try {
+      await createProduct.mutateAsync({
+        name: newProduct.name,
+        sku: newProduct.sku,
+        description: newProduct.description,
+        price: Number(newProduct.price),
+        compare_at_price: Number(newProduct.comparePrice) || null,
+        cost_price: Number(newProduct.costPrice) || null,
+        stock: Number(newProduct.stock),
+        category: newProduct.category,
+        brand: newProduct.brand || undefined,
+        tags: newProduct.tags,
+        status: newProduct.status === "Draft" ? "draft" : "active",
+        image_urls: newProduct.image
+          ? [newProduct.image, ...newProduct.images.map((img) => img.url)]
+          : newProduct.images.map((img) => img.url),
+      });
+    } catch (error) {
+      triggerToast(apiErrorMessage(error, "Could not create product."));
       return;
     }
-
-    const created: Product = {
-      ...newProduct,
-      id: newProduct.sku,
-      price: Number(newProduct.price),
-      stock: Number(newProduct.stock),
-    };
-
-    setProducts((prev) => [...prev, created]);
     setActiveModal(null);
     setNewProduct({
       sku: "",
@@ -220,7 +239,7 @@ export default function AllProductsPage() {
   };
 
   // Edit Product Handler
-  const handleEditProductSubmit = (e: React.FormEvent) => {
+  const handleEditProductSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editProduct) return;
     if (!editProduct.name.trim() || !editProduct.category.trim()) {
@@ -228,37 +247,51 @@ export default function AllProductsPage() {
       return;
     }
 
-    setProducts((prev) =>
-      prev.map((p) =>
-        p.id === editProduct.id
-          ? {
-              ...editProduct,
-              price: Number(editProduct.price),
-              stock: Number(editProduct.stock),
-            }
-          : p
-      )
-    );
+    try {
+      await updateProduct.mutateAsync({
+        id: editProduct.id,
+        payload: {
+          name: editProduct.name,
+          description: editProduct.description,
+          price: Number(editProduct.price),
+          compare_at_price: Number(editProduct.comparePrice) || null,
+          cost_price: Number(editProduct.costPrice) || null,
+          stock: Number(editProduct.stock),
+          category: editProduct.category,
+          brand: editProduct.brand || undefined,
+          tags: editProduct.tags,
+          status: editProduct.status === "Draft" ? "draft" : "active",
+        },
+      });
+    } catch (error) {
+      triggerToast(apiErrorMessage(error, "Could not update product."));
+      return;
+    }
     setActiveModal(null);
     setEditProduct(null);
     triggerToast("Product details updated successfully!");
   };
 
   // Delete Product Handler
-  const handleDeleteConfirm = () => {
+  const handleDeleteConfirm = async () => {
     if (!selectedProduct) return;
-    setProducts((prev) => prev.filter((p) => p.id !== selectedProduct.id));
+    try {
+      await deleteProduct.mutateAsync(selectedProduct.id);
+    } catch (error) {
+      triggerToast(apiErrorMessage(error, "Could not delete product."));
+      return;
+    }
     setSelectedIds((prev) => prev.filter((id) => id !== selectedProduct.id));
     setActiveModal(null);
     setSelectedProduct(null);
-    triggerToast("Product deleted successfully.");
+    triggerToast("Product archived successfully.");
   };
 
   // Metrics Calculation
-  const totalSKUs = 1842 + products.length;
-  const activeListings = 1612 + products.filter((p) => p.stock > 0).length;
-  const lowStockCount = 41 + products.filter((p) => p.stock > 0 && p.stock <= 5).length;
-  const outOfStockCount = 25 + products.filter((p) => p.stock === 0).length;
+  const totalSKUs = products.length;
+  const activeListings = products.filter((p) => p.stock > 0 && p.status !== "Draft").length;
+  const lowStockCount = products.filter((p) => p.stock > 0 && p.stock <= 5).length;
+  const outOfStockCount = products.filter((p) => p.stock === 0).length;
 
   return (
     <div className="space-y-8 max-w-[1600px] mx-auto font-sans relative pb-12">

@@ -57,9 +57,14 @@ class DatabaseSeeder extends Seeder
                 'bank_account_number' => '0123456789',
                 'bank_account_name' => 'Demo Seller',
                 'status' => 'approved',
+                'type' => 'independent',
+                'location' => 'Kano Municipal',
+                'delivery_tag' => 'Same Day',
             ]
         );
 
         unset($admin, $buyer);
+
+        $this->call(CatalogSeeder::class);
     }
 }

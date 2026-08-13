@@ -3,14 +3,19 @@ import axios from "axios";
 import type { PaginatedResponse, ApiResponse } from "@/types/api";
 import type { ProductFilter, Product } from "@/types/product";
 import type { DashboardStats } from "@/types/seller";
-import type { User } from "@/types/user";
-import {
-  MOCK_PRODUCTS,
-  MOCK_DASHBOARD_STATS,
-  MOCK_ORDERS,
-} from "@/mocks/data";
+import type { Address, User } from "@/types/user";
+import type { AddressPayload, ApiOrder, CheckoutResult } from "@/types/order";
+import type {
+  BrandPartner,
+  DealProduct,
+  EmergingVendor,
+  Mall,
+  NationwideBrand,
+  ShopCategoryItem,
+  LocalStoreItem,
+} from "@/mocks/stores-data";
+import { MOCK_DASHBOARD_STATS } from "@/mocks/data";
 import { delay } from "@/lib/utils";
-import { productMatchesCategoryFilter } from "@/lib/category-mapping";
 
 // ---------------------------------------------------------------------------
 // Axios instance — swap baseURL for your real API when ready
@@ -41,7 +46,8 @@ apiClient.interceptors.response.use(
       document.cookie = "auth_token=; Path=/; Max-Age=0; SameSite=Lax";
       document.cookie = "auth_role=; Path=/; Max-Age=0; SameSite=Lax";
       if (!window.location.pathname.startsWith("/login")) {
-        window.location.href = "/login";
+        const next = `${window.location.pathname}${window.location.search}`;
+        window.location.href = `/login?next=${encodeURIComponent(next)}`;
       }
     }
     return Promise.reject(error);
@@ -65,91 +71,167 @@ export function apiErrorMessage(error: unknown, fallback: string): string {
 // Mock API functions — replace with real axios calls when your API is ready
 // ---------------------------------------------------------------------------
 
+function compactParams(params: Record<string, unknown>) {
+  return Object.fromEntries(
+    Object.entries(params).filter(([, value]) => value !== undefined && value !== "" && value !== false),
+  );
+}
+
+export type SellerProductPayload = {
+  name: string;
+  sku?: string;
+  description?: string;
+  price: number;
+  compare_at_price?: number | null;
+  cost_price?: number | null;
+  stock?: number;
+  status?: "draft" | "active" | "archived";
+  category?: string;
+  brand?: string;
+  subcategory?: string;
+  tags?: string[];
+  image_urls?: string[];
+  is_featured?: boolean;
+};
+
 export const productsApi = {
   getAll: async (
     filters: ProductFilter = {},
     page = 1,
     limit = 12,
   ): Promise<PaginatedResponse<Product>> => {
-    await delay(400);
-
-    let results = [...MOCK_PRODUCTS];
-
-    if (filters.featured) {
-      results = results.filter((p) => p.isFeatured);
-    }
-
-    if (filters.category) {
-      results = results.filter((p) =>
-        productMatchesCategoryFilter(p.category, filters.category)
-      );
-    }
-    if (filters.minPrice !== undefined) {
-      results = results.filter((p) => p.price >= filters.minPrice!);
-    }
-    if (filters.maxPrice !== undefined) {
-      results = results.filter((p) => p.price <= filters.maxPrice!);
-    }
-    if (filters.inStock) {
-      results = results.filter((p) => p.stock > 0);
-    }
-    if (filters.sortBy === "price_asc") results.sort((a, b) => a.price - b.price);
-    if (filters.sortBy === "price_desc") results.sort((a, b) => b.price - a.price);
-    if (filters.sortBy === "rating") results.sort((a, b) => b.rating - a.rating);
-    if (filters.sortBy === "newest")
-      results.sort(
-        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-      );
-    if (filters.sortBy === "bestseller")
-      results.sort((a, b) => Number(b.isBestseller) - Number(a.isBestseller));
-
-    if (!filters.sortBy && filters.featured) {
-      results.sort(
-        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-      );
-    }
-
-    const total = results.length;
-    const start = (page - 1) * limit;
-    const data = results.slice(start, start + limit);
-
-    return {
-      data,
-      total,
-      page,
-      limit,
-      totalPages: Math.ceil(total / limit),
-      hasNextPage: start + limit < total,
-      hasPrevPage: page > 1,
-    };
+    const { data } = await apiClient.get<ApiResponse<PaginatedResponse<Product>>>("/products", {
+      params: compactParams({
+        page,
+        limit,
+        category: filters.category,
+        store: filters.store,
+        brand: filters.brand,
+        q: filters.q,
+        featured: filters.featured ? 1 : undefined,
+        min_price: filters.minPrice,
+        max_price: filters.maxPrice,
+        in_stock: filters.inStock ? 1 : undefined,
+        sort: filters.sortBy,
+      }),
+    });
+    return data.data;
   },
 
   getById: async (id: string): Promise<ApiResponse<Product>> => {
-    await delay(300);
-    const product = MOCK_PRODUCTS.find((p) => p.id === id || p.slug === id);
-    if (!product) throw new Error("Product not found");
-    return { data: product, success: true };
+    const { data } = await apiClient.get<ApiResponse<Product>>(`/products/${id}`);
+    return data;
   },
 
   getFeatured: async (): Promise<ApiResponse<Product[]>> => {
-    await delay(350);
-    return {
-      data: MOCK_PRODUCTS.filter((p) => p.isFeatured),
-      success: true,
-    };
+    const result = await productsApi.getAll({ featured: true }, 1, 24);
+    return { data: result.data, success: true };
   },
 
   search: async (query: string): Promise<ApiResponse<Product[]>> => {
-    await delay(300);
-    const q = query.toLowerCase();
-    const results = MOCK_PRODUCTS.filter(
-      (p) =>
-        p.name.toLowerCase().includes(q) ||
-        p.description.toLowerCase().includes(q) ||
-        p.tags.some((t) => t.toLowerCase().includes(q)) ||
-        p.category.toLowerCase().includes(q),
+    const { data } = await apiClient.get<ApiResponse<PaginatedResponse<Product>>>("/search", {
+      params: { q: query, limit: 24 },
+    });
+    return { data: data.data.data, success: data.success };
+  },
+};
+
+export const catalogApi = {
+  getMalls: async (params: { q?: string; city?: string; page?: number; limit?: number } = {}) => {
+    const { data } = await apiClient.get<ApiResponse<PaginatedResponse<Mall>>>("/malls", {
+      params: compactParams(params),
+    });
+    return data.data;
+  },
+
+  getMall: async (slug: string) => {
+    const { data } = await apiClient.get<ApiResponse<Mall>>(`/malls/${slug}`);
+    return data;
+  },
+
+  getMallStores: async (slug: string, category?: string) => {
+    const { data } = await apiClient.get<ApiResponse<LocalStoreItem[]>>(`/malls/${slug}/stores`, {
+      params: compactParams({ category: category && category !== "all" ? category : undefined }),
+    });
+    return data;
+  },
+
+  getStore: async (slug: string) => {
+    const { data } = await apiClient.get<ApiResponse<LocalStoreItem>>(`/stores/${slug}`);
+    return data;
+  },
+
+  getStoreProducts: async (slug: string, filters: ProductFilter = {}, page = 1, limit = 24) => {
+    const { data } = await apiClient.get<ApiResponse<PaginatedResponse<Product>>>(
+      `/stores/${slug}/products`,
+      {
+        params: compactParams({
+          page,
+          limit,
+          category: filters.category,
+        }),
+      },
     );
-    return { data: results, success: true };
+    return data.data;
+  },
+
+  getCategories: async () => {
+    const { data } = await apiClient.get<ApiResponse<ShopCategoryItem[]>>("/categories");
+    return data;
+  },
+
+  getBrands: async () => {
+    const { data } = await apiClient.get<ApiResponse<BrandPartner[]>>("/brands");
+    return data;
+  },
+
+  getBrand: async (slug: string) => {
+    const { data } = await apiClient.get<ApiResponse<BrandPartner>>(`/brands/${slug}`);
+    return data;
+  },
+
+  getBrandCategories: async (slug: string) => {
+    const { data } = await apiClient.get<ApiResponse<ShopCategoryItem[]>>(`/brands/${slug}/categories`);
+    return data;
+  },
+
+  getDeals: async () => {
+    const { data } = await apiClient.get<ApiResponse<DealProduct[]>>("/deals");
+    return data;
+  },
+
+  getEmergingVendors: async () => {
+    const { data } = await apiClient.get<ApiResponse<EmergingVendor[]>>("/vendors/emerging");
+    return data;
+  },
+
+  getNationwideStores: async () => {
+    const { data } = await apiClient.get<ApiResponse<NationwideBrand[]>>("/stores/nationwide");
+    return data;
+  },
+};
+
+export const sellerProductsApi = {
+  getAll: async (page = 1, limit = 100) => {
+    const { data } = await apiClient.get<ApiResponse<PaginatedResponse<Product>>>("/seller/products", {
+      params: { page, limit },
+    });
+    return data.data;
+  },
+
+  create: async (payload: SellerProductPayload) => {
+    const { data } = await apiClient.post<ApiResponse<Product>>("/seller/products", payload);
+    return data;
+  },
+
+  update: async (id: string, payload: Partial<SellerProductPayload>) => {
+    const { data } = await apiClient.patch<ApiResponse<Product>>(`/seller/products/${id}`, payload);
+    return data;
+  },
+
+  remove: async (id: string) => {
+    const { data } = await apiClient.delete<ApiResponse<null>>(`/seller/products/${id}`);
+    return data;
   },
 };
 
@@ -242,9 +324,84 @@ export const dashboardApi = {
   },
 };
 
+export const addressesApi = {
+  list: async () => {
+    const { data } = await apiClient.get<ApiResponse<Address[]>>("/addresses");
+    return data;
+  },
+
+  create: async (payload: AddressPayload) => {
+    const { data } = await apiClient.post<ApiResponse<Address>>("/addresses", {
+      label: payload.label,
+      street: payload.street,
+      city: payload.city,
+      state: payload.state,
+      postal_code: payload.postalCode,
+      country: payload.country,
+      phone: payload.phone,
+      is_default: payload.isDefault,
+    });
+    return data;
+  },
+};
+
+export const checkoutApi = {
+  place: async (payload: {
+    address_id: number;
+    delivery_method?: string;
+    payment_method?: string;
+    items: Array<{ product_id: string; quantity: number; variants?: Record<string, unknown> }>;
+  }) => {
+    const { data } = await apiClient.post<ApiResponse<CheckoutResult>>("/checkout", payload);
+    return data;
+  },
+
+  confirm: async (groupId: string) => {
+    const { data } = await apiClient.post<ApiResponse<CheckoutResult>>("/checkout/confirm", {
+      group_id: groupId,
+    });
+    return data;
+  },
+};
+
 export const ordersApi = {
-  getMyOrders: async () => {
-    await delay(400);
-    return { data: MOCK_ORDERS, success: true };
+  getMyOrders: async (page = 1, limit = 50) => {
+    const { data } = await apiClient.get<ApiResponse<PaginatedResponse<ApiOrder>>>("/orders", {
+      params: { page, limit },
+    });
+    return data.data;
+  },
+
+  getMyOrder: async (id: string) => {
+    const { data } = await apiClient.get<ApiResponse<ApiOrder>>(`/orders/${id}`);
+    return data;
+  },
+
+  track: async (id: string, email?: string) => {
+    const { data } = await apiClient.get<ApiResponse<ApiOrder>>(`/orders/${id}/track`, {
+      params: compactParams({ email }),
+    });
+    return data;
+  },
+};
+
+export const sellerOrdersApi = {
+  list: async (params: { q?: string; status?: string; page?: number; limit?: number } = {}) => {
+    const { data } = await apiClient.get<ApiResponse<PaginatedResponse<ApiOrder>>>("/seller/orders", {
+      params: compactParams(params),
+    });
+    return data.data;
+  },
+
+  getById: async (id: string) => {
+    const { data } = await apiClient.get<ApiResponse<ApiOrder>>(`/seller/orders/${id}`);
+    return data;
+  },
+
+  updateStatus: async (id: string, status: string) => {
+    const { data } = await apiClient.patch<ApiResponse<ApiOrder>>(`/seller/orders/${id}/status`, {
+      status,
+    });
+    return data;
   },
 };

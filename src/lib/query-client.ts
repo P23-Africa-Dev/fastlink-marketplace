@@ -38,11 +38,47 @@ export const QUERY_KEYS = {
     all: ["seller"] as const,
     dashboard: () => [...QUERY_KEYS.seller.all, "dashboard"] as const,
     orders: () => [...QUERY_KEYS.seller.all, "orders"] as const,
+    order: (id: string) => [...QUERY_KEYS.seller.all, "orders", id] as const,
     products: () => [...QUERY_KEYS.seller.all, "products"] as const,
   },
   orders: {
     all: ["orders"] as const,
     list: () => [...QUERY_KEYS.orders.all, "list"] as const,
     detail: (id: string) => [...QUERY_KEYS.orders.all, id] as const,
+    track: (id: string, email?: string) =>
+      [...QUERY_KEYS.orders.all, "track", id, email ?? ""] as const,
+  },
+  addresses: {
+    all: ["addresses"] as const,
+    list: () => [...QUERY_KEYS.addresses.all, "list"] as const,
+  },
+  malls: {
+    all: ["malls"] as const,
+    list: (filters: Record<string, unknown> = {}) => [...QUERY_KEYS.malls.all, "list", filters] as const,
+    detail: (slug: string) => [...QUERY_KEYS.malls.all, "detail", slug] as const,
+    stores: (slug: string, category?: string) =>
+      [...QUERY_KEYS.malls.all, "stores", slug, category ?? "all"] as const,
+  },
+  categories: {
+    all: ["categories"] as const,
+  },
+  brands: {
+    all: ["brands"] as const,
+    list: () => [...QUERY_KEYS.brands.all, "list"] as const,
+    detail: (slug: string) => [...QUERY_KEYS.brands.all, "detail", slug] as const,
+    categories: (slug: string) => [...QUERY_KEYS.brands.all, "categories", slug] as const,
+  },
+  stores: {
+    all: ["stores"] as const,
+    detail: (slug: string) => [...QUERY_KEYS.stores.all, "detail", slug] as const,
+    products: (slug: string, filters: Record<string, unknown> = {}) =>
+      [...QUERY_KEYS.stores.all, "products", slug, filters] as const,
+    nationwide: () => [...QUERY_KEYS.stores.all, "nationwide"] as const,
+  },
+  deals: {
+    all: ["deals"] as const,
+  },
+  vendors: {
+    emerging: () => ["vendors", "emerging"] as const,
   },
 } as const;

@@ -4,13 +4,13 @@ import { useRef, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { ChevronRight, ChevronLeft, ShoppingCart } from "lucide-react";
+import type { BrandPartner } from "@/mocks/stores-data";
 import {
-  ALL_BRAND_PARTNERS,
-  ALL_DEALS,
-  ALL_EMERGING_VENDORS,
-  ALL_NATIONWIDE_BRANDS,
-  type BrandPartner,
-} from "@/mocks/stores-data";
+  useBrands,
+  useDeals,
+  useEmergingVendors,
+  useNationwideStores,
+} from "@/hooks/use-catalog";
 
 // ── Shared: section header ─────────────────────────────────────
 
@@ -116,6 +116,14 @@ export function BrandsDealsSection() {
   const brandSliderRef = useRef<HTMLDivElement>(null);
   const vendorsSliderRef = useRef<HTMLDivElement>(null);
   const dealsSliderRef = useRef<HTMLDivElement>(null);
+  const { data: brandsRes } = useBrands();
+  const { data: nationwideRes } = useNationwideStores();
+  const { data: vendorsRes } = useEmergingVendors();
+  const { data: dealsRes } = useDeals();
+  const brands = brandsRes?.data ?? [];
+  const nationwide = nationwideRes?.data ?? [];
+  const vendors = vendorsRes?.data ?? [];
+  const deals = dealsRes?.data ?? [];
 
   // Auto-scroll Brand Partners slider every 1.8s
   useEffect(() => {
@@ -172,7 +180,7 @@ export function BrandsDealsSection() {
               ref={brandSliderRef}
               className="flex items-center divide-x divide-[#ECD7F8] overflow-x-auto scroll-smooth scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
             >
-              {ALL_BRAND_PARTNERS.map((brand) => (
+              {brands.map((brand) => (
                 <Link
                   key={brand.id}
                   href={brand.href}
@@ -193,7 +201,7 @@ export function BrandsDealsSection() {
           />
 
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-            {ALL_NATIONWIDE_BRANDS.map((brand) => (
+            {nationwide.map((brand) => (
               <Link
                 key={brand.id}
                 href={brand.href}
@@ -226,7 +234,7 @@ export function BrandsDealsSection() {
             ref={vendorsSliderRef}
             className="flex items-stretch gap-4 overflow-x-auto scroll-smooth scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden py-3 w-full pl-4 sm:pl-6 lg:pl-[calc(max(1rem,(100vw-80rem)/2+2rem))] pr-4 sm:pr-8 md:pr-12"
           >
-            {ALL_EMERGING_VENDORS.map((vendor) => (
+            {vendors.map((vendor) => (
               <Link
                 key={vendor.id}
                 href={vendor.href}
@@ -274,7 +282,7 @@ export function BrandsDealsSection() {
             ref={dealsSliderRef}
             className="flex items-stretch gap-4 overflow-x-auto scroll-smooth scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden py-3 w-full pl-4 sm:pl-6 lg:pl-[calc(max(1rem,(100vw-80rem)/2+2rem))] pr-4 sm:pr-8 md:pr-12"
           >
-            {ALL_DEALS.map((deal) => (
+            {deals.map((deal) => (
               <Link
                 key={deal.id}
                 href={deal.href}

@@ -29,12 +29,11 @@ import {
   Share2,
 } from "lucide-react";
 
-import { useProduct } from "@/hooks/use-products";
+import { useProduct, useProducts, useFeaturedProducts } from "@/hooks/use-products";
 import { useCartStore } from "@/store/cart-store";
 import { useWishlistStore } from "@/store/wishlist-store";
 import { formatPrice, cn, pluralize } from "@/lib/utils";
 import { ShopProductCard } from "@/components/product/shop-product-card";
-import { MOCK_PRODUCTS } from "@/mocks/data";
 import type { Product } from "@/types/product";
 
 interface ProductDetailPageProps {
@@ -44,14 +43,15 @@ interface ProductDetailPageProps {
 function getDistinctProducts(
   primaryList: Product[],
   count: number,
-  excludeId: string
+  excludeId: string,
+  fallback: Product[] = []
 ): Product[] {
   const map = new Map<string, Product>();
   primaryList.forEach((p) => {
     if (p.id !== excludeId) map.set(p.id, p);
   });
   if (map.size < count) {
-    MOCK_PRODUCTS.forEach((p) => {
+    fallback.forEach((p) => {
       if (p.id !== excludeId && map.size < count) map.set(p.id, p);
     });
   }
@@ -62,6 +62,10 @@ export default function ProductDetailPage(props: ProductDetailPageProps) {
   const params = use(props.params);
   const router = useRouter();
   const { data, isLoading, isError } = useProduct(params.id);
+  const { data: catalogPage } = useProducts({}, 1, 24);
+  const { data: featuredRes } = useFeaturedProducts();
+  const catalog = catalogPage?.data ?? [];
+  const featuredCatalog = featuredRes?.data ?? [];
   const { addItem } = useCartStore();
   const { toggleWishlist, isInWishlist } = useWishlistStore();
 
@@ -122,15 +126,16 @@ export default function ProductDetailPage(props: ProductDetailPageProps) {
   const product = data.data;
 
   const relatedProducts = getDistinctProducts(
-    MOCK_PRODUCTS.filter(
+    catalog.filter(
       (p) => p.id !== product.id && p.category === product.category
     ),
     3,
-    product.id
+    product.id,
+    catalog
   );
 
   const accessoryProducts = getDistinctProducts(
-    MOCK_PRODUCTS.filter(
+    catalog.filter(
       (p) =>
         p.id !== product.id &&
         (p.category.toLowerCase().includes("accessori") ||
@@ -138,24 +143,27 @@ export default function ProductDetailPage(props: ProductDetailPageProps) {
           p.tags.some((t) => t.toLowerCase().includes("accessori")))
     ),
     3,
-    product.id
+    product.id,
+    catalog
   );
 
   const sellerName = product.seller?.name || "Store";
   const sellerProducts = getDistinctProducts(
-    MOCK_PRODUCTS.filter(
+    catalog.filter(
       (p) => p.id !== product.id && p.seller?.id === product.seller?.id
     ),
     3,
-    product.id
+    product.id,
+    catalog
   );
 
   const featuredProducts = getDistinctProducts(
-    MOCK_PRODUCTS.filter(
+    featuredCatalog.filter(
       (p) => p.id !== product.id && (p.isFeatured || p.isBestseller)
     ),
     3,
-    product.id
+    product.id,
+    catalog
   );
 
   const recommendationColumns = [

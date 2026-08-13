@@ -18,6 +18,7 @@ export interface Address {
   state: string;
   postalCode: string;
   country: string;
+  phone?: string | null;
   isDefault: boolean;
 }
 

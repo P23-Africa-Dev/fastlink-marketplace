@@ -1,9 +1,13 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft, Store } from "lucide-react";
-import { ALL_EMERGING_VENDORS } from "@/mocks/stores-data";
+import { useEmergingVendors } from "@/hooks/use-catalog";
 
 export default function EmergingVendorsPage() {
+  const { data } = useEmergingVendors();
+  const vendors = data?.data ?? [];
   return (
     <div className="bg-[#EADBF8] min-h-screen pb-16">
       {/* ── 1. Full-Width Hero Section ───────────────────────────────────── */}
@@ -40,7 +44,7 @@ export default function EmergingVendorsPage() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-          {ALL_EMERGING_VENDORS.map((vendor) => (
+          {vendors.map((vendor) => (
             <Link
               key={vendor.id}
               href={vendor.href}

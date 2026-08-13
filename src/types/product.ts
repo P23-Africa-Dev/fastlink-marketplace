@@ -48,6 +48,8 @@ export interface Product {
   isFeatured: boolean;
   isNew: boolean;
   isBestseller: boolean;
+  status?: string;
+  costPrice?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -62,4 +64,7 @@ export interface ProductFilter {
   sortBy?: "price_asc" | "price_desc" | "rating" | "newest" | "bestseller";
   inStock?: boolean;
   featured?: boolean;
+  store?: string;
+  brand?: string;
+  q?: string;
 }

@@ -544,6 +544,8 @@ Migrate current mocks (`KANO_MALLS`, `LOCAL_STORES_NEAR_YOU`, `ALL_SHOP_CATEGORI
 
 **Out of scope:** Seller creating stores in UI (can seed); product CRUD.
 
+**Shipped:** 13 August 2026 — public mall/store/category/brand/deals/emerging/nationwide APIs; catalog seeded from former homepage mocks; shop pages and homepage sections read Laravel via React Query.
+
 ---
 
 ### Phase 3 — Products (public catalog + seller CRUD)
@@ -603,6 +605,8 @@ Dashboard-only fields (cost, dimensions) can be nullable extras on the same reso
 
 **Out of scope:** Payments, reviews write-path (read rating can default 0).
 
+**Shipped:** 13 August 2026 — public product list/detail/search; seller CRUD + image URLs + stock; unified Product resource; `/products`, `/all-products`, and add-new-product wired to Laravel. Buyer 403 on seller endpoints.
+
 ---
 
 ### Phase 4 — Cart, checkout, orders, tracking
@@ -653,7 +657,7 @@ Seller:
 - Tracking page shows real statuses.
 - Guest checkout: **out of scope** unless product requires it; prefer login-at-checkout.
 
----
+**Shipped:** 13 August 2026 — addresses, checkout (server re-price + stock lock), demo `POST /checkout/confirm`, buyer `/account/orders`, seller order status, public tracking by id+email. Cart stays Zustand. Paystack deferred to Phase 7.
 
 ### Phase 5 — Seller dashboard core (stats, customers, settings)
 

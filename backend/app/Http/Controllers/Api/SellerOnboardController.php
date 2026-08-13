@@ -36,6 +36,7 @@ class SellerOnboardController extends Controller
             'bank_name' => $validated['bank_name'],
             'bank_account_number' => $validated['bank_account_number'],
             'bank_account_name' => $validated['bank_account_name'],
+            'type' => 'independent',
             'status' => $status,
         ]);
 

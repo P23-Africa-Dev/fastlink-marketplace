@@ -27,9 +27,11 @@ import {
   Cell,
 } from "recharts";
 
-import { useOrdersStore, Order } from "@/store/orders-store";
+import { toDashboardOrder, type Order } from "@/lib/order-map";
 import { Pagination } from "@/components/dashboard/pagination";
+import { apiErrorMessage } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { useSellerOrders, useUpdateOrderStatus } from "@/hooks/use-orders";
 
 const WEEKLY_DATA = [
   { day: "Mon", volume: 60 },
@@ -56,7 +58,9 @@ const STATUS_STYLES: Record<string, string> = {
 };
 
 export default function DashboardOrdersPage() {
-  const { orders, updateOrderStatus } = useOrdersStore();
+  const { data: sellerPage, isLoading } = useSellerOrders();
+  const updateStatus = useUpdateOrderStatus();
+  const orders = (sellerPage?.data ?? []).map(toDashboardOrder);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("All");
   const [pageSize, setPageSize] = useState(10);
@@ -114,13 +118,17 @@ export default function DashboardOrdersPage() {
     setOpenDropdownId(null);
   };
 
-  // Submit modal status update
-  const handleConfirmStatusUpdate = () => {
-    if (targetOrder) {
-      updateOrderStatus(targetOrder.id, selectedStatus);
+  const handleConfirmStatusUpdate = async () => {
+    if (!targetOrder) return;
+    try {
+      await updateStatus.mutateAsync({ id: targetOrder.rawId, status: selectedStatus });
       setToastMessage(`Order ${targetOrder.id} status updated to "${selectedStatus}"`);
       setShowToast(true);
       setTargetOrder(null);
+      setTimeout(() => setShowToast(false), 4000);
+    } catch (error) {
+      setToastMessage(apiErrorMessage(error, "Could not update order status."));
+      setShowToast(true);
       setTimeout(() => setShowToast(false), 4000);
     }
   };
@@ -507,7 +515,9 @@ export default function DashboardOrdersPage() {
               ) : (
                 <tr>
                   <td colSpan={7} className="py-10 text-center text-slate-400 font-medium whitespace-nowrap">
-                    No orders found matching your search query or filter.
+                    {isLoading
+                      ? "Loading orders…"
+                      : "No orders found matching your search query or filter."}
                   </td>
                 </tr>
               )}
@@ -589,9 +599,10 @@ export default function DashboardOrdersPage() {
               </button>
               <button
                 onClick={handleConfirmStatusUpdate}
-                className="flex-1 py-2.5 bg-[#7a3dbf] hover:bg-[#682fad] text-white text-xs font-semibold rounded-xl transition-all shadow-md shadow-purple-600/20"
+                disabled={updateStatus.isPending}
+                className="flex-1 py-2.5 bg-[#7a3dbf] hover:bg-[#682fad] disabled:opacity-60 text-white text-xs font-semibold rounded-xl transition-all shadow-md shadow-purple-600/20"
               >
-                Confirm Update
+                {updateStatus.isPending ? "Updating…" : "Confirm Update"}
               </button>
             </div>
           </div>

@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -11,25 +10,27 @@ import {
   RotateCcw,
   Search,
 } from "lucide-react";
-import { KANO_MALLS } from "@/mocks/stores-data";
 import { MallCard } from "@/components/marketplace/mall-card";
 import { DynamicHero } from "@/components/marketplace/dynamic-hero";
+import { useMalls } from "@/hooks/use-catalog";
 
 const ITEMS_PER_PAGE = 8;
 
 export default function MallsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const { data: mallsPage } = useMalls({ limit: 50 });
+  const malls = mallsPage?.data ?? [];
 
   const filteredMalls = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
-    if (!q) return KANO_MALLS;
-    return KANO_MALLS.filter(
+    if (!q) return malls;
+    return malls.filter(
       (mall) =>
         mall.name.toLowerCase().includes(q) ||
         (mall.location && mall.location.toLowerCase().includes(q))
     );
-  }, [searchQuery]);
+  }, [searchQuery, malls]);
 
   const totalItems = filteredMalls.length;
   const totalPages = Math.max(1, Math.ceil(totalItems / ITEMS_PER_PAGE));
@@ -61,7 +62,7 @@ export default function MallsPage() {
             </p>
           </>
         }
-        backgroundImage={KANO_MALLS[0].image}
+        backgroundImage={malls[0]?.image || "https://images.unsplash.com/photo-1581417478175-a9ef18f210c2?w=1600&auto=format&fit=crop"}
         backLink="/"
         backLabel="Back to Homepage"
       />

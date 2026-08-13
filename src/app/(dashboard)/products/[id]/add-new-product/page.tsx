@@ -34,6 +34,8 @@ import {
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { apiErrorMessage } from "@/lib/api";
+import { useCreateSellerProduct } from "@/hooks/use-seller-products";
 
 interface VariantType {
   name: string;
@@ -68,6 +70,7 @@ export default function AddNewProductPage() {
   const router = useRouter();
   const params = useParams();
   const id = params?.id as string;
+  const createProduct = useCreateSellerProduct();
 
   const [activeSection, setActiveSection] = useState("basic-info");
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("saved");
@@ -346,13 +349,31 @@ export default function AddNewProductPage() {
 
   const handleSaveDraft = () => triggerToast("Draft saved successfully to dashboard index!");
 
-  const handlePublish = () => {
+  const handlePublish = async () => {
     if (completionPercentage < 100) {
       triggerToast("Please fill all required basic fields before publishing!");
       return;
     }
-    triggerToast("Listing published successfully! Redirecting...");
-    setTimeout(() => router.push("/all-products"), 1500);
+    try {
+      await createProduct.mutateAsync({
+        name: productName,
+        description,
+        price: basePrice,
+        compare_at_price: comparePrice || null,
+        cost_price: costPrice || null,
+        stock: hasVariants ? variantCombinations.reduce((sum, item) => sum + (item.stock || 0), 0) : baseStock,
+        category: categoryPath[0],
+        subcategory: categoryPath[1],
+        brand: brand || undefined,
+        tags,
+        status: "active",
+        image_urls: uploadedImages.map((img) => img.url).filter(Boolean),
+      });
+      triggerToast("Listing published successfully! Redirecting...");
+      setTimeout(() => router.push("/all-products"), 1200);
+    } catch (error) {
+      triggerToast(apiErrorMessage(error, "Could not publish listing."));
+    }
   };
 
   useEffect(() => {

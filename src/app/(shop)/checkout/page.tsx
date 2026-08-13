@@ -1,12 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Check, ChevronRight, Lock, ArrowLeft, ShieldCheck } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Check, ChevronRight, Lock, ArrowLeft, ShieldCheck, Loader2 } from "lucide-react";
 
 import { useCartStore } from "@/store/cart-store";
+import { useAuthStore } from "@/store/auth-store";
 import { formatPrice, cn } from "@/lib/utils";
+import { apiErrorMessage } from "@/lib/api";
+import { useMe } from "@/hooks/use-auth";
+import { useCheckout, useConfirmCheckout, useCreateAddress } from "@/hooks/use-orders";
 
 type Step = "contact" | "shipping" | "payment" | "review";
 
@@ -18,14 +23,26 @@ const STEPS: { id: Step; label: string }[] = [
 ];
 
 export default function CheckoutPage() {
+  const router = useRouter();
+  const token = useAuthStore((s) => s.token);
+  const { data: me } = useMe();
+  const createAddress = useCreateAddress();
+  const checkout = useCheckout();
+  const confirmCheckout = useConfirmCheckout();
+
   const [currentStep, setCurrentStep] = useState<Step>("contact");
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [orderRef, setOrderRef] = useState("");
+  const [trackingNumber, setTrackingNumber] = useState("");
+  const [submitError, setSubmitError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [pendingGroupId, setPendingGroupId] = useState<string | null>(null);
   const { items, subtotal, shipping, tax, total, clearCart } = useCartStore();
 
   const [form, setForm] = useState({
     email: "",
     name: "",
+    phone: "",
     street: "",
     city: "",
     state: "",
@@ -36,6 +53,22 @@ export default function CheckoutPage() {
     cardCvc: "",
   });
 
+  useEffect(() => {
+    if (!token) {
+      router.replace("/login?next=/checkout");
+    }
+  }, [token, router]);
+
+  useEffect(() => {
+    if (!me) return;
+    setForm((prev) => ({
+      ...prev,
+      email: prev.email || me.email,
+      name: prev.name || me.name,
+      phone: prev.phone || me.phone || "",
+    }));
+  }, [me]);
+
   function update(field: string, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
   }
@@ -45,13 +78,60 @@ export default function CheckoutPage() {
     if (idx < STEPS.length - 1) setCurrentStep(STEPS[idx + 1].id);
   }
 
-  function placeOrder() {
-    setOrderRef(Math.random().toString(36).slice(2, 8).toUpperCase());
-    clearCart();
-    setOrderPlaced(true);
+  async function placeOrder() {
+    setSubmitError("");
+    setIsSubmitting(true);
+
+    try {
+      let groupId = pendingGroupId;
+
+      if (!groupId) {
+        const address = await createAddress.mutateAsync({
+          label: "Shipping",
+          street: form.street,
+          city: form.city,
+          state: form.state,
+          postalCode: form.postalCode,
+          country: form.country,
+          phone: form.phone,
+          isDefault: true,
+        });
+
+        const placed = await checkout.mutateAsync({
+          address_id: Number(address.data.id),
+          delivery_method: "standard",
+          payment_method: "demo",
+          items: items.map((item) => ({
+            product_id: item.productId,
+            quantity: item.quantity,
+            variants: item.selectedVariants,
+          })),
+        });
+
+        groupId = placed.data.groupId;
+        setPendingGroupId(groupId);
+      }
+
+      const confirmed = await confirmCheckout.mutateAsync(groupId);
+      const first = confirmed.data.orders[0];
+      setOrderRef(first?.reference ?? "");
+      setTrackingNumber(first?.trackingNumber ?? "");
+      setPendingGroupId(null);
+      clearCart();
+      setOrderPlaced(true);
+    } catch (error) {
+      setSubmitError(apiErrorMessage(error, "Could not place your order. Please try again."));
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   if (orderPlaced) {
+    const displayRef = orderRef.startsWith("#") ? orderRef : `#${orderRef}`;
+    const trackHref = trackingNumber
+      ? `/order-tracking/${encodeURIComponent(trackingNumber)}?email=${encodeURIComponent(form.email)}`
+      : `/account/orders`;
+
     return (
       <div className="bg-[#EADBF8] min-h-screen py-16 font-montserrat">
         <div className="container-narrow text-center py-12">
@@ -62,26 +142,43 @@ export default function CheckoutPage() {
             Order Confirmed!
           </h1>
           <p className="mb-2 text-[#8A79A5] font-medium">
-            Thank you for your purchase. We&apos;ve received your order and sent a receipt to your email.
+            Demo payment recorded. Your order is confirmed and the seller can fulfil it.
           </p>
           <p className="mb-8 text-xs font-bold text-[#6D349F] bg-white/60 inline-block px-4 py-2 rounded-xl border border-white/80">
-            Order Reference: #FLK-{orderRef}
+            Order Reference: {displayRef}
           </p>
 
           <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
             <Link
-              href="/products"
+              href="/account/orders"
               className="w-full sm:w-auto rounded-xl bg-[#7E37C9] hover:bg-[#6C2CB5] text-white font-bold px-8 py-3.5 shadow-md transition-all"
             >
-              Continue Shopping
+              View My Orders
             </Link>
             <Link
-              href="/"
+              href={trackHref}
               className="w-full sm:w-auto rounded-xl border border-[#6D349F] text-[#6D349F] font-bold px-8 py-3.5 hover:bg-purple-100/50 transition-colors"
             >
-              Return Home
+              Track Order
             </Link>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (items.length === 0) {
+    return (
+      <div className="bg-[#EADBF8] min-h-screen py-16 font-montserrat">
+        <div className="container-narrow text-center py-12">
+          <h1 className="text-2xl font-extrabold text-[#6D349F] mb-3">Your cart is empty</h1>
+          <p className="text-[#8A79A5] mb-8">Add products before checking out.</p>
+          <Link
+            href="/products"
+            className="inline-flex rounded-xl bg-[#7E37C9] hover:bg-[#6C2CB5] text-white font-bold px-8 py-3.5 shadow-md"
+          >
+            Browse Products
+          </Link>
         </div>
       </div>
     );
@@ -183,9 +280,16 @@ export default function CheckoutPage() {
                   onChange={(v) => update("email", v)}
                   placeholder="amina@example.com"
                 />
+                <FormField
+                  label="Phone"
+                  value={form.phone}
+                  onChange={(v) => update("phone", v)}
+                  placeholder="+234 800 000 0000"
+                />
                 <button
                   onClick={nextStep}
-                  className="flex items-center justify-center gap-2 w-full rounded-xl bg-[#7E37C9] hover:bg-[#6C2CB5] text-white font-bold py-3.5 px-6 shadow-md transition-all mt-4"
+                  disabled={!form.name.trim() || !form.email.trim()}
+                  className="flex items-center justify-center gap-2 w-full rounded-xl bg-[#7E37C9] hover:bg-[#6C2CB5] disabled:opacity-50 text-white font-bold py-3.5 px-6 shadow-md transition-all mt-4"
                 >
                   <span>Continue to Shipping</span>
                   <ChevronRight size={16} />
@@ -234,7 +338,8 @@ export default function CheckoutPage() {
                 </div>
                 <button
                   onClick={nextStep}
-                  className="flex items-center justify-center gap-2 w-full rounded-xl bg-[#7E37C9] hover:bg-[#6C2CB5] text-white font-bold py-3.5 px-6 shadow-md transition-all mt-4"
+                  disabled={!form.street.trim() || !form.city.trim() || !form.state.trim()}
+                  className="flex items-center justify-center gap-2 w-full rounded-xl bg-[#7E37C9] hover:bg-[#6C2CB5] disabled:opacity-50 text-white font-bold py-3.5 px-6 shadow-md transition-all mt-4"
                 >
                   <span>Continue to Payment</span>
                   <ChevronRight size={16} />
@@ -249,7 +354,9 @@ export default function CheckoutPage() {
                 </h2>
                 <p className="flex items-center gap-2 text-xs text-[#8A79A5] bg-white/70 p-3 rounded-xl border border-white/80 font-medium">
                   <ShieldCheck size={16} className="text-[#6D349F] shrink-0" />
-                  <span>Encrypted 256-bit secure transaction via Fastlink Pay.</span>
+                  <span>
+                    Demo payment — no real charge. Card details stay in your browser and are not sent to the server.
+                  </span>
                 </p>
                 <FormField
                   label="Card Number"
@@ -304,17 +411,24 @@ export default function CheckoutPage() {
                   <div className="flex justify-between">
                     <span className="text-[#8A79A5] font-semibold">Payment</span>
                     <span className="text-[#3B1C5A] font-bold">
-                      {form.cardNumber ? `•••• ${form.cardNumber.slice(-4)}` : "—"}
+                      Demo payment{form.cardNumber ? ` · •••• ${form.cardNumber.slice(-4)}` : ""}
                     </span>
                   </div>
                 </div>
 
+                {submitError && (
+                  <p className="text-xs font-semibold text-rose-600 bg-rose-50 border border-rose-200 rounded-xl px-4 py-3">
+                    {submitError}
+                  </p>
+                )}
+
                 <button
                   onClick={placeOrder}
-                  className="flex items-center justify-center gap-2 w-full rounded-xl bg-[#6D349F] hover:bg-[#52237A] text-white font-extrabold py-4 px-6 shadow-lg transition-all mt-4 font-montserrat text-base"
+                  disabled={isSubmitting}
+                  className="flex items-center justify-center gap-2 w-full rounded-xl bg-[#6D349F] hover:bg-[#52237A] disabled:opacity-60 text-white font-extrabold py-4 px-6 shadow-lg transition-all mt-4 font-montserrat text-base"
                 >
-                  <Lock size={16} />
-                  <span>Place Order · {formatPrice(total)}</span>
+                  {isSubmitting ? <Loader2 size={16} className="animate-spin" /> : <Lock size={16} />}
+                  <span>{isSubmitting ? "Placing order…" : `Place Order · ${formatPrice(total)}`}</span>
                 </button>
               </div>
             )}

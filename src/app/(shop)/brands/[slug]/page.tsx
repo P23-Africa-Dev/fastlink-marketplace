@@ -1,14 +1,13 @@
+"use client";
+
+import { use } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Store } from "lucide-react";
 import { ShopProductCard } from "@/components/product/shop-product-card";
 import { TargetIcon } from "@/components/marketplace/target-icon";
-import {
-  getBrandBySlug,
-  getBrandCategories,
-  getBrandProductName,
-  getProductsByBrandSlug,
-} from "@/lib/brands";
+import { useBrand, useBrandCategories } from "@/hooks/use-catalog";
+import { useProducts } from "@/hooks/use-products";
 import { DynamicHero } from "@/components/marketplace/dynamic-hero";
 
 interface PageProps {
@@ -16,13 +15,32 @@ interface PageProps {
   searchParams: Promise<{ category?: string }>;
 }
 
-export default async function BrandDetailPage(props: PageProps) {
-  const searchParams = await props.searchParams;
-  const params = await props.params;
-  const brand = getBrandBySlug(params.slug);
+export default function BrandDetailPage(props: PageProps) {
+  const searchParams = use(props.searchParams);
+  const params = use(props.params);
   const selectedCategory = searchParams?.category;
+  const { data: brandRes, isLoading, isError } = useBrand(params.slug);
+  const { data: categoriesRes } = useBrandCategories(params.slug);
+  const { data: productsPage } = useProducts(
+    { brand: params.slug, category: selectedCategory },
+    1,
+    24,
+  );
 
-  if (!brand) {
+  const brand = brandRes?.data;
+  const categories = categoriesRes?.data ?? [];
+  const products = productsPage?.data ?? [];
+  const brandLabel = brand?.productBrand ?? brand?.name ?? "";
+
+  if (isLoading) {
+    return (
+      <div className="bg-[#EADBF8] min-h-screen flex items-center justify-center">
+        <p className="text-[#6D349F] font-bold font-montserrat">Loading brand...</p>
+      </div>
+    );
+  }
+
+  if (isError || !brand) {
     return (
       <div className="bg-[#EADBF8] min-h-screen pb-16">
         <div className="container-wide py-20 text-center space-y-4">
@@ -35,16 +53,16 @@ export default async function BrandDetailPage(props: PageProps) {
     );
   }
 
-  const categories = getBrandCategories(params.slug);
-  const products = getProductsByBrandSlug(params.slug, selectedCategory);
-  const brandLabel = getBrandProductName(brand);
-
   return (
     <div className="bg-[#EADBF8] min-h-screen pb-16">
       <DynamicHero
         title={brandLabel}
         subtitle="Official retail partner — shop by category"
-        backgroundImage={products[0]?.images?.[0] || categories[0]?.image || "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=1600&auto=format&fit=crop"}
+        backgroundImage={
+          products[0]?.images?.[0]?.url ||
+          categories[0]?.image ||
+          "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=1600&auto=format&fit=crop"
+        }
         backLink="/brands"
         backLabel="Back to Brand Partners"
       />

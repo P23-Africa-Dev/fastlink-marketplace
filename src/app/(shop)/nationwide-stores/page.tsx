@@ -1,8 +1,12 @@
+"use client";
+
 import Link from "next/link";
 import { ArrowLeft, Building2 } from "lucide-react";
-import { ALL_NATIONWIDE_BRANDS } from "@/mocks/stores-data";
+import { useNationwideStores } from "@/hooks/use-catalog";
 
 export default function NationwideStoresPage() {
+  const { data } = useNationwideStores();
+  const stores = data?.data ?? [];
   return (
     <div className="bg-[#EADBF8] min-h-screen pb-16">
       {/* ── 1. Full-Width Hero Section ───────────────────────────────────── */}
@@ -39,7 +43,7 @@ export default function NationwideStoresPage() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-          {ALL_NATIONWIDE_BRANDS.map((brand) => (
+          {stores.map((brand) => (
             <Link
               key={brand.id}
               href={brand.href}

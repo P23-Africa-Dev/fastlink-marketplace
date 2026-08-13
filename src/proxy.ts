@@ -1,29 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const SELLER_PREFIXES = [
-  "/dashboard",
-  "/orders",
-  "/all-products",
-  "/customers",
-  "/messages",
-  "/payments",
-  "/payouts",
-  "/analytics",
-  "/marketing",
-  "/reviews",
-  "/settings",
-  "/support",
-];
-
-function isSellerPath(pathname: string): boolean {
-  if (/^\/products\/[^/]+\/add-new-product/.test(pathname)) return true;
-  return SELLER_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
-}
+import { isLoginRequiredPath, isSellerDashboardPath } from "@/lib/auth-session";
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  if (!isSellerPath(pathname)) {
+  if (!isLoginRequiredPath(pathname)) {
     return NextResponse.next();
   }
 
@@ -35,7 +17,7 @@ export function proxy(request: NextRequest) {
   }
 
   const role = request.cookies.get("auth_role")?.value;
-  if (role === "buyer") {
+  if (role === "buyer" && isSellerDashboardPath(pathname)) {
     return NextResponse.redirect(new URL("/", request.url));
   }
 
@@ -44,6 +26,10 @@ export function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
+    "/checkout",
+    "/checkout/:path*",
+    "/account",
+    "/account/:path*",
     "/dashboard",
     "/dashboard/:path*",
     "/orders",

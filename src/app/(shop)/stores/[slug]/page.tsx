@@ -1,13 +1,11 @@
+"use client";
+
+import { use, useEffect } from "react";
 import Link from "next/link";
-import { redirect } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Clock, MapPin, Store as StoreIcon } from "lucide-react";
 import { ShopProductCard } from "@/components/product/shop-product-card";
-import {
-  getMallBySlug,
-  getMallForStore,
-  getProductsByStoreSlug,
-  getStoreBySlug,
-} from "@/lib/marketplace";
+import { useMall, useStore, useStoreProducts } from "@/hooks/use-catalog";
 import { DynamicHero } from "@/components/marketplace/dynamic-hero";
 
 interface PageProps {
@@ -15,16 +13,35 @@ interface PageProps {
   searchParams: Promise<{ category?: string }>;
 }
 
-export default async function StoreProductsPage(props: PageProps) {
-  const searchParams = await props.searchParams;
-  const params = await props.params;
-  const mallMatch = getMallBySlug(params.slug);
-  if (mallMatch) {
-    redirect(`/malls/${params.slug}`);
-  }
-
-  const store = getStoreBySlug(params.slug);
+export default function StoreProductsPage(props: PageProps) {
+  const params = use(props.params);
+  const searchParams = use(props.searchParams);
+  const router = useRouter();
   const selectedCategory = searchParams?.category;
+  const mallQuery = useMall(params.slug);
+  const storeQuery = useStore(params.slug, mallQuery.isError);
+  const store = storeQuery.data?.data;
+  const mall = store?.mall;
+  const productsQuery = useStoreProducts(
+    params.slug,
+    { category: selectedCategory },
+    Boolean(store) || storeQuery.isError,
+  );
+  const products = productsQuery.data?.data ?? [];
+
+  useEffect(() => {
+    if (mallQuery.data?.data) {
+      router.replace(`/malls/${params.slug}`);
+    }
+  }, [mallQuery.data, params.slug, router]);
+
+  if (mallQuery.isLoading || (mallQuery.isSuccess && mallQuery.data?.data)) {
+    return (
+      <div className="bg-[#EADBF8] min-h-screen flex items-center justify-center">
+        <p className="text-[#6D349F] font-bold font-montserrat">Loading store...</p>
+      </div>
+    );
+  }
 
   if (!store) {
     const displayName = params.slug
@@ -32,30 +49,23 @@ export default async function StoreProductsPage(props: PageProps) {
       .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
       .join(" ");
 
-    const products = getProductsByStoreSlug(params.slug, selectedCategory);
-
     return (
       <div className="bg-[#EADBF8] min-h-screen pb-16">
         <DynamicHero
           title={displayName}
-          backgroundImage={products[0]?.images?.[0] || "https://images.unsplash.com/photo-1555529669-e69e7aa0ba9a?w=1600&auto=format&fit=crop"}
+          backgroundImage="https://images.unsplash.com/photo-1555529669-e69e7aa0ba9a?w=1600&auto=format&fit=crop"
           backLink="/malls"
           backLabel="Back to Malls"
         />
-
-        <div className="container-wide py-10">
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-            {products.map((product) => (
-              <ShopProductCard key={product.id} product={product} />
-            ))}
-          </div>
+        <div className="container-wide py-20 text-center space-y-4">
+          <h2 className="text-2xl font-bold text-[#6D349F] font-montserrat">Store not found</h2>
+          <Link href="/malls" className="text-sm font-semibold text-[#6D349F] hover:underline">
+            Back to all malls
+          </Link>
         </div>
       </div>
     );
   }
-
-  const mall = getMallForStore(store);
-  const products = getProductsByStoreSlug(store.slug, selectedCategory);
 
   return (
     <div className="bg-[#EADBF8] min-h-screen pb-16">

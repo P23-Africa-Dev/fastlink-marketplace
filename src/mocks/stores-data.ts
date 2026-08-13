@@ -17,6 +17,7 @@ export interface LocalStoreItem {
   location: string;
   deliveryTag: string;
   image: string;
+  mall?: Mall;
 }
 
 export interface ShopCategoryItem {

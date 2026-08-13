@@ -1,3 +1,5 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -10,8 +12,8 @@ import {
   ShoppingBag,
   ArrowLeft,
 } from "lucide-react";
-import { ALL_SHOP_CATEGORIES } from "@/mocks/stores-data";
 import { DynamicHero } from "@/components/marketplace/dynamic-hero";
+import { useCategories } from "@/hooks/use-catalog";
 
 const CATEGORY_ICONS: Record<string, typeof Smartphone> = {
   electronics: Smartphone,
@@ -23,12 +25,14 @@ const CATEGORY_ICONS: Record<string, typeof Smartphone> = {
 };
 
 export default function CategoriesPage() {
+  const { data } = useCategories();
+  const categories = data?.data ?? [];
   return (
     <div className="bg-[#EADBF8] min-h-screen pb-16">
       <DynamicHero
         title="Shop By Category"
         subtitle="Browse products across all brands and stores — no mall navigation required"
-        backgroundImage={ALL_SHOP_CATEGORIES[0].image}
+        backgroundImage={categories[0]?.image || "https://images.unsplash.com/photo-1468495244123-6c6c332eeece?w=1600&auto=format&fit=crop"}
         backLink="/"
         backLabel="Back to Homepage"
       />
@@ -43,7 +47,7 @@ export default function CategoriesPage() {
         </div>
 
         <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-3 md:grid-cols-5">
-          {ALL_SHOP_CATEGORIES.map((cat) => {
+          {categories.map((cat) => {
             const Icon = CATEGORY_ICONS[cat.slug] || LayoutGrid;
             return (
               <Link
