@@ -54,6 +54,16 @@ class Store extends Model
         return $this->hasMany(Product::class);
     }
 
+    public function orders(): HasMany
+    {
+        return $this->hasMany(Order::class);
+    }
+
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(Review::class);
+    }
+
     public static function uniqueSlug(string $name): string
     {
         $base = Str::slug($name) ?: 'store';

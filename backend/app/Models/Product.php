@@ -78,6 +78,23 @@ class Product extends Model
         return $this->hasMany(ProductVariant::class);
     }
 
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(Review::class);
+    }
+
+    public function refreshRating(): void
+    {
+        $approved = $this->reviews()->where('status', 'approved');
+        $count = (clone $approved)->count();
+        $average = $count > 0 ? round((float) (clone $approved)->avg('rating'), 2) : 0;
+
+        $this->forceFill([
+            'rating' => $average,
+            'review_count' => $count,
+        ])->save();
+    }
+
     public function scopeActive($query)
     {
         return $query->where('status', 'active');

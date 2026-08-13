@@ -2,7 +2,7 @@ import axios from "axios";
 
 import type { PaginatedResponse, ApiResponse } from "@/types/api";
 import type { ProductFilter, Product } from "@/types/product";
-import type { DashboardStats } from "@/types/seller";
+import type { DashboardStats, ProductReview, SellerCustomer, SellerSettings, SellerStoreProfile } from "@/types/seller";
 import type { Address, User } from "@/types/user";
 import type { AddressPayload, ApiOrder, CheckoutResult } from "@/types/order";
 import type {
@@ -14,8 +14,6 @@ import type {
   ShopCategoryItem,
   LocalStoreItem,
 } from "@/mocks/stores-data";
-import { MOCK_DASHBOARD_STATS } from "@/mocks/data";
-import { delay } from "@/lib/utils";
 
 // ---------------------------------------------------------------------------
 // Axios instance — swap baseURL for your real API when ready
@@ -318,9 +316,83 @@ export const sellerApi = {
 };
 
 export const dashboardApi = {
-  getStats: async (): Promise<ApiResponse<DashboardStats>> => {
-    await delay(500);
-    return { data: MOCK_DASHBOARD_STATS, success: true };
+  getStats: async (range = "30d"): Promise<ApiResponse<DashboardStats>> => {
+    const { data } = await apiClient.get<ApiResponse<DashboardStats>>("/seller/dashboard", {
+      params: { range },
+    });
+    return data;
+  },
+};
+
+export const sellerStoreApi = {
+  get: async () => {
+    const { data } = await apiClient.get<ApiResponse<SellerStoreProfile>>("/seller/store");
+    return data;
+  },
+  update: async (payload: Partial<{
+    name: string;
+    description: string;
+    logo: string;
+    location: string;
+    headline: string;
+    delivery_tag: string;
+    phone: string;
+  }>) => {
+    const { data } = await apiClient.patch<ApiResponse<SellerStoreProfile>>("/seller/store", payload);
+    return data;
+  },
+};
+
+export const sellerSettingsApi = {
+  get: async () => {
+    const { data } = await apiClient.get<ApiResponse<SellerSettings>>("/seller/settings");
+    return data;
+  },
+  update: async (payload: {
+    bank_name?: string;
+    bank_account_number?: string;
+    bank_account_name?: string;
+    notifications?: Record<string, { email: boolean; push: boolean }>;
+  }) => {
+    const { data } = await apiClient.patch<ApiResponse<SellerSettings>>("/seller/settings", payload);
+    return data;
+  },
+};
+
+export const sellerCustomersApi = {
+  list: async (q?: string) => {
+    const { data } = await apiClient.get<ApiResponse<PaginatedResponse<SellerCustomer>>>("/seller/customers", {
+      params: compactParams({ q, limit: 100 }),
+    });
+    return data.data;
+  },
+};
+
+export const reviewsApi = {
+  listForProduct: async (id: string) => {
+    const { data } = await apiClient.get<ApiResponse<ProductReview[]>>(`/products/${id}/reviews`);
+    return data;
+  },
+  create: async (payload: { product_id: string; rating: number; body?: string; order_item_id?: number }) => {
+    const { data } = await apiClient.post<ApiResponse<ProductReview>>("/reviews", payload);
+    return data;
+  },
+};
+
+export const sellerReviewsApi = {
+  list: async (params: { status?: string; q?: string } = {}) => {
+    const { data } = await apiClient.get<ApiResponse<PaginatedResponse<ProductReview>>>("/seller/reviews", {
+      params: compactParams({ ...params, limit: 100 }),
+    });
+    return data.data;
+  },
+  reply: async (id: string, body: string) => {
+    const { data } = await apiClient.post<ApiResponse<ProductReview>>(`/seller/reviews/${id}/reply`, { body });
+    return data;
+  },
+  updateStatus: async (id: string, status: string) => {
+    const { data } = await apiClient.patch<ApiResponse<ProductReview>>(`/seller/reviews/${id}`, { status });
+    return data;
   },
 };
 

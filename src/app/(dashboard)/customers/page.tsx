@@ -33,6 +33,9 @@ import {
 } from "recharts";
 
 import { cn } from "@/lib/utils";
+import { useSellerCustomers } from "@/hooks/use-dashboard";
+import { formatOrderDate } from "@/lib/order-map";
+import type { SellerCustomer } from "@/types/seller";
 
 const ACQUISITION_DATA = [
   { month: "Jan", count: 45 },
@@ -168,16 +171,36 @@ const BG_COLORS = [
   { name: "Dark Slate", hex: "#1e293b" }
 ];
 
+function toDirectoryCustomer(row: SellerCustomer) {
+  return {
+    id: `#C-${row.id}`,
+    rawId: row.id,
+    name: row.name,
+    email: row.email,
+    avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(row.name)}`,
+    orders: row.orders,
+    spent: row.spent,
+    status: row.status,
+    joinDate: formatOrderDate(row.joinDate),
+    tier: row.tier,
+    phone: row.phone || "—",
+    address: row.address || "—",
+    notes: "Customer from store orders.",
+    preferredCategory: row.preferredCategory || "—",
+  };
+}
+
 export default function CustomersPage() {
-  const [customers, setCustomers] = useState(INITIAL_CUSTOMERS);
+  const { data: customerPage } = useSellerCustomers();
+  const customers = (customerPage?.data ?? []).map(toDirectoryCustomer);
   const [activeTab, setActiveTab] = useState<"directory" | "campaigns">("directory");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [tierFilter, setTierFilter] = useState("All");
   
   // Modals / Detail drawer states
-  const [selectedCustomer, setSelectedCustomer] = useState<typeof INITIAL_CUSTOMERS[0] | null>(null);
-  const [drawerCustomer, setDrawerCustomer] = useState<typeof INITIAL_CUSTOMERS[0] | null>(null);
+  const [selectedCustomer, setSelectedCustomer] = useState<ReturnType<typeof toDirectoryCustomer> | null>(null);
+  const [drawerCustomer, setDrawerCustomer] = useState<ReturnType<typeof toDirectoryCustomer> | null>(null);
   const [emailSubject, setEmailSubject] = useState("");
   const [emailBody, setEmailBody] = useState("");
   const [toastMessage, setToastMessage] = useState("");
@@ -213,11 +236,9 @@ export default function CustomersPage() {
     return matchesSearch && matchesStatus && matchesTier;
   });
 
-  const handleDelete = (id: string) => {
-    setCustomers((prev) => prev.filter((c) => c.id !== id));
-    if (drawerCustomer?.id === id) {
-      setDrawerCustomer(null);
-    }
+  const handleDelete = () => {
+    setToastMessage("Customers come from orders and cannot be deleted.");
+    setTimeout(() => setToastMessage(""), 4000);
   };
 
   const handleSendEmail = (e: React.FormEvent) => {
@@ -236,29 +257,9 @@ export default function CustomersPage() {
 
   const handleAddCustomer = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newName || !newEmail) return;
-
-    const newCust = {
-      id: `#C-${2000 + customers.length + 1}`,
-      name: newName,
-      email: newEmail,
-      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${newName}`,
-      orders: 0,
-      spent: 0,
-      status: "Active",
-      joinDate: new Date().toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" }),
-      tier: newTier,
-      phone: "+234 800 000 0000",
-      address: "Lekki, Lagos",
-      notes: "Newly onboarded shopper.",
-      preferredCategory: "General"
-    };
-
-    setCustomers((prev) => [newCust, ...prev]);
     setIsAdding(false);
-    setNewName("");
-    setNewEmail("");
-    setNewTier("Bronze");
+    setToastMessage("Customers appear automatically after they place an order.");
+    setTimeout(() => setToastMessage(""), 4000);
   };
 
   // Launch Campaign Creative
@@ -291,15 +292,12 @@ export default function CustomersPage() {
 
   const handleSaveNotes = () => {
     if (!drawerCustomer) return;
-    setCustomers(prev =>
-      prev.map(c => c.id === drawerCustomer.id ? { ...c, notes: customerNotes } : c)
-    );
-    setDrawerCustomer(prev => prev ? { ...prev, notes: customerNotes } : null);
+    setDrawerCustomer((prev) => (prev ? { ...prev, notes: customerNotes } : null));
     setToastMessage("Customer internal notes updated.");
     setTimeout(() => setToastMessage(""), 3000);
   };
 
-  const handleOpenDrawer = (customer: typeof INITIAL_CUSTOMERS[0]) => {
+  const handleOpenDrawer = (customer: ReturnType<typeof toDirectoryCustomer>) => {
     setDrawerCustomer(customer);
     setCustomerNotes(customer.notes);
   };
@@ -356,7 +354,7 @@ export default function CustomersPage() {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-[10px] sm:text-xs font-bold text-[#7a3dbf] uppercase tracking-wider truncate">Total Customers</p>
-            <p className="text-xl sm:text-2xl font-extrabold text-slate-800 mt-0.5">{customers.length + 1243}</p>
+            <p className="text-xl sm:text-2xl font-extrabold text-slate-800 mt-0.5">{customers.length}</p>
             <span className="text-[10px] font-bold text-green-500 mt-0.5 block">+ 18.6% vs last month</span>
           </div>
         </div>
@@ -675,7 +673,7 @@ export default function CustomersPage() {
                               <Mail size={13} />
                             </button>
                             <button
-                              onClick={() => handleDelete(c.id)}
+                              onClick={() => handleDelete()}
                               className="p-2 border border-slate-200 hover:border-red-500 rounded-lg text-slate-400 hover:text-red-500 transition-all bg-white shadow-sm active:scale-90"
                               title="Delete Customer"
                             >
@@ -1119,7 +1117,7 @@ export default function CustomersPage() {
                 <button
                   onClick={() => {
                     if (confirm(`Delete customer account ${drawerCustomer.name}?`)) {
-                      handleDelete(drawerCustomer.id);
+                      handleDelete();
                     }
                   }}
                   className="px-4 py-2.5 bg-red-50 hover:bg-red-100 border border-red-200 text-red-600 font-bold text-xs rounded-xl transition-all flex items-center justify-center active:scale-95"

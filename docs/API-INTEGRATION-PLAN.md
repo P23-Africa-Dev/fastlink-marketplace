@@ -687,6 +687,8 @@ Seller:
 
 **Out of scope:** Marketing ad platforms, analytics time-series (can show simple aggregates here).
 
+**Shipped:** 13 August 2026 — `GET /seller/dashboard` (revenue/orders/customers/products, chart, recent orders, top products), customers derived from orders with spend tiers, store + notification/bank settings persist. Dashboard, `/customers`, `/settings`, and `/dashboard/store` read Laravel.
+
 ---
 
 ### Phase 6 — Reviews
@@ -712,6 +714,8 @@ Seller:
 
 - Rating on product cards updates from approved reviews.
 - Seller can reply; buyer sees reply on product page.
+
+**Shipped:** 13 August 2026 — public product reviews, buyer create (must have purchased), seller list/reply/flag/hide; product `rating`/`reviewCount` recalculated from approved reviews.
 
 ---
 

@@ -14,6 +14,10 @@ import {
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { apiErrorMessage } from "@/lib/api";
+import { formatOrderDate } from "@/lib/order-map";
+import { useReplyToReview, useSellerReviews, useUpdateReviewStatus } from "@/hooks/use-dashboard";
+import type { ProductReview } from "@/types/seller";
 
 interface ReviewReply {
   author: string;
@@ -91,8 +95,31 @@ const INITIAL_REVIEWS: ReviewRecord[] = [
   }
 ];
 
+function toReviewRecord(review: ProductReview): ReviewRecord {
+  return {
+    id: review.id,
+    reviewerName: review.buyer.name,
+    avatarSeed: review.buyer.name,
+    productName: review.productName || "Product",
+    rating: review.rating,
+    date: formatOrderDate(review.createdAt),
+    comment: review.body || "",
+    status: (review.displayStatus as ReviewRecord["status"]) || "Approved",
+    reply: review.reply
+      ? {
+          author: "Store",
+          date: formatOrderDate(review.reply.createdAt),
+          comment: review.reply.body,
+        }
+      : undefined,
+  };
+}
+
 export default function ReviewsPage() {
-  const [reviews, setReviews] = useState<ReviewRecord[]>(INITIAL_REVIEWS);
+  const { data: reviewPage } = useSellerReviews();
+  const replyMutation = useReplyToReview();
+  const statusMutation = useUpdateReviewStatus();
+  const reviews = (reviewPage?.data ?? []).map(toReviewRecord);
   const [activeTab, setActiveTab] = useState<"all" | "pending" | "flagged">("all");
   const [search, setSearch] = useState("");
   const [toastMessage, setToastMessage] = useState("");
@@ -108,50 +135,38 @@ export default function ReviewsPage() {
     setTimeout(() => setToastMessage(""), 3000);
   };
 
-  const handleReplySubmit = (e: React.FormEvent) => {
+  const handleReplySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedReviewForReply || !replyText.trim()) return;
-
-    setReviews(prev =>
-      prev.map(rev =>
-        rev.id === selectedReviewForReply.id
-          ? {
-              ...rev,
-              status: "Approved",
-              reply: {
-                author: "FastLink Stores (Merchant)",
-                date: "Today (Just now)",
-                comment: replyText
-              }
-            }
-          : rev
-      )
-    );
-
-    setSelectedReviewForReply(null);
-    setReplyText("");
-    triggerToast("Reply posted successfully!");
+    try {
+      await replyMutation.mutateAsync({ id: selectedReviewForReply.id, body: replyText });
+      setSelectedReviewForReply(null);
+      setReplyText("");
+      triggerToast("Reply posted successfully!");
+    } catch (error) {
+      triggerToast(apiErrorMessage(error, "Could not post reply."));
+    }
   };
 
-  const handleFlagSubmit = (e: React.FormEvent) => {
+  const handleFlagSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedReviewForFlag) return;
-
-    setReviews(prev =>
-      prev.map(rev =>
-        rev.id === selectedReviewForFlag.id
-          ? { ...rev, status: "Flagged" }
-          : rev
-      )
-    );
-
-    setSelectedReviewForFlag(null);
-    triggerToast("Review flagged for moderator review.");
+    try {
+      await statusMutation.mutateAsync({ id: selectedReviewForFlag.id, status: "flagged" });
+      setSelectedReviewForFlag(null);
+      triggerToast("Review flagged for moderator review.");
+    } catch (error) {
+      triggerToast(apiErrorMessage(error, "Could not flag review."));
+    }
   };
 
-  const handleDeleteReview = (id: string) => {
-    setReviews(prev => prev.filter(rev => rev.id !== id));
-    triggerToast("Review removed from listings.");
+  const handleDeleteReview = async (id: string) => {
+    try {
+      await statusMutation.mutateAsync({ id, status: "hidden" });
+      triggerToast("Review hidden from the public listing.");
+    } catch (error) {
+      triggerToast(apiErrorMessage(error, "Could not hide review."));
+    }
   };
 
   // Filter reviews

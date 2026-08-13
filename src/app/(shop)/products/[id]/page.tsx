@@ -29,10 +29,13 @@ import {
   Share2,
 } from "lucide-react";
 
-import { useProduct, useProducts, useFeaturedProducts } from "@/hooks/use-products";
+import { useProduct, useProducts, useFeaturedProducts, useProductReviews, useCreateReview } from "@/hooks/use-products";
 import { useCartStore } from "@/store/cart-store";
 import { useWishlistStore } from "@/store/wishlist-store";
+import { useAuthStore } from "@/store/auth-store";
 import { formatPrice, cn, pluralize } from "@/lib/utils";
+import { apiErrorMessage } from "@/lib/api";
+import { formatOrderDate } from "@/lib/order-map";
 import { ShopProductCard } from "@/components/product/shop-product-card";
 import type { Product } from "@/types/product";
 
@@ -62,6 +65,9 @@ export default function ProductDetailPage(props: ProductDetailPageProps) {
   const params = use(props.params);
   const router = useRouter();
   const { data, isLoading, isError } = useProduct(params.id);
+  const { data: reviewsRes } = useProductReviews(params.id);
+  const createReview = useCreateReview();
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const { data: catalogPage } = useProducts({}, 1, 24);
   const { data: featuredRes } = useFeaturedProducts();
   const catalog = catalogPage?.data ?? [];
@@ -76,6 +82,9 @@ export default function ProductDetailPage(props: ProductDetailPageProps) {
   const [selectedStorage, setSelectedStorage] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [addedToCart, setAddedToCart] = useState(false);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewBody, setReviewBody] = useState("");
+  const [reviewMessage, setReviewMessage] = useState("");
   const [activeTab, setActiveTab] = useState<
     "description" | "additional" | "specification" | "review"
   >("description");
@@ -800,6 +809,88 @@ export default function ProductDetailPage(props: ProductDetailPageProps) {
                     </span>
                   </div>
                 </div>
+
+                <ul className="space-y-4">
+                  {(reviewsRes?.data ?? []).map((review) => (
+                    <li key={review.id} className="rounded-xl border border-purple-100 bg-white p-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-sm font-bold text-[#1E1E2F]">{review.buyer.name}</p>
+                        <span className="text-xs text-[#8A79A5]">{formatOrderDate(review.createdAt)}</span>
+                      </div>
+                      <div className="flex gap-0.5 text-amber-400 my-1">
+                        {Array.from({ length: 5 }).map((_, i) => (
+                          <Star key={i} size={12} className={i < review.rating ? "fill-amber-400" : "text-slate-300"} />
+                        ))}
+                      </div>
+                      {review.body && <p className="text-sm text-[#5F6C72]">{review.body}</p>}
+                      {review.reply && (
+                        <p className="mt-2 text-xs text-[#6D349F] bg-purple-50 rounded-lg p-2">
+                          Seller reply: {review.reply.body}
+                        </p>
+                      )}
+                    </li>
+                  ))}
+                  {(reviewsRes?.data ?? []).length === 0 && (
+                    <p className="text-sm text-[#8A79A5]">No reviews yet.</p>
+                  )}
+                </ul>
+
+                {isAuthenticated ? (
+                  <form
+                    className="max-w-md space-y-3 rounded-xl border border-purple-100 bg-white p-4"
+                    onSubmit={async (e) => {
+                      e.preventDefault();
+                      setReviewMessage("");
+                      try {
+                        await createReview.mutateAsync({
+                          product_id: product.id,
+                          rating: reviewRating,
+                          body: reviewBody,
+                        });
+                        setReviewBody("");
+                        setReviewMessage("Thanks — your review is live.");
+                      } catch (error) {
+                        setReviewMessage(apiErrorMessage(error, "You can only review products you purchased."));
+                      }
+                    }}
+                  >
+                    <p className="text-sm font-bold text-[#1E1E2F]">Write a review</p>
+                    <div className="flex gap-1">
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <button
+                          type="button"
+                          key={i}
+                          onClick={() => setReviewRating(i + 1)}
+                          className="text-amber-400"
+                        >
+                          <Star size={18} className={i < reviewRating ? "fill-amber-400" : "text-slate-300"} />
+                        </button>
+                      ))}
+                    </div>
+                    <textarea
+                      value={reviewBody}
+                      onChange={(e) => setReviewBody(e.target.value)}
+                      rows={3}
+                      placeholder="How was this product?"
+                      className="w-full rounded-xl border border-purple-100 px-3 py-2 text-sm"
+                    />
+                    {reviewMessage && <p className="text-xs font-semibold text-[#6D349F]">{reviewMessage}</p>}
+                    <button
+                      type="submit"
+                      disabled={createReview.isPending}
+                      className="rounded-xl bg-[#7E37C9] text-white text-xs font-bold px-4 py-2 disabled:opacity-60"
+                    >
+                      {createReview.isPending ? "Posting…" : "Post review"}
+                    </button>
+                  </form>
+                ) : (
+                  <p className="text-sm text-[#8A79A5]">
+                    <Link href={`/login?next=/products/${product.id}`} className="font-bold text-[#6D349F] hover:underline">
+                      Log in
+                    </Link>{" "}
+                    to review this product after purchase.
+                  </p>
+                )}
               </div>
             )}
           </div>

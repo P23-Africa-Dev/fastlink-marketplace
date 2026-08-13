@@ -10,9 +10,15 @@ use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\MallController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\ProductController;
+use App\Http\Controllers\Api\ReviewController;
+use App\Http\Controllers\Api\SellerDashboardController;
+use App\Http\Controllers\Api\SellerCustomerController;
 use App\Http\Controllers\Api\SellerOnboardController;
 use App\Http\Controllers\Api\SellerOrderController;
 use App\Http\Controllers\Api\SellerProductController;
+use App\Http\Controllers\Api\SellerReviewController;
+use App\Http\Controllers\Api\SellerSettingsController;
+use App\Http\Controllers\Api\SellerStoreController;
 use App\Http\Controllers\Api\StoreController;
 use App\Http\Controllers\Api\VendorController;
 use Illuminate\Support\Facades\Route;
@@ -47,6 +53,7 @@ Route::get('/stores/{slug}', [StoreController::class, 'show']);
 Route::get('/stores/{slug}/products', [StoreController::class, 'products']);
 
 Route::get('/products', [ProductController::class, 'index']);
+Route::get('/products/{idOrSlug}/reviews', [ReviewController::class, 'index']);
 Route::get('/products/{idOrSlug}', [ProductController::class, 'show']);
 Route::get('/search', [ProductController::class, 'search']);
 Route::get('/orders/{order}/track', [OrderController::class, 'track']);
@@ -64,6 +71,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::post('/checkout/confirm', [CheckoutController::class, 'confirm']);
     Route::get('/orders', [OrderController::class, 'index']);
     Route::get('/orders/{order}', [OrderController::class, 'show']);
+    Route::post('/reviews', [ReviewController::class, 'store']);
 
     Route::middleware('role:seller,admin')->group(function (): void {
         Route::get('/seller/products', [SellerProductController::class, 'index']);
@@ -78,5 +86,16 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::get('/seller/orders', [SellerOrderController::class, 'index']);
         Route::get('/seller/orders/{order}', [SellerOrderController::class, 'show']);
         Route::patch('/seller/orders/{order}/status', [SellerOrderController::class, 'updateStatus']);
+
+        Route::get('/seller/dashboard', [SellerDashboardController::class, 'show']);
+        Route::get('/seller/customers', [SellerCustomerController::class, 'index']);
+        Route::get('/seller/customers/{customer}', [SellerCustomerController::class, 'show']);
+        Route::get('/seller/store', [SellerStoreController::class, 'show']);
+        Route::patch('/seller/store', [SellerStoreController::class, 'update']);
+        Route::get('/seller/settings', [SellerSettingsController::class, 'show']);
+        Route::patch('/seller/settings', [SellerSettingsController::class, 'update']);
+        Route::get('/seller/reviews', [SellerReviewController::class, 'index']);
+        Route::post('/seller/reviews/{review}/reply', [SellerReviewController::class, 'reply']);
+        Route::patch('/seller/reviews/{review}', [SellerReviewController::class, 'update']);
     });
 });

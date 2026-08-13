@@ -15,7 +15,6 @@ import {
   Wallet,
   ChevronRight,
   Plus,
-  Minus,
   Clock,
   Sparkles,
   Download,
@@ -33,105 +32,38 @@ import {
 
 import { StatCard } from "@/components/dashboard/stat-card";
 import headphonesImg from "@/assets/headphones.png";
+import { useDashboardStats } from "@/hooks/use-dashboard";
+import { formatOrderDate } from "@/lib/order-map";
 
 export default function DashboardPage() {
-  // Chart period state
   const [timeframe, setTimeframe] = useState<"7d" | "30d" | "1y">("30d");
+  const { data: statsRes } = useDashboardStats(timeframe);
+  const stats = statsRes?.data;
 
-  // Chart data variants
-  const chartDataMap = {
-    "7d": [
-      { name: "Mon", value: 35000 },
-      { name: "Tue", value: 42000 },
-      { name: "Wed", value: 38000 },
-      { name: "Thu", value: 65000 },
-      { name: "Fri", value: 72000 },
-      { name: "Sat", value: 85000 },
-      { name: "Sun", value: 91000 },
-    ],
-    "30d": [
-      { name: "May 8", value: 20000 },
-      { name: "May 11", value: 30000 },
-      { name: "May 15", value: 25000 },
-      { name: "May 18", value: 50000 },
-      { name: "May 22", value: 70000 },
-      { name: "May 25", value: 45000 },
-      { name: "May 29", value: 60000 },
-      { name: "Jun 1", value: 78000 },
-      { name: "Jun 5", value: 55000 },
-      { name: "Jun 8", value: 82000 },
-      { name: "Jun 10", value: 70000 },
-    ],
-    "1y": [
-      { name: "Jan", value: 180000 },
-      { name: "Feb", value: 240000 },
-      { name: "Mar", value: 310000 },
-      { name: "Apr", value: 290000 },
-      { name: "May", value: 450000 },
-      { name: "Jun", value: 520000 },
-      { name: "Jul", value: 610000 },
-      { name: "Aug", value: 780000 },
-    ],
-  };
+  const chartData = stats?.chart?.length
+    ? stats.chart
+    : [{ name: "—", value: 0 }];
 
-  // Filter tab for orders
   const [orderFilter, setOrderFilter] = useState<"All" | "Processing" | "Shipped" | "Delivered">("All");
 
-  // Orders list state
-  const [orders, setOrders] = useState([
-    {
-      id: "ord-1",
-      title: "Highlander Men's Chronograph Watch",
-      sku: "SKU: HLC-CHR-001",
-      price: 49000,
-      quantity: 1,
-      image: "https://images.unsplash.com/photo-1522312346375-d1a52e2b99b3?w=300&auto=format",
-      status: "Processing" as const,
-      delivery: "Same Day: Jun 4-24",
-    },
-    {
-      id: "ord-2",
-      title: 'Samsung 65" 4K Crystal UHD Smart TV',
-      sku: "SKU: SAM-65-4K",
-      price: 290000,
-      quantity: 3,
-      image: "https://images.unsplash.com/photo-1593305841991-05c297ba4575?w=300&auto=format",
-      status: "Processing" as const,
-      delivery: "Express: Jun 4-24",
-    },
-    {
-      id: "ord-3",
-      title: 'Apple MacBook Pro 16" M3 Max - Space Black',
-      sku: "SKU: APP-MBP-16",
-      price: 1850000,
-      quantity: 1,
-      image: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=300&auto=format",
-      status: "Shipped" as const,
-      delivery: "Standard: Jun 2-18",
-    },
-    {
-      id: "ord-4",
-      title: "Nike Air Max 270 React Sneakers",
-      sku: "SKU: NKE-AM270-W",
-      price: 75000,
-      quantity: 2,
-      image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=300&auto=format",
-      status: "Delivered" as const,
-      delivery: "Delivered: Jun 1",
-    },
-  ]);
-
-  // Quantity control
-  const handleQuantityChange = (id: string, delta: number) => {
-    setOrders((prev) =>
-      prev.map((o) => {
-        if (o.id === id) {
-          return { ...o, quantity: Math.max(1, o.quantity + delta) };
-        }
-        return o;
-      })
-    );
-  };
+  const orders = (stats?.recentOrders ?? []).map((order) => {
+    const uiStatus =
+      order.status === "shipped" || order.displayStatus === "Shipped"
+        ? "Shipped"
+        : order.status === "delivered" || order.displayStatus === "Delivered"
+          ? "Delivered"
+          : "Processing";
+    return {
+      id: order.reference || order.id,
+      title: order.title || order.customerName,
+      sku: order.sku ? `SKU: ${order.sku}` : order.customerName,
+      price: order.amount,
+      quantity: order.quantity || 1,
+      image: order.image || "",
+      status: uiStatus as "Processing" | "Shipped" | "Delivered",
+      delivery: order.delivery || formatOrderDate(order.date),
+    };
+  });
 
   // Countdown timer for Hot Deals
   const [timeLeft, setTimeLeft] = useState({ hours: 4, minutes: 22, seconds: 15 });
@@ -198,36 +130,36 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-5">
         <StatCard
           title="Total Orders"
-          value="1,248"
+          value={(stats?.totalOrders ?? 0).toLocaleString()}
           icon={<ShoppingBag size={18} />}
-          badgeText="18.6%"
+          badgeText={`${stats?.ordersChange ?? 0}%`}
           badgeIcon={<TrendingUp size={11} />}
           variant="purple"
         />
 
         <StatCard
           title="Total Sales"
-          value="₦2,450,000"
+          value={`₦${Math.round(stats?.totalRevenue ?? 0).toLocaleString()}`}
           icon={<Receipt size={18} />}
-          badgeText="24.8%"
+          badgeText={`${stats?.revenueChange ?? 0}%`}
           badgeIcon={<TrendingUp size={11} />}
           variant="emerald"
         />
 
         <StatCard
           title="Total Customers"
-          value="856"
+          value={(stats?.totalCustomers ?? 0).toLocaleString()}
           icon={<Users size={18} />}
-          badgeText="15.7%"
+          badgeText="CRM"
           badgeIcon={<TrendingUp size={11} />}
           variant="blue"
         />
 
         <StatCard
           title="Total Products"
-          value="320"
+          value={(stats?.totalProducts ?? 0).toLocaleString()}
           icon={<Boxes size={18} />}
-          badgeText="9.3%"
+          badgeText="Live"
           badgeIcon={<TrendingUp size={11} />}
           variant="amber"
         />
@@ -296,12 +228,16 @@ export default function DashboardPage() {
                     {/* Item Info */}
                     <div className="flex items-center gap-4 min-w-0">
                       <div className="relative h-16 w-16 rounded-2xl overflow-hidden bg-white shrink-0 border border-slate-200 shadow-sm group-hover:scale-105 transition-transform duration-300">
-                        <Image
-                          src={order.image}
-                          alt={order.title}
-                          fill
-                          className="object-cover"
-                        />
+                        {order.image ? (
+                          <Image
+                            src={order.image}
+                            alt={order.title}
+                            fill
+                            className="object-cover"
+                          />
+                        ) : (
+                          <Package className="m-auto mt-4 text-slate-300" size={24} />
+                        )}
                       </div>
                       <div className="min-w-0">
                         <h3 className="text-slate-800 font-semibold text-sm sm:text-base leading-snug truncate">
@@ -324,26 +260,12 @@ export default function DashboardPage() {
                         </span>
                       </div>
 
-                      {/* Quantity Stepper */}
-                      <div className="flex items-center border border-slate-200 rounded-xl overflow-hidden bg-white shadow-sm">
-                        <button
-                          onClick={() => handleQuantityChange(order.id, -1)}
-                          className="px-2.5 py-1.5 text-slate-500 hover:bg-purple-50 hover:text-[#7a3dbf] font-semibold text-xs border-r border-slate-200 transition-colors"
-                          aria-label="Decrease quantity"
-                        >
-                          <Minus size={13} />
-                        </button>
-                        <span className="px-3.5 py-1 text-slate-800 font-semibold text-xs">
-                          {order.quantity}
-                        </span>
-                        <button
-                          onClick={() => handleQuantityChange(order.id, 1)}
-                          className="px-2.5 py-1.5 text-slate-500 hover:bg-purple-50 hover:text-[#7a3dbf] font-semibold text-xs border-l border-slate-200 transition-colors"
-                          aria-label="Increase quantity"
-                        >
-                          <Plus size={13} />
-                        </button>
-                      </div>
+                      <Link
+                        href={`/orders/${encodeURIComponent(order.id)}`}
+                        className="px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-[#7a3dbf] hover:bg-purple-50"
+                      >
+                        View
+                      </Link>
 
                       {/* Status Pill */}
                       <span
@@ -398,7 +320,7 @@ export default function DashboardPage() {
             {/* Recharts AreaChart with Gradient */}
             <div className="w-full h-[200px] mt-4 select-none">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={chartDataMap[timeframe]} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <defs>
                     <linearGradient id="purpleGradient" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#7a3dbf" stopOpacity={0.35} />

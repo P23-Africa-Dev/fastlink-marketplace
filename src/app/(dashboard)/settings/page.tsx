@@ -22,6 +22,8 @@ import {
 
 import { useAuthStore } from "@/store/auth-store";
 import { cn } from "@/lib/utils";
+import { apiErrorMessage, authApi } from "@/lib/api";
+import { useSellerSettings, useUpdateSellerSettings } from "@/hooks/use-dashboard";
 
 // Interface definitions for settings configuration
 interface NotificationRule {
@@ -57,6 +59,8 @@ function SettingsPageContent() {
   const view = searchParams ? searchParams.get("view") || "general" : "general";
 
   const { user, updateUser } = useAuthStore();
+  const { data: settingsRes } = useSellerSettings();
+  const updateSettings = useUpdateSellerSettings();
 
   // Toast notifications
   const [toast, setToast] = useState("");
@@ -74,19 +78,33 @@ function SettingsPageContent() {
   // --- GENERAL SETTINGS STATES (View 1) ---
   const [genName, setGenName] = useState("");
   const [genEmail, setGenEmail] = useState("");
-  const [genPhone, setGenPhone] = useState("+1 (555) 123-4567");
+  const [genPhone, setGenPhone] = useState("");
   const [avatarSeed, setAvatarSeed] = useState("Sarah");
 
   // Load defaults or store values
   useEffect(() => {
     if (view === "general") {
-      setGenName(user?.name || "Sarah Johnson");
-      setGenEmail(user?.email || "sarah.j@email.co");
+      setGenName(user?.name || "");
+      setGenEmail(user?.email || "");
+      setGenPhone(user?.phone || "");
     } else {
-      setGenName(user?.name || "Roken Balan");
-      setGenEmail(user?.email || "verified@rrail.com");
+      const parts = (user?.name || "").split(" ");
+      setProfFirstName(parts[0] || "");
+      setProfLastName(parts.slice(1).join(" ") || "");
+      setGenEmail(user?.email || "");
+      setProfPhone(user?.phone || "");
     }
   }, [user, view]);
+
+  useEffect(() => {
+    const n = settingsRes?.data.notifications;
+    if (!n) return;
+    setNotifications([
+      { id: "sale", label: "New Sale", email: Boolean(n.sale?.email), push: Boolean(n.sale?.push) },
+      { id: "order", label: "Order Update", email: Boolean(n.order?.email), push: Boolean(n.order?.push) },
+      { id: "stock", label: "Low Stock Alert", email: Boolean(n.stock?.email), push: Boolean(n.stock?.push) },
+    ]);
+  }, [settingsRes]);
 
   // Modal active state: 'avatar' | 'verify' | '2fa' | 'tax' | null
   const [activeModal, setActiveModal] = useState<"avatar" | "verify" | "2fa" | "tax" | null>(null);
@@ -135,19 +153,33 @@ function SettingsPageContent() {
   const [taxId, setTaxId] = useState("");
   const [taxName, setTaxName] = useState("");
 
-  const handleUpdateBasicInfo = (e: React.FormEvent) => {
+  const handleUpdateBasicInfo = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!genName.trim() || !genEmail.trim()) {
       triggerToast("Name and email are required.");
       return;
     }
-    updateUser({ name: genName, email: genEmail });
-    triggerToast("Basic profile information updated successfully!");
+    try {
+      const { data } = await authApi.updateProfile({ name: genName, phone: genPhone });
+      updateUser(data);
+      triggerToast("Basic profile information updated successfully!");
+    } catch (error) {
+      triggerToast(apiErrorMessage(error, "Could not update profile."));
+    }
   };
 
-  const handleUpdatePreferences = (e: React.FormEvent) => {
+  const handleUpdatePreferences = async (e: React.FormEvent) => {
     e.preventDefault();
-    triggerToast("Preferences and system overrides saved successfully.");
+    try {
+      await updateSettings.mutateAsync({
+        notifications: Object.fromEntries(
+          notifications.map((rule) => [rule.id, { email: rule.email, push: rule.push }]),
+        ),
+      });
+      triggerToast("Preferences saved.");
+    } catch (error) {
+      triggerToast(apiErrorMessage(error, "Could not save preferences."));
+    }
   };
 
   const handleToggleNotification = (id: string, field: "email" | "push") => {
@@ -182,10 +214,23 @@ function SettingsPageContent() {
     triggerToast("Your password was updated successfully!");
   };
 
-  const handleSaveBilling = (e: React.FormEvent) => {
+  const handleSaveBilling = async (e: React.FormEvent) => {
     e.preventDefault();
-    updateUser({ name: `${profFirstName} ${profLastName}` });
-    triggerToast("Billing profile details verified and stored.");
+    try {
+      const name = [profFirstName, profLastName].filter(Boolean).join(" ") || genName;
+      const { data } = await authApi.updateProfile({ name, phone: profPhone });
+      updateUser(data);
+      if (settingsRes?.data.store) {
+        await updateSettings.mutateAsync({
+          bank_name: settingsRes.data.store.bankName || undefined,
+          bank_account_number: settingsRes.data.store.bankAccountNumber || undefined,
+          bank_account_name: settingsRes.data.store.bankAccountName || undefined,
+        });
+      }
+      triggerToast("Profile details saved.");
+    } catch (error) {
+      triggerToast(apiErrorMessage(error, "Could not save billing profile."));
+    }
   };
 
   const handleAvatarChangeSubmit = (seed: string) => {

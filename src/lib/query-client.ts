@@ -26,6 +26,7 @@ export const QUERY_KEYS = {
     detail: (id: string) => [...QUERY_KEYS.products.details(), id] as const,
     featured: () => [...QUERY_KEYS.products.all, "featured"] as const,
     search: (query: string) => [...QUERY_KEYS.products.all, "search", query] as const,
+    reviews: (id: string) => [...QUERY_KEYS.products.all, "reviews", id] as const,
   },
   cart: {
     all: ["cart"] as const,
@@ -40,6 +41,11 @@ export const QUERY_KEYS = {
     orders: () => [...QUERY_KEYS.seller.all, "orders"] as const,
     order: (id: string) => [...QUERY_KEYS.seller.all, "orders", id] as const,
     products: () => [...QUERY_KEYS.seller.all, "products"] as const,
+    customers: () => [...QUERY_KEYS.seller.all, "customers"] as const,
+    customer: (id: string) => [...QUERY_KEYS.seller.all, "customers", id] as const,
+    store: () => [...QUERY_KEYS.seller.all, "store"] as const,
+    settings: () => [...QUERY_KEYS.seller.all, "settings"] as const,
+    reviews: () => [...QUERY_KEYS.seller.all, "reviews"] as const,
   },
   orders: {
     all: ["orders"] as const,
