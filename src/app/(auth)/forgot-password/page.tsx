@@ -3,33 +3,30 @@
 import { useState } from "react";
 import Link from "next/link";
 import { ChevronLeft, Loader2 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import Image from "next/image";
 
 import loginFrame from "@/assets/login-frame.png";
+import { authApi, apiErrorMessage } from "@/lib/api";
 
 export default function ForgotPasswordPage() {
-  const router = useRouter();
-
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [sent, setSent] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
     setIsLoading(true);
 
-    await new Promise((r) => setTimeout(r, 1000));
-
-    if (!email.includes("@")) {
-      setError("Please enter a valid email address.");
+    try {
+      await authApi.forgotPassword(email);
+      setSent(true);
+    } catch (err) {
+      setError(apiErrorMessage(err, "Could not send reset link."));
+    } finally {
       setIsLoading(false);
-      return;
     }
-
-    setIsLoading(false);
-    router.push("/set-new-password");
   }
 
   return (
@@ -83,6 +80,12 @@ export default function ForgotPasswordPage() {
               </p>
 
               <form onSubmit={handleSubmit} className="space-y-5">
+                {sent && (
+                  <div className="rounded border border-white/50 bg-white/10 px-4 py-3 text-sm text-white font-medium text-center">
+                    If that email exists, we sent a reset link. Check the Laravel log locally.
+                  </div>
+                )}
+
                 {error && (
                   <div className="rounded border border-white/50 bg-white/10 px-4 py-3 text-sm text-white font-medium text-center">
                     {error}

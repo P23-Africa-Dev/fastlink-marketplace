@@ -3,10 +3,10 @@ import axios from "axios";
 import type { PaginatedResponse, ApiResponse } from "@/types/api";
 import type { ProductFilter, Product } from "@/types/product";
 import type { DashboardStats } from "@/types/seller";
+import type { User } from "@/types/user";
 import {
   MOCK_PRODUCTS,
   MOCK_DASHBOARD_STATS,
-  MOCK_USER,
   MOCK_ORDERS,
 } from "@/mocks/data";
 import { delay } from "@/lib/utils";
@@ -32,15 +32,34 @@ apiClient.interceptors.request.use((config) => {
 apiClient.interceptors.response.use(
   (res) => res,
   (error) => {
-    if (error.response?.status === 401) {
-      if (typeof window !== "undefined") {
-        localStorage.removeItem("auth_token");
+    const status = error.response?.status;
+    const url = String(error.config?.url ?? "");
+    const isPublicAuth = /\/auth\/(login|register|forgot-password|reset-password)/.test(url);
+
+    if (status === 401 && !isPublicAuth && typeof window !== "undefined") {
+      localStorage.removeItem("auth_token");
+      document.cookie = "auth_token=; Path=/; Max-Age=0; SameSite=Lax";
+      document.cookie = "auth_role=; Path=/; Max-Age=0; SameSite=Lax";
+      if (!window.location.pathname.startsWith("/login")) {
         window.location.href = "/login";
       }
     }
     return Promise.reject(error);
   },
 );
+
+export function apiErrorMessage(error: unknown, fallback: string): string {
+  if (axios.isAxiosError(error)) {
+    const message = error.response?.data?.message;
+    if (typeof message === "string" && message.trim()) return message;
+    const errors = error.response?.data?.errors;
+    if (errors && typeof errors === "object") {
+      const first = Object.values(errors).flat()[0];
+      if (typeof first === "string") return first;
+    }
+  }
+  return fallback;
+}
 
 // ---------------------------------------------------------------------------
 // Mock API functions — replace with real axios calls when your API is ready
@@ -135,25 +154,84 @@ export const productsApi = {
 };
 
 export const authApi = {
-  login: async (email: string, _password: string) => {
-    await delay(600);
-    if (email === MOCK_USER.email) {
-      return { data: { user: MOCK_USER, token: "mock-jwt-token-xyz" }, success: true };
-    }
-    throw new Error("Invalid credentials");
+  login: async (email: string, password: string) => {
+    const { data } = await apiClient.post<ApiResponse<{ user: User; token: string }>>(
+      "/auth/login",
+      { email, password },
+    );
+    return data;
   },
 
-  register: async (name: string, email: string, _password: string) => {
-    await delay(800);
-    return {
-      data: { user: { ...MOCK_USER, name, email }, token: "mock-jwt-token-new" },
-      success: true,
-    };
+  register: async (
+    name: string,
+    email: string,
+    password: string,
+    options?: { passwordConfirmation?: string; role?: "buyer" | "seller" },
+  ) => {
+    const { data } = await apiClient.post<ApiResponse<{ user: User; token: string }>>(
+      "/auth/register",
+      {
+        name,
+        email,
+        password,
+        password_confirmation: options?.passwordConfirmation ?? password,
+        role: options?.role ?? "buyer",
+      },
+    );
+    return data;
+  },
+
+  logout: async () => {
+    const { data } = await apiClient.post<ApiResponse<null>>("/auth/logout");
+    return data;
   },
 
   getMe: async () => {
-    await delay(200);
-    return { data: MOCK_USER, success: true };
+    const { data } = await apiClient.get<ApiResponse<User>>("/auth/me");
+    return data;
+  },
+
+  updateProfile: async (payload: { name?: string; phone?: string; avatar?: string }) => {
+    const { data } = await apiClient.patch<ApiResponse<User>>("/auth/profile", payload);
+    return data;
+  },
+
+  forgotPassword: async (email: string) => {
+    const { data } = await apiClient.post<ApiResponse<null>>("/auth/forgot-password", { email });
+    return data;
+  },
+
+  resetPassword: async (payload: {
+    email: string;
+    token: string;
+    password: string;
+    passwordConfirmation: string;
+  }) => {
+    const { data } = await apiClient.post<ApiResponse<null>>("/auth/reset-password", {
+      email: payload.email,
+      token: payload.token,
+      password: payload.password,
+      password_confirmation: payload.passwordConfirmation,
+    });
+    return data;
+  },
+};
+
+export const sellerApi = {
+  onboard: async (payload: {
+    business_name: string;
+    phone: string;
+    bank_name: string;
+    bank_account_number: string;
+    bank_account_name: string;
+  }) => {
+    const { data } = await apiClient.post<
+      ApiResponse<{
+        store: { id: string; name: string; slug: string; status: string };
+        user: { id: string; role: string };
+      }>
+    >("/seller/onboard", payload);
+    return data;
   },
 };
 

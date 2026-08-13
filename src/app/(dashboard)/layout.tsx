@@ -3,8 +3,8 @@
 import Link from "next/link";
 import Image from "next/image";
 import logoSvg from "@/assets/logo.svg";
-import { usePathname, useSearchParams } from "next/navigation";
-import { useState, Suspense } from "react";
+import { usePathname, useSearchParams, useRouter } from "next/navigation";
+import { useState, Suspense, useEffect } from "react";
 import {
   LayoutDashboard,
   ShoppingBag,
@@ -29,6 +29,8 @@ import { useAuthStore } from "@/store/auth-store";
 import { useCartStore } from "@/store/cart-store";
 import { cn } from "@/lib/utils";
 import { useMessagesStore } from "@/store/messages-store";
+import { authApi } from "@/lib/api";
+import { queryClient } from "@/lib/query-client";
 
 interface NavItem {
   href: string;
@@ -367,10 +369,17 @@ function HeaderTitleContent() {
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { logout } = useAuthStore();
+  const router = useRouter();
+  const { logout, user, isAuthenticated } = useAuthStore();
   const { itemCount } = useCartStore();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+
+  useEffect(() => {
+    if (isAuthenticated && user?.role === "buyer") {
+      router.replace("/");
+    }
+  }, [isAuthenticated, user?.role, router]);
 
   return (
     <div className="flex h-screen w-full flex-col bg-[#faf6ff] font-sans overflow-hidden">
@@ -513,9 +522,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               </button>
               <button
                 type="button"
-                onClick={() => {
+                onClick={async () => {
                   setShowLogoutConfirm(false);
+                  try {
+                    await authApi.logout();
+                  } catch {
+                    /* still clear local session */
+                  }
                   logout();
+                  queryClient.clear();
+                  window.location.href = "/login";
                 }}
                 className="flex-1 px-4 py-2.5 bg-[#7a3dbf] hover:bg-[#682fad] text-white font-bold text-xs rounded-xl transition-all"
               >

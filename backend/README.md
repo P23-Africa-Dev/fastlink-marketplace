@@ -18,6 +18,7 @@ cp .env.example .env   # skip if .env already exists
 php artisan key:generate
 touch database/database.sqlite   # Windows: type nul > database\database.sqlite
 php artisan migrate
+php artisan db:seed
 php artisan serve
 ```
 
@@ -71,6 +72,18 @@ NEXT_PUBLIC_API_URL=http://localhost:8000/api
 The API response shape matches the frontend `ApiResponse` type: `{ success, data, message? }`.
 
 CORS is configured for `FRONTEND_URL` (default `http://localhost:3000`).
+
+## Demo users (after `php artisan db:seed`)
+
+Password for all: `password`
+
+| Email | Role |
+|-------|------|
+| `admin@fastlink.test` | admin |
+| `seller@fastlink.test` | seller |
+| `buyer@fastlink.test` | buyer |
+
+Admin is seeded only — public register cannot create `role=admin`.
 
 ## Project structure
 

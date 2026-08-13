@@ -3,18 +3,28 @@
 import { useState } from "react";
 import Link from "next/link";
 import { ChevronLeft, Loader2 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 
 import signUpBg from "@/assets/sign-up-bg.png";
-import { authApi } from "@/lib/api";
+import { authApi, apiErrorMessage } from "@/lib/api";
+import { homeForRole } from "@/lib/auth-session";
+import { QUERY_KEYS, queryClient } from "@/lib/query-client";
 import { useAuthStore } from "@/store/auth-store";
 
 export default function RegisterPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { setUser } = useAuthStore();
+  const requestedSeller = searchParams.get("role") === "seller";
 
-  const [form, setForm] = useState({ name: "", email: "", password: "", confirmPassword: "" });
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    sellOnFastlink: requestedSeller,
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -29,11 +39,21 @@ export default function RegisterPage() {
 
     setIsLoading(true);
     try {
-      const { data } = await authApi.register(form.name, form.email, form.password);
+      const role = form.sellOnFastlink ? "seller" : "buyer";
+      const { data } = await authApi.register(form.name, form.email, form.password, {
+        passwordConfirmation: form.confirmPassword,
+        role,
+      });
       setUser(data.user, data.token);
-      router.push("/products");
-    } catch {
-      setError("Something went wrong. Please try again.");
+      queryClient.setQueryData(QUERY_KEYS.auth.user(), data.user);
+      const next = searchParams.get("next");
+      if (role === "seller") {
+        router.push(next || "/vendor/register");
+        return;
+      }
+      router.push(next || homeForRole(data.user.role));
+    } catch (err) {
+      setError(apiErrorMessage(err, "Something went wrong. Please try again."));
     } finally {
       setIsLoading(false);
     }
@@ -132,14 +152,24 @@ export default function RegisterPage() {
                 type="password"
                 value={form.confirmPassword}
                 onChange={(e) => setForm((p) => ({ ...p, confirmPassword: e.target.value }))}
-                placeholder="Forgotten password"
+                placeholder="Confirm password"
                 required
                 className="w-full bg-transparent border border-white rounded font-medium text-white placeholder:text-white px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-white/50 transition-all text-center"
               />
             </div>
 
+            <label className="flex items-center justify-center gap-2 text-white text-sm font-medium cursor-pointer">
+              <input
+                type="checkbox"
+                checked={form.sellOnFastlink}
+                onChange={(e) => setForm((p) => ({ ...p, sellOnFastlink: e.target.checked }))}
+                className="h-4 w-4 accent-white"
+              />
+              Sell on Fastlink
+            </label>
+
             <div className="text-center pt-1">
-              <Link href="#" className="text-white text-sm font-medium hover:underline">
+              <Link href="/forgot-password" className="text-white text-sm font-medium hover:underline">
                 Forgotten Password?
               </Link>
             </div>

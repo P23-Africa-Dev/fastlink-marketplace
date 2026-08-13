@@ -23,6 +23,7 @@ import { useRouter } from "next/navigation";
 import { useCartStore } from "@/store/cart-store";
 import { useWishlistStore } from "@/store/wishlist-store";
 import { useAuthStore } from "@/store/auth-store";
+import { accountHref } from "@/lib/auth-session";
 import { useUIStore } from "@/store/ui-store";
 import { cn } from "@/lib/utils";
 
@@ -31,7 +32,6 @@ import { cn } from "@/lib/utils";
 const TOP_LINKS = [
   { href: "/", label: "Home" },
   { href: "/about", label: "About Us" },
-  { href: "/dashboard", label: "My Account" },
   { href: "/blog", label: "Blog" },
   { href: "/contact", label: "Contact" },
   { href: "/order-tracking", label: "Order Tracking" },
@@ -51,7 +51,7 @@ export function Header() {
   const router = useRouter();
   const { itemCount, openCart } = useCartStore();
   const { itemCount: wishlistCount } = useWishlistStore();
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, user } = useAuthStore();
   const { openMobileMenu, closeMobileMenu, isMobileMenuOpen, setSearchQuery } = useUIStore();
 
   const [isScrolled, setIsScrolled] = useState(false);
@@ -91,6 +91,12 @@ export function Header() {
                 {link.label}
               </Link>
             ))}
+            <Link
+              href={accountHref(isAuthenticated, user?.role)}
+              className="text-xs font-bold text-[#6D349F] transition-colors hover:text-[#52237A]"
+            >
+              My Account
+            </Link>
           </nav>
 
           {/* Right – phone + language */}
@@ -198,13 +204,14 @@ export function Header() {
 
               {/* Account */}
               <Link
-                // href={isAuthenticated ? "/dashboard" : "/login"}
-                href="#"
+                href={accountHref(isAuthenticated, user?.role)}
                 className="group hidden items-center gap-2 md:flex"
                 aria-label="Account"
               >
                 <User size={24} className="stroke-[#F59E0B] stroke-[2.2] transition-transform group-hover:scale-110" />
-                <span className="text-sm font-bold text-white">Account</span>
+                <span className="text-sm font-bold text-white">
+                  {isAuthenticated ? "Account" : "Sign in"}
+                </span>
               </Link>
 
               {/* Mobile hamburger */}
@@ -291,7 +298,7 @@ export function Header() {
 
           <div className="mt-auto pt-6 border-t border-brand-100">
             <Link
-              href={isAuthenticated ? "/dashboard" : "/login"}
+              href={accountHref(isAuthenticated, user?.role)}
               onClick={closeMobileMenu}
               className="btn-primary w-full justify-center"
             >

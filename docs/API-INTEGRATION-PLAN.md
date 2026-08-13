@@ -442,6 +442,8 @@ Do not start Phase N+1 until Phase N acceptance criteria pass locally (frontend 
 - Health check succeeds from the browser origin (CORS).
 - Users table has `role`.
 
+**Shipped:** 13 August 2026 — Sanctum, `role`/`status` on users, API error envelope, demo seed users.
+
 ---
 
 ### Phase 1 — Authentication and session (start here)
@@ -497,6 +499,8 @@ Reject `role=admin` from public register. Admin is seeded only.
 - Logout clears token and redirects to `/login`.
 
 **Out of scope:** Product CRUD, checkout, admin console.
+
+**Shipped:** 13 August 2026 — register/login/logout/me/profile/password reset, seller onboard, Next.js `proxy` dashboard guard, role redirects, `/vendor/register`. Mock `hello@example.com` login removed.
 
 ---
 

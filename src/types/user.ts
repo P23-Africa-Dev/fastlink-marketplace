@@ -4,6 +4,8 @@ export interface User {
   name: string;
   avatar?: string;
   role: "buyer" | "seller" | "admin";
+  status?: "active" | "pending" | "suspended";
+  phone?: string | null;
   createdAt: string;
   addresses?: Address[];
 }
