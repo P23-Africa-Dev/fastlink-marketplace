@@ -76,9 +76,9 @@ export function DynamicHero({
           </h1>
 
           {subtitle && (
-            <p className="text-xs sm:text-sm md:text-base text-slate-200 leading-relaxed font-medium max-w-2xl sm:max-w-3xl">
+            <div className="text-xs sm:text-sm md:text-base text-slate-200 leading-relaxed font-medium max-w-2xl sm:max-w-3xl">
               {subtitle}
-            </p>
+            </div>
           )}
 
           {children && (
