@@ -12,6 +12,7 @@ export const SELLER_PATH_PREFIXES = [
   "/analytics",
   "/marketing",
   "/reviews",
+  "/returns",
   "/settings",
   "/support",
 ];

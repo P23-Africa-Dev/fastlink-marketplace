@@ -10,6 +10,7 @@ use App\Support\ProductQuery;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\View;
 
 class OrderController extends Controller
 {
@@ -44,6 +45,20 @@ class OrderController extends Controller
         $this->authorize('view', $model);
 
         return ApiResponse::success((new OrderResource($model->load(['items', 'store', 'events'])))->resolve());
+    }
+
+    public function invoice(Request $request, string $order): JsonResponse
+    {
+        $model = $this->findOwnedOrFail($request, $order);
+        $this->authorize('view', $model);
+        $model->load(['items', 'store']);
+
+        $html = View::make('invoices.order', ['order' => $model])->render();
+
+        return ApiResponse::success([
+            'reference' => $model->reference,
+            'html' => $html,
+        ]);
     }
 
     public function track(Request $request, string $order): JsonResponse

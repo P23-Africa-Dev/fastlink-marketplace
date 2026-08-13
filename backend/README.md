@@ -6,7 +6,7 @@ Laravel backend for the Fastlink Marketplace project. The Next.js frontend lives
 
 - PHP 8.3+
 - Composer
-- SQLite (default) or MySQL
+- PostgreSQL (Supabase) or SQLite for local/tests
 
 ## Quick start
 
@@ -16,7 +16,7 @@ From this `backend` folder:
 composer install
 cp .env.example .env   # skip if .env already exists
 php artisan key:generate
-touch database/database.sqlite   # Windows: type nul > database\database.sqlite
+# Point DB_* at Supabase Postgres (see docs/BACKLOG.md), then:
 php artisan migrate
 php artisan db:seed
 php artisan serve
@@ -92,6 +92,6 @@ backend/
 ├── app/Http/Controllers/Api/   # API controllers
 ├── routes/api.php              # API routes (prefix: /api)
 ├── config/                     # App configuration
-├── database/                   # Migrations & SQLite database
+├── database/                   # Migrations & seeders
 └── tests/Feature/              # API tests
 ```

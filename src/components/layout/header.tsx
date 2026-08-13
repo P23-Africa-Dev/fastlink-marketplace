@@ -24,6 +24,7 @@ import { useCartStore } from "@/store/cart-store";
 import { useWishlist } from "@/hooks/use-wishlist";
 import { useAuthStore } from "@/store/auth-store";
 import { accountHref } from "@/lib/auth-session";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 import { useUIStore } from "@/store/ui-store";
 import { cn } from "@/lib/utils";
 
@@ -183,6 +184,8 @@ export function Header() {
                 </div>
                 <span className="text-sm font-bold text-white">Whistlist</span>
               </Link>
+
+              {isAuthenticated && <NotificationBell />}
 
               {/* Cart */}
               <button

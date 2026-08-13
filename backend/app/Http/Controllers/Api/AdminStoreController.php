@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\StoreResource;
 use App\Models\AuditLog;
 use App\Models\Store;
+use App\Services\NotificationService;
 use App\Support\ApiResponse;
 use App\Support\ProductQuery;
 use Illuminate\Http\JsonResponse;
@@ -59,11 +60,16 @@ class AdminStoreController extends Controller
                 'id' => (string) $store->owner->id,
                 'name' => $store->owner->name,
                 'email' => $store->owner->email,
+                'phone' => $store->owner->phone,
             ] : null,
+            'bankName' => $store->bank_name,
+            'bankAccountNumber' => $store->bank_account_number,
+            'bankAccountName' => $store->bank_account_name,
+            'createdAt' => $store->created_at?->toIso8601String(),
         ]);
     }
 
-    public function approve(Request $request, Store $store): JsonResponse
+    public function approve(Request $request, Store $store, NotificationService $notifications): JsonResponse
     {
         $validated = $request->validate([
             'mall_id' => ['nullable', 'integer', 'exists:malls,id'],
@@ -78,13 +84,24 @@ class AdminStoreController extends Controller
             'mall_id' => $store->mall_id,
         ]);
 
+        $store->loadMissing('owner');
+        if ($store->owner) {
+            $notifications->notify(
+                $store->owner,
+                'store.approved',
+                'Your store was approved',
+                $store->name.' is now live on Fastlink. You can publish products.',
+                ['storeId' => (string) $store->id],
+            );
+        }
+
         return ApiResponse::success(
             (new StoreResource($store->fresh(['mall', 'category'])))->resolve(),
             'Store approved.',
         );
     }
 
-    public function reject(Request $request, Store $store): JsonResponse
+    public function reject(Request $request, Store $store, NotificationService $notifications): JsonResponse
     {
         $validated = $request->validate([
             'reason' => ['nullable', 'string', 'max:500'],
@@ -94,6 +111,17 @@ class AdminStoreController extends Controller
         AuditLog::record($request->user(), 'store.rejected', $store, [
             'reason' => $validated['reason'] ?? null,
         ]);
+
+        $store->loadMissing('owner');
+        if ($store->owner) {
+            $notifications->notify(
+                $store->owner,
+                'store.rejected',
+                'Store application declined',
+                $validated['reason'] ?? 'Your store application was not approved at this time.',
+                ['storeId' => (string) $store->id],
+            );
+        }
 
         return ApiResponse::success(
             (new StoreResource($store->fresh(['mall', 'category'])))->resolve(),

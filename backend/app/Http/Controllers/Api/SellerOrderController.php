@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\OrderResource;
 use App\Models\Order;
 use App\Services\CheckoutService;
+use App\Services\NotificationService;
 use App\Support\ApiResponse;
 use App\Support\ProductQuery;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -94,6 +95,21 @@ class SellerOrderController extends Controller
 
         $model->update(['status' => $next]);
         $model->addEvent($next, $this->eventTitle($next));
+
+        $type = match ($next) {
+            'shipped' => 'order.shipped',
+            'delivered' => 'order.delivered',
+            'cancelled' => 'order.cancelled',
+            default => null,
+        };
+        if ($type) {
+            app(NotificationService::class)->notifyOrderEvent(
+                $model->fresh(['buyer', 'store.owner']),
+                $type,
+                $this->eventTitle($next),
+                $this->eventTitle($next),
+            );
+        }
 
         return ApiResponse::success(
             (new OrderResource($model->fresh(['items', 'store', 'events'])))->resolve(),

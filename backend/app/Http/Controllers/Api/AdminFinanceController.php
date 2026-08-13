@@ -9,6 +9,7 @@ use App\Models\AuditLog;
 use App\Models\Payment;
 use App\Models\Payout;
 use App\Models\PlatformSetting;
+use App\Services\LedgerService;
 use App\Support\ApiResponse;
 use App\Support\ProductQuery;
 use Illuminate\Http\JsonResponse;
@@ -82,6 +83,8 @@ class AdminFinanceController extends Controller
             'amount' => $payout->amount,
         ]);
 
+        app(LedgerService::class)->recordPayoutApproved($payout->fresh());
+
         return ApiResponse::success(
             (new PayoutResource($payout->fresh('store')))->resolve(),
             'Payout approved.',
@@ -119,6 +122,42 @@ class AdminFinanceController extends Controller
         return ApiResponse::success([
             'rate' => PlatformSetting::commissionRate(),
         ]);
+    }
+
+    public function settings(): JsonResponse
+    {
+        return ApiResponse::success(PlatformSetting::marketplaceConfig());
+    }
+
+    public function updateSettings(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'commissionRate' => ['sometimes', 'numeric', 'min:0', 'max:50'],
+            'returnWindowDays' => ['sometimes', 'integer', 'min:1', 'max:90'],
+            'minOrderAmount' => ['sometimes', 'numeric', 'min:0'],
+            'defaultShippingFee' => ['sometimes', 'numeric', 'min:0'],
+            'maintenanceMode' => ['sometimes', 'boolean'],
+        ]);
+
+        if (array_key_exists('commissionRate', $validated)) {
+            PlatformSetting::setValue('commission_rate', $validated['commissionRate']);
+        }
+        if (array_key_exists('returnWindowDays', $validated)) {
+            PlatformSetting::setValue('return_window_days', $validated['returnWindowDays']);
+        }
+        if (array_key_exists('minOrderAmount', $validated)) {
+            PlatformSetting::setValue('min_order_amount', $validated['minOrderAmount']);
+        }
+        if (array_key_exists('defaultShippingFee', $validated)) {
+            PlatformSetting::setValue('default_shipping_fee', $validated['defaultShippingFee']);
+        }
+        if (array_key_exists('maintenanceMode', $validated)) {
+            PlatformSetting::setValue('maintenance_mode', $validated['maintenanceMode'] ? '1' : '0');
+        }
+
+        AuditLog::record($request->user(), 'settings.marketplace', $request->user(), $validated);
+
+        return ApiResponse::success(PlatformSetting::marketplaceConfig(), 'Marketplace settings updated.');
     }
 
     public function updateCommission(Request $request): JsonResponse

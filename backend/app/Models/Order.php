@@ -100,6 +100,11 @@ class Order extends Model
         return $this->belongsTo(Rider::class);
     }
 
+    public function returnRequest(): HasOne
+    {
+        return $this->hasOne(ReturnRequest::class);
+    }
+
     public function canTransitionTo(string $status): bool
     {
         return in_array($status, self::TRANSITIONS[$this->status] ?? [], true);

@@ -53,6 +53,8 @@ export const QUERY_KEYS = {
     campaigns: () => [...QUERY_KEYS.seller.all, "campaigns"] as const,
     tickets: () => [...QUERY_KEYS.seller.all, "tickets"] as const,
     ticket: (id: string) => [...QUERY_KEYS.seller.all, "tickets", id] as const,
+    returns: (filters: Record<string, unknown> = {}) =>
+      [...QUERY_KEYS.seller.all, "returns", filters] as const,
   },
   orders: {
     all: ["orders"] as const,
@@ -111,6 +113,13 @@ export const QUERY_KEYS = {
     tickets: () => [...QUERY_KEYS.admin.all, "tickets"] as const,
     riders: (filters: Record<string, unknown> = {}) => [...QUERY_KEYS.admin.all, "riders", filters] as const,
     analytics: () => [...QUERY_KEYS.admin.all, "analytics"] as const,
+    returns: (filters: Record<string, unknown> = {}) => [...QUERY_KEYS.admin.all, "returns", filters] as const,
+    verification: () => [...QUERY_KEYS.admin.all, "verification"] as const,
+    mall: (id: string) => [...QUERY_KEYS.admin.all, "malls", id] as const,
+    settings: () => [...QUERY_KEYS.admin.all, "settings"] as const,
+    ledger: (filters: Record<string, unknown> = {}) => [...QUERY_KEYS.admin.all, "ledger", filters] as const,
+    trustReports: (filters: Record<string, unknown> = {}) =>
+      [...QUERY_KEYS.admin.all, "trust-reports", filters] as const,
   },
   conversations: {
     all: ["conversations"] as const,
@@ -123,5 +132,13 @@ export const QUERY_KEYS = {
   rider: {
     me: () => ["rider", "me"] as const,
     orders: () => ["rider", "orders"] as const,
+  },
+  returns: {
+    all: ["returns"] as const,
+    order: (orderId: string) => [...QUERY_KEYS.returns.all, "order", orderId] as const,
+  },
+  notifications: {
+    all: ["notifications"] as const,
+    list: (params: Record<string, unknown> = {}) => [...QUERY_KEYS.notifications.all, "list", params] as const,
   },
 } as const;

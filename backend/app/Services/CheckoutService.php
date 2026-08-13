@@ -113,6 +113,12 @@ class CheckoutService
                 }
 
                 $order->addEvent('pending', 'Your order has been placed and is awaiting demo payment.');
+                app(NotificationService::class)->notifyOrderEvent(
+                    $order,
+                    'order.placed',
+                    'Order placed',
+                    'We received your order '.$order->reference.'. Complete payment to confirm.',
+                );
                 $orders->push($order->load(['items', 'store', 'events']));
             }
 

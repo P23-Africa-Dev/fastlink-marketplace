@@ -3,18 +3,28 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useParams } from "next/navigation";
-import { ArrowLeft, Package } from "lucide-react";
+import { useState } from "react";
+import { ArrowLeft, Package, RotateCcw, Download } from "lucide-react";
 
 import { formatPrice } from "@/lib/utils";
 import { formatOrderDate } from "@/lib/order-map";
+import { apiErrorMessage, ordersApi } from "@/lib/api";
 import { useMyOrder } from "@/hooks/use-orders";
+import { useOrderReturn, useRequestReturn } from "@/hooks/use-returns";
 import { MessageSellerButton } from "@/components/inbox/message-seller";
 
 export default function AccountOrderDetailPage() {
   const params = useParams();
   const id = decodeURIComponent(String(params?.id ?? ""));
   const { data, isLoading, isError } = useMyOrder(id);
+  const returnQuery = useOrderReturn(id);
+  const requestReturn = useRequestReturn();
+  const [reason, setReason] = useState("");
+  const [showForm, setShowForm] = useState(false);
+  const [toast, setToast] = useState("");
+  const [invoiceLoading, setInvoiceLoading] = useState(false);
   const order = data?.data;
+  const returnRequest = returnQuery.data ?? null;
 
   if (isLoading) {
     return (
@@ -38,6 +48,42 @@ export default function AccountOrderDetailPage() {
 
   const trackHref = `/order-tracking/${encodeURIComponent(order.trackingNumber || order.reference)}?email=${encodeURIComponent(order.buyer.email)}`;
 
+  const canRequestReturn =
+    order.paymentStatus === "paid" &&
+    ["confirmed", "shipped", "delivered"].includes(order.status) &&
+    !returnRequest;
+
+  async function handleDownloadInvoice() {
+    setInvoiceLoading(true);
+    try {
+      const invoice = await ordersApi.invoice(id);
+      const blob = new Blob([invoice.html], { type: "text/html" });
+      const url = URL.createObjectURL(blob);
+      window.open(url, "_blank", "noopener,noreferrer");
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch (err) {
+      setToast(apiErrorMessage(err, "Could not download receipt."));
+      setTimeout(() => setToast(""), 4000);
+    } finally {
+      setInvoiceLoading(false);
+    }
+  }
+
+  async function handleReturnSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!reason.trim()) return;
+    try {
+      await requestReturn.mutateAsync({ orderId: id, reason: reason.trim() });
+      setShowForm(false);
+      setReason("");
+      setToast("Return request submitted.");
+      setTimeout(() => setToast(""), 3000);
+    } catch (err) {
+      setToast(apiErrorMessage(err, "Could not submit return request."));
+      setTimeout(() => setToast(""), 4000);
+    }
+  }
+
   return (
     <div className="min-h-screen bg-[#FAF8FC] font-montserrat">
       <div className="mx-auto max-w-4xl px-4 sm:px-6 py-10 space-y-6">
@@ -58,6 +104,17 @@ export default function AccountOrderDetailPage() {
           <Link href={trackHref} className="inline-block text-xs font-bold text-[#7a3dbf] hover:underline">
             Track this order
           </Link>
+          {order.paymentStatus === "paid" && (
+            <button
+              type="button"
+              disabled={invoiceLoading}
+              onClick={handleDownloadInvoice}
+              className="ml-4 inline-flex items-center gap-1 text-xs font-bold text-[#7a3dbf] hover:underline disabled:opacity-60"
+            >
+              <Download size={14} />
+              {invoiceLoading ? "Loading…" : "Download receipt"}
+            </button>
+          )}
           <div className="pt-2">
             <MessageSellerButton storeId={order.store?.id} orderId={order.id} label="Message seller about this order" />
           </div>
@@ -91,6 +148,69 @@ export default function AccountOrderDetailPage() {
               .join(", ")}
           </p>
         </div>
+
+        {(returnRequest || canRequestReturn) && (
+          <div className="rounded-2xl border border-[#EBD7FA] bg-white p-6 space-y-4">
+            <h2 className="font-bold text-[#3B1C5A] flex items-center gap-2">
+              <RotateCcw size={18} className="text-[#7a3dbf]" />
+              Returns
+            </h2>
+            {returnRequest ? (
+              <div className="rounded-xl bg-[#FAF8FC] border border-[#EBD7FA] p-4 space-y-2">
+                <p className="text-xs font-black uppercase text-[#6D349F]">{returnRequest.displayStatus}</p>
+                <p className="text-sm">{returnRequest.reason}</p>
+                {returnRequest.refundAmount != null && (
+                  <p className="text-sm font-bold text-[#3B1C5A]">
+                    Refund: {formatPrice(returnRequest.refundAmount)}
+                  </p>
+                )}
+                <p className="text-xs text-[#8A79A5]">
+                  Requested {formatOrderDate(returnRequest.createdAt)}
+                </p>
+              </div>
+            ) : showForm ? (
+              <form onSubmit={handleReturnSubmit} className="space-y-3">
+                <textarea
+                  value={reason}
+                  onChange={(e) => setReason(e.target.value)}
+                  placeholder="Tell the seller why you want to return this order…"
+                  className="w-full min-h-[100px] rounded-xl border border-[#EBD7FA] px-3 py-2 text-sm outline-none focus:border-[#7a3dbf]"
+                  required
+                />
+                <div className="flex gap-2">
+                  <button
+                    type="submit"
+                    disabled={requestReturn.isPending}
+                    className="rounded-xl bg-[#7a3dbf] px-4 py-2 text-xs font-bold text-white"
+                  >
+                    Submit request
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowForm(false)}
+                    className="rounded-xl border border-[#EBD7FA] px-4 py-2 text-xs font-bold text-[#6D349F]"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setShowForm(true)}
+                className="rounded-xl border border-[#EBD7FA] px-4 py-2 text-xs font-bold text-[#6D349F] hover:bg-[#FAF8FC]"
+              >
+                Request a return
+              </button>
+            )}
+          </div>
+        )}
+
+        {toast && (
+          <div className="fixed bottom-6 right-6 z-50 rounded-xl bg-[#3B1C5A] px-4 py-3 text-sm font-semibold text-white shadow-lg">
+            {toast}
+          </div>
+        )}
       </div>
     </div>
   );

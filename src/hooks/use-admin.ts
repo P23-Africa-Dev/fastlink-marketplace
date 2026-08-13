@@ -40,11 +40,17 @@ export function useAdminStoreActions() {
 
   return {
     approve: useMutation({
-      mutationFn: (id: string) => adminApi.approveStore(id),
+      mutationFn: (input: string | { id: string; mallId?: string }) => {
+        if (typeof input === "string") return adminApi.approveStore(input);
+        return adminApi.approveStore(input.id, input.mallId);
+      },
       onSuccess: invalidate,
     }),
     reject: useMutation({
-      mutationFn: (id: string) => adminApi.rejectStore(id),
+      mutationFn: (input: string | { id: string; reason?: string }) => {
+        if (typeof input === "string") return adminApi.rejectStore(input);
+        return adminApi.rejectStore(input.id, input.reason);
+      },
       onSuccess: invalidate,
     }),
     suspend: useMutation({
@@ -196,5 +202,102 @@ export function useAdminAnalytics() {
   return useQuery({
     queryKey: QUERY_KEYS.admin.analytics(),
     queryFn: adminApi.analytics,
+  });
+}
+
+export function useAdminReturns(filters: { status?: string } = {}) {
+  return useQuery({
+    queryKey: QUERY_KEYS.admin.returns(filters),
+    queryFn: () => adminApi.returns({ ...filters, limit: 50 }),
+  });
+}
+
+export function useAdminReturnAction() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      action,
+      note,
+    }: {
+      id: string;
+      action: "approve" | "reject";
+      note?: string;
+    }) => adminApi.updateReturn(id, action, note),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.admin.returns() });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.orders.all });
+    },
+  });
+}
+
+export function useAdminVerification() {
+  return useQuery({
+    queryKey: QUERY_KEYS.admin.verification(),
+    queryFn: adminApi.verification,
+  });
+}
+
+export function useAdminMall(id: string) {
+  return useQuery({
+    queryKey: QUERY_KEYS.admin.mall(id),
+    queryFn: () => adminApi.mall(id),
+    enabled: Boolean(id),
+  });
+}
+
+export function useRejectRider() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, reason }: { id: string; reason?: string }) => adminApi.rejectRider(id, reason),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.admin.all }),
+  });
+}
+
+export function useAdminSettings() {
+  return useQuery({
+    queryKey: QUERY_KEYS.admin.settings(),
+    queryFn: adminApi.settings,
+  });
+}
+
+export function useUpdateAdminSettings() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: adminApi.updateSettings,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.admin.settings() });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.admin.commission() });
+    },
+  });
+}
+
+export function useAdminLedger(filters: { type?: string } = {}) {
+  return useQuery({
+    queryKey: QUERY_KEYS.admin.ledger(filters),
+    queryFn: () => adminApi.ledger({ ...filters, limit: 50 }),
+  });
+}
+
+export function useAdminTrustReports(filters: { status?: string } = {}) {
+  return useQuery({
+    queryKey: QUERY_KEYS.admin.trustReports(filters),
+    queryFn: () => adminApi.trustReports({ ...filters, limit: 30 }),
+  });
+}
+
+export function useUpdateTrustReport() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      status,
+      admin_note,
+    }: {
+      id: string;
+      status: string;
+      admin_note?: string;
+    }) => adminApi.updateTrustReport(id, { status, admin_note }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.admin.trustReports() }),
   });
 }

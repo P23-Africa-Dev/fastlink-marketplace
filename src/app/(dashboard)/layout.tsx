@@ -18,6 +18,7 @@ import {
   Star,
   Settings,
   HelpCircle,
+  RotateCcw,
   LogOut,
   Menu,
   X,
@@ -31,6 +32,7 @@ import { cn } from "@/lib/utils";
 import { useConversations } from "@/hooks/use-conversations";
 import { authApi } from "@/lib/api";
 import { queryClient } from "@/lib/query-client";
+import { PendingStoreBanner } from "@/components/dashboard/pending-store-banner";
 
 interface NavItem {
   href: string;
@@ -51,6 +53,7 @@ const NAV_SECTIONS: NavSection[] = [
     items: [
       { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
       { href: "/orders", label: "Order", icon: ShoppingBag },
+      { href: "/returns", label: "Returns", icon: RotateCcw },
       { href: "/all-products", label: "Products", icon: Package },
       { href: "/customers", label: "Customers", icon: Users },
       { href: "/messages", label: "Messages", icon: MessageSquare, hasUnread: true },
@@ -493,6 +496,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         {/* Content Area */}
         <main className="flex-1 p-6 md:p-8 overflow-y-auto">
+          <PendingStoreBanner />
           {children}
         </main>
       </div>

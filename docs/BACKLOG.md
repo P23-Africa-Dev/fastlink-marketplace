@@ -1,55 +1,60 @@
 # Fastlink Marketplace — Backlog
 
-Deferred work that is **not** required to boot the API. Do these after the current local path works (`php artisan serve` + `GET /api/health` on SQLite).
+Deferred work that is **not** required to boot the API.
 
 See also: [`API-INTEGRATION-PLAN.md`](./API-INTEGRATION-PLAN.md) · [`API-CATALOG.md`](./API-CATALOG.md)
 
 ---
 
-## Local infrastructure
+## Database
 
-### MySQL (recommended once you leave “health check”)
+### Supabase Postgres (current target)
 
-**Status:** Backlog  
-**Blocked on:** Local health check succeeding on SQLite (`GET /api/health`)  
-**Why:** SQLite is enough for first boot and early auth tests. Mall/store/product relations and concurrent orders belong on MySQL ([plan §3.7](./API-INTEGRATION-PLAN.md#37-database)).
+**Status:** In use for local Laravel `.env`  
+**Auth stays Laravel Sanctum** — Supabase is the hosted Postgres database only, not login.
 
-**Do not do this yet** if you have not confirmed the health endpoint.
+Point `backend/.env` at the project (Project Settings → Database):
 
-When you pick this up:
+```
+DB_CONNECTION=pgsql
+DB_HOST=db.<project-ref>.supabase.co
+DB_PORT=5432
+DB_DATABASE=postgres
+DB_USERNAME=postgres
+DB_PASSWORD="your-database-password"
+DB_SSLMODE=require
+```
 
-1. Run MySQL locally (pick one):
-   - **Docker (free, no Herd Pro):**
+Quote the password if it contains `*`, `+`, `#`, or spaces.
 
-     ```bash
-     docker run --name fastlink-mysql \
-       -e MYSQL_ROOT_PASSWORD=secret \
-       -e MYSQL_DATABASE=fastlink \
-       -p 3306:3306 \
-       -d mysql:8.4
-     ```
+Then:
 
-   - Homebrew (`brew install mysql`), or Herd Pro’s MySQL service.
+```bash
+cd backend
+php artisan migrate
+php artisan db:seed
+php artisan serve
+```
 
-2. Point `backend/.env` at MySQL (PHP needs `pdo_mysql`):
+**Keep PHPUnit on SQLite in-memory** (`backend/phpunit.xml`). Tests must not hit Supabase.
 
-   ```
-   DB_CONNECTION=mysql
-   DB_HOST=127.0.0.1
-   DB_PORT=3306
-   DB_DATABASE=fastlink
-   DB_USERNAME=root
-   DB_PASSWORD=secret
-   ```
+If the direct host (`db.<ref>.supabase.co`) fails from your network (often IPv6-only), use the **Session pooler** (port `5432`, username `postgres.<project-ref>`), for example:
 
-3. Migrate and serve:
+```
+DB_HOST=aws-0-eu-central-1.pooler.supabase.com
+DB_PORT=5432
+DB_USERNAME=postgres.<project-ref>
+```
 
-   ```bash
-   cd backend
-   php artisan migrate
-   php artisan serve
-   ```
+Never put the database password in the Next.js `.env.local`. That file is for the frontend.
 
-**Keep PHPUnit on SQLite in-memory** (`backend/phpunit.xml`). Local `.env` can use MySQL; tests should not.
+### SQLite (optional local fallback)
 
-**Also later:** document both SQLite and MySQL in `backend/.env.example` (still SQLite-default today).
+For offline work without Supabase:
+
+```
+DB_CONNECTION=sqlite
+# leave DB_HOST / DB_PASSWORD unset
+```
+
+Then `touch database/database.sqlite` and `php artisan migrate`.

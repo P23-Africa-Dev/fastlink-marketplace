@@ -4,9 +4,13 @@ use App\Http\Controllers\Api\AddressController;
 use App\Http\Controllers\Api\AdminAnalyticsController;
 use App\Http\Controllers\Api\AdminAuditLogController;
 use App\Http\Controllers\Api\AdminCatalogController;
+use App\Http\Controllers\Api\AdminVerificationController;
 use App\Http\Controllers\Api\AdminDashboardController;
 use App\Http\Controllers\Api\AdminFinanceController;
+use App\Http\Controllers\Api\AdminLedgerController;
+use App\Http\Controllers\Api\AdminTrustReportController;
 use App\Http\Controllers\Api\AdminOrderController;
+use App\Http\Controllers\Api\AdminReturnController;
 use App\Http\Controllers\Api\AdminProductController;
 use App\Http\Controllers\Api\AdminStoreController;
 use App\Http\Controllers\Api\AdminUserController;
@@ -18,9 +22,12 @@ use App\Http\Controllers\Api\ConversationController;
 use App\Http\Controllers\Api\DealController;
 use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\MallController;
+use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\NotificationPreferenceController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\PaystackWebhookController;
 use App\Http\Controllers\Api\ProductController;
+use App\Http\Controllers\Api\ReturnController;
 use App\Http\Controllers\Api\ReviewController;
 use App\Http\Controllers\Api\RiderController;
 use App\Http\Controllers\Api\SellerDashboardController;
@@ -32,11 +39,13 @@ use App\Http\Controllers\Api\SellerOrderController;
 use App\Http\Controllers\Api\SellerPaymentController;
 use App\Http\Controllers\Api\SellerPayoutController;
 use App\Http\Controllers\Api\SellerProductController;
+use App\Http\Controllers\Api\SellerReturnController;
 use App\Http\Controllers\Api\SellerReviewController;
 use App\Http\Controllers\Api\SellerSettingsController;
 use App\Http\Controllers\Api\SellerStoreController;
 use App\Http\Controllers\Api\StoreController;
 use App\Http\Controllers\Api\SupportTicketController;
+use App\Http\Controllers\Api\TrustReportController;
 use App\Http\Controllers\Api\VendorController;
 use App\Http\Controllers\Api\WishlistController;
 use Illuminate\Support\Facades\Route;
@@ -92,7 +101,18 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::post('/checkout/confirm', [CheckoutController::class, 'confirm']);
     Route::get('/orders', [OrderController::class, 'index']);
     Route::get('/orders/{order}', [OrderController::class, 'show']);
+    Route::get('/orders/{order}/invoice', [OrderController::class, 'invoice']);
+    Route::get('/orders/{order}/returns', [ReturnController::class, 'show']);
+    Route::post('/orders/{order}/returns', [ReturnController::class, 'store']);
+
+    Route::get('/notifications', [NotificationController::class, 'index']);
+    Route::patch('/notifications/{notification}/read', [NotificationController::class, 'read']);
+    Route::post('/notifications/read-all', [NotificationController::class, 'readAll']);
+    Route::get('/notification-preferences', [NotificationPreferenceController::class, 'show']);
+    Route::patch('/notification-preferences', [NotificationPreferenceController::class, 'update']);
+
     Route::post('/reviews', [ReviewController::class, 'store']);
+    Route::post('/trust-reports', [TrustReportController::class, 'store']);
 
     Route::get('/conversations', [ConversationController::class, 'index']);
     Route::post('/conversations', [ConversationController::class, 'store']);
@@ -127,6 +147,9 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::get('/seller/orders/{order}', [SellerOrderController::class, 'show']);
         Route::patch('/seller/orders/{order}/status', [SellerOrderController::class, 'updateStatus']);
 
+        Route::get('/seller/returns', [SellerReturnController::class, 'index']);
+        Route::patch('/seller/returns/{return}', [SellerReturnController::class, 'update']);
+
         Route::get('/seller/dashboard', [SellerDashboardController::class, 'show']);
         Route::get('/seller/customers', [SellerCustomerController::class, 'index']);
         Route::get('/seller/customers/{customer}', [SellerCustomerController::class, 'show']);
@@ -157,6 +180,8 @@ Route::middleware('auth:sanctum')->group(function (): void {
 
     Route::middleware('role:admin')->prefix('admin')->group(function (): void {
         Route::get('/dashboard', [AdminDashboardController::class, 'show']);
+        Route::get('/verification', [AdminVerificationController::class, 'index']);
+
         Route::get('/users', [AdminUserController::class, 'index']);
         Route::get('/users/{user}', [AdminUserController::class, 'show']);
         Route::patch('/users/{user}', [AdminUserController::class, 'update']);
@@ -181,8 +206,14 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::post('/payouts/{payout}/reject', [AdminFinanceController::class, 'rejectPayout']);
         Route::get('/settings/commission', [AdminFinanceController::class, 'commission']);
         Route::patch('/settings/commission', [AdminFinanceController::class, 'updateCommission']);
+        Route::get('/settings', [AdminFinanceController::class, 'settings']);
+        Route::patch('/settings', [AdminFinanceController::class, 'updateSettings']);
+        Route::get('/ledger', [AdminLedgerController::class, 'index']);
+        Route::get('/trust-reports', [AdminTrustReportController::class, 'index']);
+        Route::patch('/trust-reports/{trustReport}', [AdminTrustReportController::class, 'update']);
 
         Route::get('/malls', [AdminCatalogController::class, 'malls']);
+        Route::get('/malls/{mall}', [AdminCatalogController::class, 'showMall']);
         Route::post('/malls', [AdminCatalogController::class, 'storeMall']);
         Route::patch('/malls/{mall}', [AdminCatalogController::class, 'updateMall']);
         Route::delete('/malls/{mall}', [AdminCatalogController::class, 'destroyMall']);
@@ -205,6 +236,10 @@ Route::middleware('auth:sanctum')->group(function (): void {
 
         Route::get('/riders', [RiderController::class, 'adminIndex']);
         Route::post('/riders/{rider}/approve', [RiderController::class, 'approve']);
+        Route::post('/riders/{rider}/reject', [RiderController::class, 'reject']);
         Route::patch('/orders/{order}/assign-rider', [RiderController::class, 'assign']);
+
+        Route::get('/returns', [AdminReturnController::class, 'index']);
+        Route::patch('/returns/{return}', [AdminReturnController::class, 'update']);
     });
 });

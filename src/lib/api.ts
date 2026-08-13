@@ -18,9 +18,15 @@ import type {
   AdminBrand,
   AdminCategory,
   AdminMall,
+  AdminMallDetail,
   AdminOverview,
   AdminStoreRow,
+  AdminTrustReportsResponse,
   AdminUserRow,
+  AdminVerificationQueue,
+  LedgerEntryRow,
+  MarketplaceConfig,
+  TrustReportRow,
 } from "@/types/admin";
 import type {
   ApiCampaign,
@@ -29,6 +35,8 @@ import type {
   ApiSupportTicket,
   SellerAnalytics,
 } from "@/types/inbox";
+import type { NotificationListResult } from "@/types/notifications";
+import type { ApiReturnRequest } from "@/types/returns";
 import type {
   BrandPartner,
   DealProduct,
@@ -328,6 +336,11 @@ export const sellerApi = {
     bank_name: string;
     bank_account_number: string;
     bank_account_name: string;
+    type?: "mall_store" | "independent" | "nationwide" | "emerging";
+    mall_id?: number;
+    category_id?: number;
+    location?: string;
+    description?: string;
   }) => {
     const { data } = await apiClient.post<
       ApiResponse<{
@@ -493,6 +506,23 @@ export const ordersApi = {
     });
     return data;
   },
+
+  invoice: async (id: string) => {
+    const { data } = await apiClient.get<ApiResponse<{ reference: string; html: string }>>(`/orders/${id}/invoice`);
+    return data.data;
+  },
+};
+
+export const trustApi = {
+  report: async (payload: {
+    subject_type: "product" | "store";
+    subject_id: number;
+    reason: string;
+    details?: string;
+  }) => {
+    const { data } = await apiClient.post<ApiResponse<TrustReportRow>>("/trust-reports", payload);
+    return data;
+  },
 };
 
 export const sellerOrdersApi = {
@@ -578,6 +608,16 @@ export const adminApi = {
     return data.data;
   },
 
+  store: async (id: string) => {
+    const { data } = await apiClient.get<ApiResponse<AdminStoreRow>>(`/admin/stores/${id}`);
+    return data;
+  },
+
+  verification: async () => {
+    const { data } = await apiClient.get<ApiResponse<AdminVerificationQueue>>("/admin/verification");
+    return data.data;
+  },
+
   approveStore: async (id: string, mallId?: string) => {
     const { data } = await apiClient.post<ApiResponse<AdminStoreRow>>(`/admin/stores/${id}/approve`, {
       mall_id: mallId ? Number(mallId) : undefined,
@@ -648,12 +688,46 @@ export const adminApi = {
     return data;
   },
 
+  settings: async () => {
+    const { data } = await apiClient.get<ApiResponse<MarketplaceConfig>>("/admin/settings");
+    return data.data;
+  },
+
+  updateSettings: async (payload: Partial<MarketplaceConfig>) => {
+    const { data } = await apiClient.patch<ApiResponse<MarketplaceConfig>>("/admin/settings", payload);
+    return data.data;
+  },
+
+  ledger: async (params: { type?: string; store_id?: string; page?: number; limit?: number } = {}) => {
+    const { data } = await apiClient.get<ApiResponse<PaginatedResponse<LedgerEntryRow>>>("/admin/ledger", {
+      params: compactParams(params),
+    });
+    return data.data;
+  },
+
+  trustReports: async (params: { status?: string; page?: number; limit?: number } = {}) => {
+    const { data } = await apiClient.get<ApiResponse<AdminTrustReportsResponse>>("/admin/trust-reports", {
+      params: compactParams(params),
+    });
+    return data.data;
+  },
+
+  updateTrustReport: async (id: string, payload: { status: string; admin_note?: string }) => {
+    const { data } = await apiClient.patch<ApiResponse<TrustReportRow>>(`/admin/trust-reports/${id}`, payload);
+    return data.data;
+  },
+
   malls: async () => {
     const { data } = await apiClient.get<ApiResponse<AdminMall[]>>("/admin/malls");
     return data.data;
   },
 
-  createMall: async (payload: { name: string; city?: string; location?: string }) => {
+  mall: async (id: string) => {
+    const { data } = await apiClient.get<ApiResponse<AdminMallDetail>>(`/admin/malls/${id}`);
+    return data.data;
+  },
+
+  createMall: async (payload: { name: string; city?: string; location?: string; image?: string }) => {
     const { data } = await apiClient.post<ApiResponse<AdminMall>>("/admin/malls", payload);
     return data;
   },
@@ -749,6 +823,11 @@ export const adminApi = {
     return data;
   },
 
+  rejectRider: async (id: string, reason?: string) => {
+    const { data } = await apiClient.post<ApiResponse<ApiRider>>(`/admin/riders/${id}/reject`, { reason });
+    return data;
+  },
+
   assignRider: async (orderId: string, riderId: string) => {
     const { data } = await apiClient.patch<ApiResponse<ApiOrder>>(`/admin/orders/${orderId}/assign-rider`, {
       rider_id: Number(riderId),
@@ -768,6 +847,21 @@ export const adminApi = {
       chart: Array<{ name: string; gmv: number }>;
     }>>("/admin/analytics");
     return data.data;
+  },
+
+  returns: async (params: { status?: string; page?: number; limit?: number } = {}) => {
+    const { data } = await apiClient.get<ApiResponse<PaginatedResponse<ApiReturnRequest>>>("/admin/returns", {
+      params: compactParams(params),
+    });
+    return data.data;
+  },
+
+  updateReturn: async (id: string, action: "approve" | "reject", note?: string) => {
+    const { data } = await apiClient.patch<ApiResponse<ApiReturnRequest>>(`/admin/returns/${id}`, {
+      action,
+      note,
+    });
+    return data;
   },
 };
 
@@ -889,6 +983,72 @@ export const riderApi = {
   orders: async () => {
     const { data } = await apiClient.get<ApiResponse<ApiOrder[]>>("/rider/orders");
     return data.data;
+  },
+};
+
+export const returnsApi = {
+  getForOrder: async (orderId: string) => {
+    const { data } = await apiClient.get<ApiResponse<ApiReturnRequest | null>>(`/orders/${orderId}/returns`);
+    return data.data;
+  },
+
+  request: async (orderId: string, reason: string) => {
+    const { data } = await apiClient.post<ApiResponse<ApiReturnRequest>>(`/orders/${orderId}/returns`, {
+      reason,
+    });
+    return data;
+  },
+
+  sellerList: async (params: { status?: string; page?: number; limit?: number } = {}) => {
+    const { data } = await apiClient.get<ApiResponse<PaginatedResponse<ApiReturnRequest>>>("/seller/returns", {
+      params: compactParams(params),
+    });
+    return data.data;
+  },
+
+  sellerUpdate: async (id: string, action: "approve" | "reject", note?: string) => {
+    const { data } = await apiClient.patch<ApiResponse<ApiReturnRequest>>(`/seller/returns/${id}`, {
+      action,
+      note,
+    });
+    return data;
+  },
+
+  adminList: async (params: { status?: string; page?: number; limit?: number } = {}) => {
+    const { data } = await apiClient.get<ApiResponse<PaginatedResponse<ApiReturnRequest>>>("/admin/returns", {
+      params: compactParams(params),
+    });
+    return data.data;
+  },
+
+  adminUpdate: async (id: string, action: "approve" | "reject", note?: string) => {
+    const { data } = await apiClient.patch<ApiResponse<ApiReturnRequest>>(`/admin/returns/${id}`, {
+      action,
+      note,
+    });
+    return data;
+  },
+};
+
+export const notificationsApi = {
+  list: async (params: { unread?: boolean; page?: number; limit?: number } = {}) => {
+    const { data } = await apiClient.get<ApiResponse<NotificationListResult>>("/notifications", {
+      params: compactParams({
+        ...params,
+        unread: params.unread ? true : undefined,
+      }),
+    });
+    return data.data;
+  },
+
+  markRead: async (id: string) => {
+    const { data } = await apiClient.patch<ApiResponse<unknown>>(`/notifications/${id}/read`);
+    return data;
+  },
+
+  markAllRead: async () => {
+    const { data } = await apiClient.post<ApiResponse<null>>("/notifications/read-all");
+    return data;
   },
 };
 

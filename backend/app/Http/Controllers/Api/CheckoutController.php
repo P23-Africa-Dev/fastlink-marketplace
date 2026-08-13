@@ -5,16 +5,24 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\OrderResource;
 use App\Models\Address;
+use App\Models\PlatformSetting;
 use App\Services\CheckoutService;
 use App\Services\PaymentService;
 use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class CheckoutController extends Controller
 {
     public function store(Request $request, CheckoutService $checkout): JsonResponse
     {
+        if (PlatformSetting::maintenanceMode()) {
+            throw ValidationException::withMessages([
+                'checkout' => 'Checkout is temporarily unavailable while we perform maintenance.',
+            ]);
+        }
+
         $validated = $request->validate([
             'address_id' => ['required', 'integer', 'exists:addresses,id'],
             'delivery_method' => ['nullable', 'string', 'max:40'],

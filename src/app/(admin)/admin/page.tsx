@@ -23,10 +23,14 @@ export default function AdminOverviewPage() {
   const cards = [
     { label: "GMV (paid)", value: formatPrice(data.gmv), href: "/admin/orders" },
     { label: "Take (fees)", value: formatPrice(data.take), href: "/admin/payments" },
-    { label: "Users", value: String(data.users), href: "/admin/users" },
-    { label: "Pending stores", value: String(data.pendingStores), href: "/admin/stores" },
+    { label: "Users", value: String(data.users), href: "/admin/customers" },
+    {
+      label: "Pending applications",
+      value: String(data.pendingApplications ?? data.pendingStores + (data.pendingRiders ?? 0)),
+      href: "/admin/verification",
+    },
     { label: "Pending payouts", value: `${data.pendingPayouts} · ${formatPrice(data.pendingPayoutAmount)}`, href: "/admin/payouts" },
-    { label: "Products", value: String(data.products), href: "/admin/products" },
+    { label: "Malls", value: "View all", href: "/admin/malls" },
   ];
 
   return (

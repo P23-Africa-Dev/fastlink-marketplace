@@ -11,7 +11,7 @@ class NotificationPreferences
     {
         return [
             'sale' => ['email' => true, 'push' => true],
-            'order' => ['email' => true, 'push' => false],
+            'order' => ['email' => true, 'push' => true],
             'stock' => ['email' => false, 'push' => true],
         ];
     }

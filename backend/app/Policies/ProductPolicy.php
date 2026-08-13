@@ -28,12 +28,22 @@ class ProductPolicy
 
     public function create(User $user): bool
     {
-        return $user->role === 'seller' && $user->stores()->exists();
+        if ($user->role !== 'seller') {
+            return false;
+        }
+
+        $store = $user->store;
+
+        return $store !== null && $store->status === 'approved';
     }
 
     public function update(User $user, Product $product): bool
     {
-        return $product->store?->owner_id === $user->id;
+        if ($product->store?->owner_id !== $user->id) {
+            return false;
+        }
+
+        return $product->store?->status === 'approved';
     }
 
     public function delete(User $user, Product $product): bool

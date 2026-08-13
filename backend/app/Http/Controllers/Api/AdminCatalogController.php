@@ -6,10 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\BrandResource;
 use App\Http\Resources\CategoryResource;
 use App\Http\Resources\MallResource;
+use App\Http\Resources\StoreResource;
 use App\Models\AuditLog;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Mall;
+use App\Models\Order;
+use App\Models\Store;
 use App\Support\ApiResponse;
 use App\Support\UniqueSlug;
 use Illuminate\Http\JsonResponse;
@@ -22,6 +25,32 @@ class AdminCatalogController extends Controller
         $malls = Mall::query()->withCount('stores')->orderBy('name')->get();
 
         return ApiResponse::success(MallResource::collection($malls)->resolve());
+    }
+
+    public function showMall(Mall $mall): JsonResponse
+    {
+        $mall->loadCount('stores');
+        $stores = $mall->stores()->with(['owner', 'category'])->orderBy('name')->get();
+        $storeIds = $stores->pluck('id');
+
+        $gmv = (float) Order::query()
+            ->whereIn('store_id', $storeIds)
+            ->where('payment_status', 'paid')
+            ->sum('total');
+
+        return ApiResponse::success([
+            'mall' => (new MallResource($mall))->resolve(),
+            'gmv' => $gmv,
+            'pendingStores' => $stores->where('status', 'pending')->count(),
+            'stores' => $stores->map(fn (Store $store) => [
+                ...(new StoreResource($store))->resolve(),
+                'owner' => $store->owner ? [
+                    'id' => (string) $store->owner->id,
+                    'name' => $store->owner->name,
+                    'email' => $store->owner->email,
+                ] : null,
+            ])->values()->all(),
+        ]);
     }
 
     public function storeMall(Request $request): JsonResponse

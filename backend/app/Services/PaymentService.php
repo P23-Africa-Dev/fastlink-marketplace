@@ -162,7 +162,15 @@ class PaymentService
                     'payment_method' => $provider,
                 ]);
                 $order->addEvent('confirmed', 'Payment received. Your order has been confirmed.');
+                app(NotificationService::class)->notifyOrderEvent(
+                    $order->fresh(['buyer', 'store.owner']),
+                    'order.paid',
+                    'Payment confirmed',
+                    'Payment for order '.$order->reference.' was successful.',
+                );
             }
+
+            app(LedgerService::class)->recordPaymentCaptured($payment->fresh());
         }
 
         return $payments->fresh(['order']);

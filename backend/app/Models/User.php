@@ -61,6 +61,11 @@ class User extends Authenticatable
         return $this->hasOne(Rider::class);
     }
 
+    public function notifications(): HasMany
+    {
+        return $this->hasMany(UserNotification::class);
+    }
+
     public function isSuspended(): bool
     {
         return $this->status === 'suspended';

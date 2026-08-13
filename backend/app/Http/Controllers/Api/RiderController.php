@@ -8,6 +8,7 @@ use App\Http\Resources\RiderResource;
 use App\Models\AuditLog;
 use App\Models\Order;
 use App\Models\Rider;
+use App\Services\NotificationService;
 use App\Support\ApiResponse;
 use App\Support\ProductQuery;
 use Illuminate\Http\JsonResponse;
@@ -15,7 +16,7 @@ use Illuminate\Http\Request;
 
 class RiderController extends Controller
 {
-    public function register(Request $request): JsonResponse
+    public function register(Request $request, NotificationService $notifications): JsonResponse
     {
         $user = $request->user();
         if ($user->rider()->exists()) {
@@ -28,7 +29,7 @@ class RiderController extends Controller
             'city' => ['nullable', 'string', 'max:120'],
         ]);
 
-        $status = app()->environment(['local', 'testing']) ? 'approved' : 'pending';
+        $status = app()->environment('testing') ? 'approved' : 'pending';
         $rider = Rider::query()->create([
             'user_id' => $user->id,
             'phone' => $validated['phone'],
@@ -41,6 +42,15 @@ class RiderController extends Controller
             'role' => 'rider',
             'phone' => $validated['phone'],
         ])->save();
+
+        if ($status === 'pending') {
+            $notifications->notifyAdmins(
+                'application.rider_submitted',
+                'New rider application',
+                $user->name.' applied to deliver with Fastlink.',
+                ['riderId' => (string) $rider->id, 'userId' => (string) $user->id],
+            );
+        }
 
         return ApiResponse::success([
             'rider' => (new RiderResource($rider->load('user')))->resolve(),
@@ -98,13 +108,47 @@ class RiderController extends Controller
         );
     }
 
-    public function approve(Request $request, Rider $rider): JsonResponse
+    public function approve(Request $request, Rider $rider, NotificationService $notifications): JsonResponse
     {
         $rider->update(['status' => 'approved']);
         $rider->user?->forceFill(['role' => 'rider', 'status' => 'active'])->save();
         AuditLog::record($request->user(), 'rider.approved', $rider);
 
+        if ($rider->user) {
+            $notifications->notify(
+                $rider->user,
+                'rider.approved',
+                'Rider application approved',
+                'You can now view assigned deliveries on your rider dashboard.',
+                ['riderId' => (string) $rider->id],
+            );
+        }
+
         return ApiResponse::success((new RiderResource($rider->fresh('user')))->resolve(), 'Rider approved.');
+    }
+
+    public function reject(Request $request, Rider $rider, NotificationService $notifications): JsonResponse
+    {
+        $validated = $request->validate([
+            'reason' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $rider->update(['status' => 'rejected']);
+        AuditLog::record($request->user(), 'rider.rejected', $rider, [
+            'reason' => $validated['reason'] ?? null,
+        ]);
+
+        if ($rider->user) {
+            $notifications->notify(
+                $rider->user,
+                'rider.rejected',
+                'Rider application declined',
+                $validated['reason'] ?? 'Your rider application was not approved at this time.',
+                ['riderId' => (string) $rider->id],
+            );
+        }
+
+        return ApiResponse::success((new RiderResource($rider->fresh('user')))->resolve(), 'Rider rejected.');
     }
 
     public function assign(Request $request, Order $order): JsonResponse

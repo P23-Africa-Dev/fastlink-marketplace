@@ -328,9 +328,9 @@ Pages already on React Query (`/products`, `/products/[id]`, `/search`) light up
 
 ### 3.7 Database
 
-Start with **MySQL** for anything beyond local experiments. SQLite is fine for first auth tests, but mall/store/product relations and concurrent orders belong on MySQL. Document both in `.env.example`.
+Start with **Postgres on Supabase** for anything beyond local experiments. SQLite is fine for PHPUnit (`backend/phpunit.xml` stays in-memory). Laravel Auth stays **Sanctum** — Supabase is the hosted database, not the identity provider.
 
-**Backlog:** switching local `.env` to MySQL is deferred until `GET /api/health` works on SQLite. Setup steps: [`BACKLOG.md`](./BACKLOG.md#mysql-recommended-once-you-leave-health-check).
+**Local `.env`:** `backend/.env` uses `DB_CONNECTION=pgsql` against the Fastlink Supabase project. Setup: [`BACKLOG.md`](./BACKLOG.md#supabase-postgres-current-target).
 
 ---
 
@@ -841,6 +841,70 @@ Seller:
 
 ---
 
+### Phase 11 — Returns, notifications (MVP gaps)
+
+**Returns**
+
+- `return_requests` table (one per order); buyer `POST/GET /orders/{order}/returns`.
+- Seller `GET/PATCH /seller/returns/{return}` and admin mirror at `/admin/returns`.
+- Approve: full refund, restore stock, cancel order; reject with optional note.
+- UI: buyer request on `/account/orders/[id]`; seller `/returns`; admin `/admin/returns`.
+
+**Notifications**
+
+- `user_notifications` table; list, mark read, mark all read.
+- Hooks on checkout, payment, order status changes, and return workflow.
+- Optional email via `OrderEventMail` when preferences allow.
+- UI: notification bell in site header; `/account/notifications`.
+
+**Shipped:** 13 August 2026 — returns workflow end-to-end; in-app notifications with bell + preferences from existing settings shape.
+
+---
+
+### Phase 12 — Platform Operations (CR-Tier 0)
+
+**Backend**
+
+- `ProductPolicy` publish gate: only `store.status === approved` can create/update/delete products.
+- Seller onboard accepts store type, mall, category, location; **pending** outside `testing` env; admin notifications.
+- `GET /admin/verification` queue (pending stores + riders).
+- `GET /admin/malls/{id}` mall detail with stores + GMV.
+- Store/rider approve/reject notifies applicants; rider reject endpoint.
+- `GET /orders/{id}/invoice` HTML receipt.
+
+**Frontend**
+
+- Admin: `/admin/malls`, `/admin/malls/[id]`, `/admin/verification`, `/admin/vendors`, `/admin/customers`; reorganized nav.
+- Buyer: `/account` hub shell, addresses, profile, invoice download on order detail.
+- Seller: multi-step `/vendor/register` wizard; `/vendor/pending` holding page; pending banner on dashboard.
+
+**Shipped:** 13 August 2026 — see [`CHANGE-REQUEST.md`](./CHANGE-REQUEST.md) CR-Tier 0 acceptance criteria.
+
+---
+
+### Phase 13 — Trust & Money (CR-Tier 1, partial)
+
+**Financial ledger (CR-1.3)**
+
+- Append-only `ledger_entries` table with idempotency keys.
+- `LedgerService` hooks on payment capture, refund approval, payout approval.
+- Admin `GET /admin/ledger` + `/admin/ledger` UI.
+
+**Trust & Safety MVP (CR-1.1)**
+
+- `trust_reports` table; buyer `POST /trust-reports`.
+- Admin queue `GET/PATCH /admin/trust-reports` + `/admin/trust-reports` UI.
+
+**Marketplace config center (CR-1.7, partial)**
+
+- Extended `platform_settings`: return window, min order, default shipping, maintenance mode.
+- `GET/PATCH /admin/settings` + expanded `/admin/settings` config UI.
+- Maintenance mode blocks new checkout.
+
+**Shipped:** 13 August 2026 — disputes, webhook reconciliation, seller reputation, and product moderation remain Tier 1 backlog.
+
+---
+
 ## 6. MVP add list
 
 This is the product cut for the first shippable marketplace. Fastlink already has most **buyer browse** and **seller dashboard** screens. MVP is not the full 13-section marketplace catalog — it is the glue that makes those screens real: identity, ownership, money, and an admin.
@@ -939,6 +1003,9 @@ Phase 7  Paystack payments + payouts
 Phase 8  Admin console                                        ← “general admin monitors everything”
 Phase 9  Messages + support tickets
 Phase 10 Analytics, marketing, wishlist sync, search upgrade, riders
+Phase 11 Returns, in-app notifications (MVP gap closure)
+Phase 12 Platform operations (CR-Tier 0 — mall admin, verification, account hub)
+Phase 13 Trust & money partial (ledger, trust reports, config center)
 ```
 
 **Why not start with products?**  
