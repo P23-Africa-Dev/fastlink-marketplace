@@ -28,7 +28,7 @@ import {
 import { useAuthStore } from "@/store/auth-store";
 import { useCartStore } from "@/store/cart-store";
 import { cn } from "@/lib/utils";
-import { useMessagesStore } from "@/store/messages-store";
+import { useConversations } from "@/hooks/use-conversations";
 import { authApi } from "@/lib/api";
 import { queryClient } from "@/lib/query-client";
 
@@ -82,8 +82,8 @@ interface SidebarNavProps {
 }
 
 function SidebarNav({ pathname, onItemClick, onLogoutClick }: SidebarNavProps) {
-  const conversations = useMessagesStore((state) => state.conversations);
-  const unreadCount = conversations.filter((c) => c.status === "New").length;
+  const { data } = useConversations();
+  const unreadCount = (data?.data ?? []).reduce((sum, c) => sum + c.unreadCount, 0);
 
   const checkIsActive = (href: string) => {
     if (href === "/dashboard") {
@@ -175,8 +175,8 @@ function HeaderTitleContent() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { user } = useAuthStore();
-
-  const conversations = useMessagesStore((state) => state.conversations);
+  const { data } = useConversations();
+  const conversations = data?.data ?? [];
   const messagesMatch = pathname.match(/^\/messages\/([^/]+)$/);
   const activeConversationId = messagesMatch ? messagesMatch[1] : null;
   const activeMessage = activeConversationId
@@ -187,7 +187,7 @@ function HeaderTitleContent() {
     return (
       <>
         <h1 className="text-white font-bold text-xl md:text-2xl leading-tight">
-          Customer profile {activeMessage.senderName}
+          Customer profile {activeMessage.buyer?.name ?? ""}
         </h1>
         <p className="text-purple-200 text-xs md:text-sm font-medium">
           <Link href="/messages" className="hover:underline">

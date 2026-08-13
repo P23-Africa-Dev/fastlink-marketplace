@@ -125,35 +125,7 @@ class CheckoutService
      */
     public function confirm(User $buyer, string $groupId): Collection
     {
-        $orders = Order::query()
-            ->with(['items', 'store', 'events'])
-            ->where('buyer_id', $buyer->id)
-            ->where('group_id', $groupId)
-            ->get();
-
-        if ($orders->isEmpty()) {
-            abort(404);
-        }
-
-        foreach ($orders as $order) {
-            if ($order->payment_status === 'paid') {
-                continue;
-            }
-
-            $order->update([
-                'payment_status' => 'paid',
-                'status' => 'confirmed',
-                'paid_at' => now(),
-                'payment_method' => $order->payment_method ?: 'demo',
-            ]);
-            $order->addEvent('confirmed', 'Demo payment received. Your order has been confirmed.');
-        }
-
-        return Order::query()
-            ->with(['items', 'store', 'events'])
-            ->where('buyer_id', $buyer->id)
-            ->where('group_id', $groupId)
-            ->get();
+        return app(PaymentService::class)->confirmDemo($buyer, $groupId);
     }
 
     public function restoreStock(Order $order): void

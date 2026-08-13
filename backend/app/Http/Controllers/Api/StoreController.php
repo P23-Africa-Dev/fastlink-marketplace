@@ -7,6 +7,7 @@ use App\Http\Resources\ProductResource;
 use App\Http\Resources\StoreResource;
 use App\Models\Store;
 use App\Support\ApiResponse;
+use App\Support\PageViewRecorder;
 use App\Support\ProductQuery;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -34,13 +35,15 @@ class StoreController extends Controller
         return ApiResponse::success($data);
     }
 
-    public function show(string $slug): JsonResponse
+    public function show(string $slug, Request $request): JsonResponse
     {
         $store = Store::query()
             ->with(['category', 'mall'])
             ->where('slug', $slug)
             ->where('status', 'approved')
             ->firstOrFail();
+
+        PageViewRecorder::record($request->user(), $store, null, '/stores/'.$store->slug);
 
         return ApiResponse::success((new StoreResource($store))->resolve());
     }

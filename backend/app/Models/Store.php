@@ -59,6 +59,16 @@ class Store extends Model
         return $this->hasMany(Order::class);
     }
 
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class);
+    }
+
+    public function payouts(): HasMany
+    {
+        return $this->hasMany(Payout::class);
+    }
+
     public function reviews(): HasMany
     {
         return $this->hasMany(Review::class);

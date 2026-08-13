@@ -3,7 +3,7 @@ export interface User {
   email: string;
   name: string;
   avatar?: string;
-  role: "buyer" | "seller" | "admin";
+  role: "buyer" | "seller" | "admin" | "rider";
   status?: "active" | "pending" | "suspended";
   phone?: string | null;
   createdAt: string;

@@ -35,6 +35,11 @@ export interface Product {
     rating: number;
     totalSales: number;
   };
+  store?: {
+    id: string;
+    name: string;
+    slug: string;
+  } | null;
   rating: number;
   reviewCount: number;
   stock: number;

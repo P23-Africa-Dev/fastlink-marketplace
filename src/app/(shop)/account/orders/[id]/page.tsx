@@ -8,6 +8,7 @@ import { ArrowLeft, Package } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
 import { formatOrderDate } from "@/lib/order-map";
 import { useMyOrder } from "@/hooks/use-orders";
+import { MessageSellerButton } from "@/components/inbox/message-seller";
 
 export default function AccountOrderDetailPage() {
   const params = useParams();
@@ -57,6 +58,9 @@ export default function AccountOrderDetailPage() {
           <Link href={trackHref} className="inline-block text-xs font-bold text-[#7a3dbf] hover:underline">
             Track this order
           </Link>
+          <div className="pt-2">
+            <MessageSellerButton storeId={order.store?.id} orderId={order.id} label="Message seller about this order" />
+          </div>
         </div>
 
         <div className="rounded-2xl border border-[#EBD7FA] bg-white p-6 space-y-4">

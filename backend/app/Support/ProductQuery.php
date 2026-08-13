@@ -47,7 +47,9 @@ class ProductQuery
                 $inner->where('name', 'like', $q)
                     ->orWhere('description', 'like', $q)
                     ->orWhere('sku', 'like', $q)
-                    ->orWhere('subcategory', 'like', $q);
+                    ->orWhere('subcategory', 'like', $q)
+                    ->orWhereHas('store', fn (Builder $store) => $store->where('name', 'like', $q))
+                    ->orWhereHas('brand', fn (Builder $brand) => $brand->where('name', 'like', $q)->orWhere('product_brand', 'like', $q));
             });
         }
 

@@ -56,6 +56,11 @@ class User extends Authenticatable
         return $this->hasMany(Review::class, 'buyer_id');
     }
 
+    public function rider(): HasOne
+    {
+        return $this->hasOne(Rider::class);
+    }
+
     public function isSuspended(): bool
     {
         return $this->status === 'suspended';

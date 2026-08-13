@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\ProductResource;
 use App\Models\Product;
 use App\Support\ApiResponse;
+use App\Support\PageViewRecorder;
 use App\Support\ProductQuery;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -29,7 +30,7 @@ class ProductController extends Controller
         );
     }
 
-    public function show(string $idOrSlug): JsonResponse
+    public function show(string $idOrSlug, Request $request): JsonResponse
     {
         $product = Product::query()
             ->with(['images', 'variants', 'store', 'brand', 'category'])
@@ -44,6 +45,8 @@ class ProductController extends Controller
         if ($product->status !== 'active') {
             abort(404);
         }
+
+        PageViewRecorder::record($request->user(), $product->store, $product, '/products/'.$product->slug);
 
         return ApiResponse::success((new ProductResource($product))->resolve());
     }

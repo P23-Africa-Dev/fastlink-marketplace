@@ -31,12 +31,12 @@ import {
 
 import { useProduct, useProducts, useFeaturedProducts, useProductReviews, useCreateReview } from "@/hooks/use-products";
 import { useCartStore } from "@/store/cart-store";
-import { useWishlistStore } from "@/store/wishlist-store";
+import { useWishlist } from "@/hooks/use-wishlist";
 import { useAuthStore } from "@/store/auth-store";
 import { formatPrice, cn, pluralize } from "@/lib/utils";
 import { apiErrorMessage } from "@/lib/api";
 import { formatOrderDate } from "@/lib/order-map";
-import { ShopProductCard } from "@/components/product/shop-product-card";
+import { MessageSellerButton } from "@/components/inbox/message-seller";
 import type { Product } from "@/types/product";
 
 interface ProductDetailPageProps {
@@ -73,7 +73,7 @@ export default function ProductDetailPage(props: ProductDetailPageProps) {
   const catalog = catalogPage?.data ?? [];
   const featuredCatalog = featuredRes?.data ?? [];
   const { addItem } = useCartStore();
-  const { toggleWishlist, isInWishlist } = useWishlistStore();
+  const { toggleWishlist, isInWishlist } = useWishlist();
 
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
@@ -556,6 +556,8 @@ export default function ProductDetailPage(props: ProductDetailPageProps) {
                   <Heart size={16} className={cn(isInWishlist(product.id) && "fill-[#411266] text-[#411266]")} />
                   <span>{isInWishlist(product.id) ? "In Wishlist" : "Add to Wishlist"}</span>
                 </button>
+
+                <MessageSellerButton storeId={product.store?.id} productId={product.id} />
 
                 <button className="flex items-center gap-1.5 text-[#594970] hover:text-[#411266] font-semibold transition-colors cursor-pointer">
                   <ArrowLeftRight size={16} />

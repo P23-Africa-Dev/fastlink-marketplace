@@ -71,7 +71,7 @@ After auth works, the next real product value is **catalog + seller product CRUD
 | Orders | `/orders`, `/orders/[id]` | `src/store/orders-store.ts` (in-memory) |
 | Products | `/all-products`, add/edit | `src/lib/mock-products.ts` (different Product type than shop) |
 | Customers | `/customers` | Inline array |
-| Messages | `/messages`, `/messages/[id]` | `src/store/messages-store.ts` |
+| Messages | `/messages`, `/messages/[id]`, `/account/messages` | `useConversations` |
 | Payments | `/payments` | Inline records |
 | Payouts | `/payouts` | Inline records (Nigerian banks) |
 | Analytics | `/analytics` | Inline telemetry |
@@ -299,7 +299,7 @@ Use Zustand for state that is **not** a cache of GET responses.
 | Today | Becomes |
 |-------|---------|
 | `orders-store.ts` | `useSellerOrders` / `useMyOrders` |
-| `messages-store.ts` | `useConversations` (post-MVP) |
+| `messages-store.ts` | `useConversations` |
 
 **Rules**
 
@@ -755,6 +755,8 @@ Seller:
 
 **Do not start this phase until orders are trustworthy.**
 
+**Shipped:** 13 August 2026 — Paystack initialize/verify + HMAC webhook; demo mode when `PAYSTACK_SECRET_KEY` is empty (callback `/checkout/callback`); payments store fees/net from platform commission %; seller payouts stay pending until admin approve. Checkout redirects to Paystack/demo; `/payments` and `/payouts` read Laravel.
+
 ---
 
 ### Phase 8 — Admin platform (“monitor everything”)
@@ -786,6 +788,8 @@ Seller:
 - Admin can suspend a user; they cannot log in (`status=suspended`).
 - Admin can take down a product; it disappears from public catalog.
 
+**Shipped:** 13 August 2026 — `/admin` Control console (overview, users, stores, products, orders, payments/payouts, catalog CMS, commission, audit). `role:admin` on `/api/admin/*`; sellers get 403. Proxy sends only admins to `/admin`. Approve store, suspend user, unpublish product, and payout approve all persist.
+
 ---
 
 ### Phase 9 — Messages and support (post-MVP)
@@ -803,9 +807,7 @@ Seller:
 - `support_tickets` + `ticket_messages`
 - Seller creates tickets; admin replies (ties to Phase 8)
 
-**Frontend:** replace `messages-store` and support inline data.
-
-**Out of scope for v1:** Email-to-ticket, WhatsApp, SMS.
+**Shipped:** 13 August 2026 — buyer↔seller `conversations`/`messages` over REST; seller `support_tickets` with admin replies. Seller `/messages` and `/support` plus buyer `/account/messages` and “Message seller” on PDP/orders read Laravel. No WebSockets, email-to-ticket, WhatsApp, or SMS.
 
 ---
 
@@ -834,6 +836,8 @@ Seller:
 **Riders**
 
 - After core commerce: `riders` table, `/rider/register`, assign deliveries to orders. Explicitly **last**.
+
+**Shipped:** 13 August 2026 — seller analytics from paid orders + `page_views`; internal campaigns (no Meta/Google APIs); wishlist API with localStorage merge on login; product search also matches store and brand name; rider register/approve/assign. `/analytics`, `/marketing`, `/wishlist`, `/rider`, and admin support/riders/analytics are live.
 
 ---
 

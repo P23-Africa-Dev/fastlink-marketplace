@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\OrderResource;
 use App\Models\Address;
 use App\Services\CheckoutService;
+use App\Services\PaymentService;
 use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -36,7 +37,35 @@ class CheckoutController extends Controller
         return ApiResponse::success([
             'groupId' => $orders->first()?->group_id,
             'orders' => OrderResource::collection($orders)->resolve(),
-        ], 'Order placed. Complete demo payment to confirm.', 201);
+        ], 'Order placed. Complete payment to confirm.', 201);
+    }
+
+    public function initialize(Request $request, PaymentService $payments): JsonResponse
+    {
+        $validated = $request->validate([
+            'group_id' => ['required', 'string'],
+        ]);
+
+        $result = $payments->initialize($request->user(), $validated['group_id']);
+
+        return ApiResponse::success($result, $result['alreadyPaid']
+            ? 'Order already paid.'
+            : 'Redirect the buyer to complete payment.');
+    }
+
+    public function verify(Request $request, PaymentService $payments): JsonResponse
+    {
+        $validated = $request->validate([
+            'reference' => ['required', 'string'],
+        ]);
+
+        $orders = $payments->verify($validated['reference'], $request->user());
+
+        return ApiResponse::success([
+            'groupId' => $orders->first()?->group_id,
+            'reference' => $validated['reference'],
+            'orders' => OrderResource::collection($orders)->resolve(),
+        ], 'Payment confirmed.');
     }
 
     public function confirm(Request $request, CheckoutService $checkout): JsonResponse

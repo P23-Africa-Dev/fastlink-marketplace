@@ -21,7 +21,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 
 import { useCartStore } from "@/store/cart-store";
-import { useWishlistStore } from "@/store/wishlist-store";
+import { useWishlist } from "@/hooks/use-wishlist";
 import { useAuthStore } from "@/store/auth-store";
 import { accountHref } from "@/lib/auth-session";
 import { useUIStore } from "@/store/ui-store";
@@ -50,7 +50,7 @@ const CATEGORY_LINKS = [
 export function Header() {
   const router = useRouter();
   const { itemCount, openCart } = useCartStore();
-  const { itemCount: wishlistCount } = useWishlistStore();
+  const { itemCount: wishlistCount } = useWishlist();
   const { isAuthenticated, user } = useAuthStore();
   const { openMobileMenu, closeMobileMenu, isMobileMenuOpen, setSearchQuery } = useUIStore();
 

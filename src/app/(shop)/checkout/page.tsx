@@ -9,9 +9,9 @@ import { Check, ChevronRight, Lock, ArrowLeft, ShieldCheck, Loader2 } from "luci
 import { useCartStore } from "@/store/cart-store";
 import { useAuthStore } from "@/store/auth-store";
 import { formatPrice, cn } from "@/lib/utils";
-import { apiErrorMessage } from "@/lib/api";
+import { apiErrorMessage, checkoutApi } from "@/lib/api";
 import { useMe } from "@/hooks/use-auth";
-import { useCheckout, useConfirmCheckout, useCreateAddress } from "@/hooks/use-orders";
+import { useCheckout, useCreateAddress, useInitializeCheckout } from "@/hooks/use-orders";
 
 type Step = "contact" | "shipping" | "payment" | "review";
 
@@ -28,7 +28,7 @@ export default function CheckoutPage() {
   const { data: me } = useMe();
   const createAddress = useCreateAddress();
   const checkout = useCheckout();
-  const confirmCheckout = useConfirmCheckout();
+  const initializeCheckout = useInitializeCheckout();
 
   const [currentStep, setCurrentStep] = useState<Step>("contact");
   const [orderPlaced, setOrderPlaced] = useState(false);
@@ -58,6 +58,11 @@ export default function CheckoutPage() {
       router.replace("/login?next=/checkout");
     }
   }, [token, router]);
+
+  useEffect(() => {
+    const stored = sessionStorage.getItem("fastlink_checkout_group");
+    if (stored) setPendingGroupId(stored);
+  }, []);
 
   useEffect(() => {
     if (!me) return;
@@ -100,7 +105,7 @@ export default function CheckoutPage() {
         const placed = await checkout.mutateAsync({
           address_id: Number(address.data.id),
           delivery_method: "standard",
-          payment_method: "demo",
+          payment_method: "paystack",
           items: items.map((item) => ({
             product_id: item.productId,
             quantity: item.quantity,
@@ -110,15 +115,30 @@ export default function CheckoutPage() {
 
         groupId = placed.data.groupId;
         setPendingGroupId(groupId);
+        sessionStorage.setItem("fastlink_checkout_group", groupId);
       }
 
-      const confirmed = await confirmCheckout.mutateAsync(groupId);
-      const first = confirmed.data.orders[0];
-      setOrderRef(first?.reference ?? "");
-      setTrackingNumber(first?.trackingNumber ?? "");
-      setPendingGroupId(null);
-      clearCart();
-      setOrderPlaced(true);
+      const initialized = await initializeCheckout.mutateAsync(groupId);
+      if (initialized.data.alreadyPaid) {
+        sessionStorage.removeItem("fastlink_checkout_group");
+        setPendingGroupId(null);
+        clearCart();
+        if (initialized.data.reference) {
+          const verified = await checkoutApi.verify(initialized.data.reference);
+          const first = verified.data.orders[0];
+          setOrderRef(first?.reference ?? "");
+          setTrackingNumber(first?.trackingNumber ?? "");
+        }
+        setOrderPlaced(true);
+        return;
+      }
+
+      if (!initialized.data.authorizationUrl) {
+        throw new Error("Payment could not be started.");
+      }
+
+      sessionStorage.setItem("fastlink_checkout_group", groupId);
+      window.location.href = initialized.data.authorizationUrl;
     } catch (error) {
       setSubmitError(apiErrorMessage(error, "Could not place your order. Please try again."));
     } finally {
@@ -142,7 +162,7 @@ export default function CheckoutPage() {
             Order Confirmed!
           </h1>
           <p className="mb-2 text-[#8A79A5] font-medium">
-            Demo payment recorded. Your order is confirmed and the seller can fulfil it.
+            Payment received. Your order is confirmed and the seller can fulfil it.
           </p>
           <p className="mb-8 text-xs font-bold text-[#6D349F] bg-white/60 inline-block px-4 py-2 rounded-xl border border-white/80">
             Order Reference: {displayRef}
@@ -355,28 +375,14 @@ export default function CheckoutPage() {
                 <p className="flex items-center gap-2 text-xs text-[#8A79A5] bg-white/70 p-3 rounded-xl border border-white/80 font-medium">
                   <ShieldCheck size={16} className="text-[#6D349F] shrink-0" />
                   <span>
-                    Demo payment — no real charge. Card details stay in your browser and are not sent to the server.
+                    You will be redirected to Paystack to pay by card, bank, or USSD. Fastlink never stores card details.
                   </span>
                 </p>
-                <FormField
-                  label="Card Number"
-                  value={form.cardNumber}
-                  onChange={(v) => update("cardNumber", v)}
-                  placeholder="5399 4242 4242 4242"
-                />
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    label="Expiry Date"
-                    value={form.cardExpiry}
-                    onChange={(v) => update("cardExpiry", v)}
-                    placeholder="MM / YY"
-                  />
-                  <FormField
-                    label="CVC"
-                    value={form.cardCvc}
-                    onChange={(v) => update("cardCvc", v)}
-                    placeholder="•••"
-                  />
+                <div className="rounded-xl border border-[#D8C2EF] bg-white p-4 space-y-2">
+                  <p className="text-sm font-bold text-[#3B1C5A]">Paystack checkout</p>
+                  <p className="text-xs text-[#8A79A5] font-medium">
+                    Amount due: <span className="font-extrabold text-[#6D349F]">{formatPrice(total)}</span>
+                  </p>
                 </div>
                 <button
                   onClick={nextStep}
@@ -410,9 +416,7 @@ export default function CheckoutPage() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-[#8A79A5] font-semibold">Payment</span>
-                    <span className="text-[#3B1C5A] font-bold">
-                      Demo payment{form.cardNumber ? ` · •••• ${form.cardNumber.slice(-4)}` : ""}
-                    </span>
+                    <span className="text-[#3B1C5A] font-bold">Paystack</span>
                   </div>
                 </div>
 
@@ -428,7 +432,7 @@ export default function CheckoutPage() {
                   className="flex items-center justify-center gap-2 w-full rounded-xl bg-[#6D349F] hover:bg-[#52237A] disabled:opacity-60 text-white font-extrabold py-4 px-6 shadow-lg transition-all mt-4 font-montserrat text-base"
                 >
                   {isSubmitting ? <Loader2 size={16} className="animate-spin" /> : <Lock size={16} />}
-                  <span>{isSubmitting ? "Placing order…" : `Place Order · ${formatPrice(total)}`}</span>
+                  <span>{isSubmitting ? "Redirecting to Paystack…" : `Pay · ${formatPrice(total)}`}</span>
                 </button>
               </div>
             )}

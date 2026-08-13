@@ -25,6 +25,9 @@ export default function AccountOrdersPage() {
         <div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-[#6D349F]">My Orders</h1>
           <p className="text-sm text-[#8A79A5] mt-1">Orders you have placed on Fastlink.</p>
+          <Link href="/account/messages" className="inline-block mt-2 text-xs font-bold text-[#7a3dbf] hover:underline">
+            Seller messages
+          </Link>
         </div>
 
         {isLoading && <p className="text-sm text-[#8A79A5]">Loading orders…</p>}

@@ -106,6 +106,12 @@ export interface ApiOrder {
     name: string;
     slug: string;
   } | null;
+  rider?: {
+    id: string;
+    name?: string | null;
+    phone?: string | null;
+    status?: string;
+  } | null;
   shippingAddress: {
     street: string;
     city: string;

@@ -2,12 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import {
-  addressesApi,
-  checkoutApi,
-  ordersApi,
-  sellerOrdersApi,
-} from "@/lib/api";
+import { addressesApi, checkoutApi, ordersApi, sellerOrdersApi } from "@/lib/api";
 import { QUERY_KEYS } from "@/lib/query-client";
 import type { AddressPayload } from "@/types/order";
 
@@ -42,11 +37,22 @@ export function useCheckout() {
   });
 }
 
-export function useConfirmCheckout() {
+export function useInitializeCheckout() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (groupId: string) => checkoutApi.confirm(groupId),
+    mutationFn: (groupId: string) => checkoutApi.initialize(groupId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.orders.all });
+    },
+  });
+}
+
+export function useVerifyCheckout() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (reference: string) => checkoutApi.verify(reference),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.orders.all });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.seller.orders() });

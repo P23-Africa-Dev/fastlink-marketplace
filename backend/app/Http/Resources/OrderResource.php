@@ -40,6 +40,12 @@ class OrderResource extends JsonResource
                 'name' => $this->store->name,
                 'slug' => $this->store->slug,
             ] : null),
+            'rider' => $this->whenLoaded('rider', fn () => $this->rider ? [
+                'id' => (string) $this->rider->id,
+                'name' => $this->rider->user?->name,
+                'phone' => $this->rider->phone,
+                'status' => $this->rider->status,
+            ] : null),
             'shippingAddress' => [
                 'street' => $this->shipping_street,
                 'city' => $this->shipping_city,

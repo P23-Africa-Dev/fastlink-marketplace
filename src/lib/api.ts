@@ -6,6 +6,30 @@ import type { DashboardStats, ProductReview, SellerCustomer, SellerSettings, Sel
 import type { Address, User } from "@/types/user";
 import type { AddressPayload, ApiOrder, CheckoutResult } from "@/types/order";
 import type {
+  ApiPayment,
+  ApiPayout,
+  CheckoutInitializeResult,
+  PaymentListResult,
+  PayoutAccount,
+  PayoutListResult,
+} from "@/types/payment";
+import type {
+  AdminAuditLog,
+  AdminBrand,
+  AdminCategory,
+  AdminMall,
+  AdminOverview,
+  AdminStoreRow,
+  AdminUserRow,
+} from "@/types/admin";
+import type {
+  ApiCampaign,
+  ApiConversation,
+  ApiRider,
+  ApiSupportTicket,
+  SellerAnalytics,
+} from "@/types/inbox";
+import type {
   BrandPartner,
   DealProduct,
   EmergingVendor,
@@ -434,6 +458,20 @@ export const checkoutApi = {
     });
     return data;
   },
+
+  initialize: async (groupId: string) => {
+    const { data } = await apiClient.post<ApiResponse<CheckoutInitializeResult>>("/checkout/initialize", {
+      group_id: groupId,
+    });
+    return data;
+  },
+
+  verify: async (reference: string) => {
+    const { data } = await apiClient.post<ApiResponse<CheckoutResult>>("/checkout/verify", {
+      reference,
+    });
+    return data;
+  },
 };
 
 export const ordersApi = {
@@ -477,3 +515,380 @@ export const sellerOrdersApi = {
     return data;
   },
 };
+
+export const sellerPaymentsApi = {
+  list: async (params: { q?: string; status?: string; page?: number; limit?: number } = {}) => {
+    const { data } = await apiClient.get<ApiResponse<PaymentListResult>>("/seller/payments", {
+      params: compactParams(params),
+    });
+    return data.data;
+  },
+};
+
+export const sellerPayoutsApi = {
+  list: async (params: { status?: string; page?: number; limit?: number } = {}) => {
+    const { data } = await apiClient.get<ApiResponse<PayoutListResult>>("/seller/payouts", {
+      params: compactParams(params),
+    });
+    return data.data;
+  },
+
+  request: async (amount: number) => {
+    const { data } = await apiClient.post<ApiResponse<ApiPayout>>("/seller/payouts", { amount });
+    return data;
+  },
+
+  account: async () => {
+    const { data } = await apiClient.get<ApiResponse<PayoutAccount>>("/seller/payout-accounts");
+    return data;
+  },
+
+  saveAccount: async (payload: {
+    bank_name: string;
+    bank_account_number: string;
+    bank_account_name: string;
+  }) => {
+    const { data } = await apiClient.post<ApiResponse<PayoutAccount>>("/seller/payout-accounts", payload);
+    return data;
+  },
+};
+
+export const adminApi = {
+  overview: async () => {
+    const { data } = await apiClient.get<ApiResponse<AdminOverview>>("/admin/dashboard");
+    return data.data;
+  },
+
+  users: async (params: { q?: string; role?: string; status?: string; page?: number; limit?: number } = {}) => {
+    const { data } = await apiClient.get<ApiResponse<PaginatedResponse<AdminUserRow>>>("/admin/users", {
+      params: compactParams(params),
+    });
+    return data.data;
+  },
+
+  updateUser: async (id: string, payload: { status?: string }) => {
+    const { data } = await apiClient.patch<ApiResponse<AdminUserRow>>(`/admin/users/${id}`, payload);
+    return data;
+  },
+
+  stores: async (params: { q?: string; status?: string; page?: number; limit?: number } = {}) => {
+    const { data } = await apiClient.get<ApiResponse<PaginatedResponse<AdminStoreRow>>>("/admin/stores", {
+      params: compactParams(params),
+    });
+    return data.data;
+  },
+
+  approveStore: async (id: string, mallId?: string) => {
+    const { data } = await apiClient.post<ApiResponse<AdminStoreRow>>(`/admin/stores/${id}/approve`, {
+      mall_id: mallId ? Number(mallId) : undefined,
+    });
+    return data;
+  },
+
+  rejectStore: async (id: string, reason?: string) => {
+    const { data } = await apiClient.post<ApiResponse<AdminStoreRow>>(`/admin/stores/${id}/reject`, { reason });
+    return data;
+  },
+
+  suspendStore: async (id: string) => {
+    const { data } = await apiClient.post<ApiResponse<AdminStoreRow>>(`/admin/stores/${id}/suspend`);
+    return data;
+  },
+
+  products: async (params: { q?: string; status?: string; page?: number; limit?: number } = {}) => {
+    const { data } = await apiClient.get<ApiResponse<PaginatedResponse<Product>>>("/admin/products", {
+      params: compactParams(params),
+    });
+    return data.data;
+  },
+
+  unpublishProduct: async (id: string) => {
+    const { data } = await apiClient.patch<ApiResponse<Product>>(`/admin/products/${id}/unpublish`);
+    return data;
+  },
+
+  orders: async (params: { q?: string; status?: string; page?: number; limit?: number } = {}) => {
+    const { data } = await apiClient.get<ApiResponse<PaginatedResponse<ApiOrder>>>("/admin/orders", {
+      params: compactParams(params),
+    });
+    return data.data;
+  },
+
+  payments: async (params: { q?: string; status?: string; page?: number; limit?: number } = {}) => {
+    const { data } = await apiClient.get<ApiResponse<PaginatedResponse<ApiPayment>>>("/admin/payments", {
+      params: compactParams(params),
+    });
+    return data.data;
+  },
+
+  payouts: async (params: { status?: string; page?: number; limit?: number } = {}) => {
+    const { data } = await apiClient.get<ApiResponse<PaginatedResponse<ApiPayout>>>("/admin/payouts", {
+      params: compactParams(params),
+    });
+    return data.data;
+  },
+
+  approvePayout: async (id: string) => {
+    const { data } = await apiClient.post<ApiResponse<ApiPayout>>(`/admin/payouts/${id}/approve`);
+    return data;
+  },
+
+  rejectPayout: async (id: string, reason?: string) => {
+    const { data } = await apiClient.post<ApiResponse<ApiPayout>>(`/admin/payouts/${id}/reject`, { reason });
+    return data;
+  },
+
+  commission: async () => {
+    const { data } = await apiClient.get<ApiResponse<{ rate: number }>>("/admin/settings/commission");
+    return data.data;
+  },
+
+  updateCommission: async (rate: number) => {
+    const { data } = await apiClient.patch<ApiResponse<{ rate: number }>>("/admin/settings/commission", { rate });
+    return data;
+  },
+
+  malls: async () => {
+    const { data } = await apiClient.get<ApiResponse<AdminMall[]>>("/admin/malls");
+    return data.data;
+  },
+
+  createMall: async (payload: { name: string; city?: string; location?: string }) => {
+    const { data } = await apiClient.post<ApiResponse<AdminMall>>("/admin/malls", payload);
+    return data;
+  },
+
+  updateMall: async (id: string, payload: { name?: string; city?: string; location?: string }) => {
+    const { data } = await apiClient.patch<ApiResponse<AdminMall>>(`/admin/malls/${id}`, payload);
+    return data;
+  },
+
+  deleteMall: async (id: string) => {
+    const { data } = await apiClient.delete<ApiResponse<null>>(`/admin/malls/${id}`);
+    return data;
+  },
+
+  categories: async () => {
+    const { data } = await apiClient.get<ApiResponse<AdminCategory[]>>("/admin/categories");
+    return data.data;
+  },
+
+  createCategory: async (payload: { name: string }) => {
+    const { data } = await apiClient.post<ApiResponse<AdminCategory>>("/admin/categories", payload);
+    return data;
+  },
+
+  updateCategory: async (id: string, payload: { name?: string }) => {
+    const { data } = await apiClient.patch<ApiResponse<AdminCategory>>(`/admin/categories/${id}`, payload);
+    return data;
+  },
+
+  deleteCategory: async (id: string) => {
+    const { data } = await apiClient.delete<ApiResponse<null>>(`/admin/categories/${id}`);
+    return data;
+  },
+
+  brands: async () => {
+    const { data } = await apiClient.get<ApiResponse<AdminBrand[]>>("/admin/brands");
+    return data.data;
+  },
+
+  createBrand: async (payload: { name: string; product_brand?: string }) => {
+    const { data } = await apiClient.post<ApiResponse<AdminBrand>>("/admin/brands", payload);
+    return data;
+  },
+
+  updateBrand: async (id: string, payload: { name?: string; product_brand?: string }) => {
+    const { data } = await apiClient.patch<ApiResponse<AdminBrand>>(`/admin/brands/${id}`, payload);
+    return data;
+  },
+
+  deleteBrand: async (id: string) => {
+    const { data } = await apiClient.delete<ApiResponse<null>>(`/admin/brands/${id}`);
+    return data;
+  },
+
+  auditLogs: async (params: { q?: string; action?: string; page?: number; limit?: number } = {}) => {
+    const { data } = await apiClient.get<ApiResponse<PaginatedResponse<AdminAuditLog>>>("/admin/audit-logs", {
+      params: compactParams(params),
+    });
+    return data.data;
+  },
+
+  tickets: async (params: { q?: string; status?: string; page?: number; limit?: number } = {}) => {
+    const { data } = await apiClient.get<ApiResponse<PaginatedResponse<ApiSupportTicket>>>("/admin/support/tickets", {
+      params: compactParams(params),
+    });
+    return data.data;
+  },
+
+  ticket: async (id: string) => {
+    const { data } = await apiClient.get<ApiResponse<ApiSupportTicket>>(`/admin/support/tickets/${id}`);
+    return data;
+  },
+
+  replyTicket: async (id: string, body: string) => {
+    const { data } = await apiClient.post<ApiResponse<ApiSupportTicket>>(`/admin/support/tickets/${id}/messages`, { body });
+    return data;
+  },
+
+  updateTicket: async (id: string, payload: { status?: string }) => {
+    const { data } = await apiClient.patch<ApiResponse<ApiSupportTicket>>(`/admin/support/tickets/${id}`, payload);
+    return data;
+  },
+
+  riders: async (params: { status?: string; page?: number; limit?: number } = {}) => {
+    const { data } = await apiClient.get<ApiResponse<PaginatedResponse<ApiRider>>>("/admin/riders", {
+      params: compactParams(params),
+    });
+    return data.data;
+  },
+
+  approveRider: async (id: string) => {
+    const { data } = await apiClient.post<ApiResponse<ApiRider>>(`/admin/riders/${id}/approve`);
+    return data;
+  },
+
+  assignRider: async (orderId: string, riderId: string) => {
+    const { data } = await apiClient.patch<ApiResponse<ApiOrder>>(`/admin/orders/${orderId}/assign-rider`, {
+      rider_id: Number(riderId),
+    });
+    return data;
+  },
+
+  analytics: async () => {
+    const { data } = await apiClient.get<ApiResponse<{
+      gmv: number;
+      take: number;
+      takeRate: number;
+      orders: number;
+      buyers: number;
+      sellers: number;
+      growth30d: number;
+      chart: Array<{ name: string; gmv: number }>;
+    }>>("/admin/analytics");
+    return data.data;
+  },
+};
+
+export const conversationsApi = {
+  list: async (params: { q?: string; status?: string; page?: number; limit?: number } = {}) => {
+    const { data } = await apiClient.get<ApiResponse<PaginatedResponse<ApiConversation>>>("/conversations", {
+      params: compactParams(params),
+    });
+    return data.data;
+  },
+
+  get: async (id: string) => {
+    const { data } = await apiClient.get<ApiResponse<ApiConversation>>(`/conversations/${id}`);
+    return data;
+  },
+
+  start: async (payload: { store_id: string | number; product_id?: string; order_id?: number; body: string }) => {
+    const { data } = await apiClient.post<ApiResponse<ApiConversation>>("/conversations", payload);
+    return data;
+  },
+
+  reply: async (id: string, body: string) => {
+    const { data } = await apiClient.post<ApiResponse<ApiConversation>>(`/conversations/${id}/messages`, { body });
+    return data;
+  },
+
+  read: async (id: string) => {
+    const { data } = await apiClient.patch<ApiResponse<ApiConversation>>(`/conversations/${id}/read`);
+    return data;
+  },
+
+  update: async (id: string, status: string) => {
+    const { data } = await apiClient.patch<ApiResponse<ApiConversation>>(`/conversations/${id}`, { status });
+    return data;
+  },
+
+  remove: async (id: string) => {
+    const { data } = await apiClient.delete<ApiResponse<null>>(`/conversations/${id}`);
+    return data;
+  },
+};
+
+export const sellerSupportApi = {
+  list: async () => {
+    const { data } = await apiClient.get<ApiResponse<PaginatedResponse<ApiSupportTicket>>>("/seller/support/tickets");
+    return data.data;
+  },
+
+  create: async (payload: { subject: string; category?: string; priority?: string; body: string }) => {
+    const { data } = await apiClient.post<ApiResponse<ApiSupportTicket>>("/seller/support/tickets", payload);
+    return data;
+  },
+
+  get: async (id: string) => {
+    const { data } = await apiClient.get<ApiResponse<ApiSupportTicket>>(`/seller/support/tickets/${id}`);
+    return data;
+  },
+
+  reply: async (id: string, body: string) => {
+    const { data } = await apiClient.post<ApiResponse<ApiSupportTicket>>(`/seller/support/tickets/${id}/messages`, { body });
+    return data;
+  },
+};
+
+export const sellerAnalyticsApi = {
+  get: async (range: string) => {
+    const { data } = await apiClient.get<ApiResponse<SellerAnalytics>>("/seller/analytics", { params: { range } });
+    return data.data;
+  },
+};
+
+export const sellerCampaignsApi = {
+  list: async () => {
+    const { data } = await apiClient.get<ApiResponse<ApiCampaign[]>>("/seller/marketing/campaigns");
+    return data.data;
+  },
+
+  create: async (payload: { name: string; channel: string; spend?: number; conversions?: number }) => {
+    const { data } = await apiClient.post<ApiResponse<ApiCampaign>>("/seller/marketing/campaigns", payload);
+    return data;
+  },
+
+  update: async (id: string, payload: Partial<{ name: string; channel: string; spend: number; conversions: number; status: string }>) => {
+    const { data } = await apiClient.patch<ApiResponse<ApiCampaign>>(`/seller/marketing/campaigns/${id}`, payload);
+    return data;
+  },
+};
+
+export const wishlistApi = {
+  list: async () => {
+    const { data } = await apiClient.get<ApiResponse<Product[]>>("/wishlist");
+    return data.data;
+  },
+
+  add: async (productId: string) => {
+    const { data } = await apiClient.post<ApiResponse<Product[]>>("/wishlist", { product_id: productId });
+    return data.data;
+  },
+
+  remove: async (productId: string) => {
+    const { data } = await apiClient.delete<ApiResponse<Product[]>>(`/wishlist/${productId}`);
+    return data.data;
+  },
+};
+
+export const riderApi = {
+  register: async (payload: { phone: string; vehicle_type?: string; city?: string }) => {
+    const { data } = await apiClient.post<
+      ApiResponse<{ rider: ApiRider; user: { id: string; role: string } }>
+    >("/rider/register", payload);
+    return data;
+  },
+
+  me: async () => {
+    const { data } = await apiClient.get<ApiResponse<ApiRider>>("/rider/me");
+    return data.data;
+  },
+
+  orders: async () => {
+    const { data } = await apiClient.get<ApiResponse<ApiOrder[]>>("/rider/orders");
+    return data.data;
+  },
+};
+

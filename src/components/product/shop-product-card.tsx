@@ -7,7 +7,7 @@ import { useState } from "react";
 
 import type { Product } from "@/types/product";
 import { useCartStore } from "@/store/cart-store";
-import { useWishlistStore } from "@/store/wishlist-store";
+import { useWishlist } from "@/hooks/use-wishlist";
 import { cn, formatPrice } from "@/lib/utils";
 
 interface ShopProductCardProps {
@@ -34,7 +34,7 @@ function formatNaira(price: number): string {
 export function ShopProductCard({ product, priority = false }: ShopProductCardProps) {
   const [imageLoaded, setImageLoaded] = useState(false);
   const { addItem } = useCartStore();
-  const { toggleWishlist, isInWishlist } = useWishlistStore();
+  const { toggleWishlist, isInWishlist } = useWishlist();
 
   const primaryImage = product.images.find((img) => img.isPrimary) ?? product.images[0];
   const deliveryType = getDeliveryType(product);
