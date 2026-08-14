@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 
 import loginFrame from "@/assets/login-frame.png";
+import { FastlinkLogo } from "@/components/brand/fastlink-logo";
 import { authApi } from "@/lib/api";
 import { useAuthStore } from "@/store/auth-store";
 
@@ -65,18 +66,8 @@ export default function LoginPage() {
             {/* The Purple Card */}
             <div className="w-full max-w-md rounded-[2.5rem] bg-[#9e67e3] p-8 sm:p-12 shadow-2xl">
               
-              {/* Logo & Brand Name */}
-              <div className="text-center mb-8">
-                <div className="text-white font-display font-bold text-3xl flex justify-center items-center gap-2">
-                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#a4d2ff]">
-                    <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path>
-                    <line x1="4" y1="22" x2="4" y2="15"></line>
-                  </svg>
-                  <span>ASTLINK</span>
-                </div>
-                <div className="text-[#a4d2ff] text-xs font-semibold tracking-[0.2em] mt-1 -ml-4">
-                  MARKETPLACE
-                </div>
+              <div className="mb-8 flex justify-center">
+                <FastlinkLogo linked={false} className="h-10" />
               </div>
 
               <h2 className="text-white text-2xl font-bold text-center mb-8">Welcome Back</h2>

@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 
 import signUpBg from "@/assets/sign-up-bg.png";
+import { FastlinkLogo } from "@/components/brand/fastlink-logo";
 import { authApi } from "@/lib/api";
 import { useAuthStore } from "@/store/auth-store";
 
@@ -67,22 +68,8 @@ export default function RegisterPage() {
         {/* Center Registration Card */}
         <div className="w-full max-w-md rounded-[2.5rem] bg-[#9e67e3]/85 backdrop-blur-md p-8 sm:p-12 shadow-2xl z-10">
           
-          {/* Logo & Brand Name */}
-          <div className="text-center mb-6 flex flex-col items-center">
-            <div className="flex items-center gap-1.5 justify-center">
-              {/* Official Fastlink Arrow Icon */}
-              <svg width="32" height="28" viewBox="0 0 26 22" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M2 11L10 3L18 11L10 19" stroke="#5FD0C8" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M10 11H24" stroke="#5FD0C8" strokeWidth="2.5" strokeLinecap="round"/>
-                <path d="M2 6H12" stroke="white" strokeWidth="2" strokeLinecap="round" opacity="0.7"/>
-              </svg>
-              <span className="text-white font-display font-extrabold text-3xl tracking-wide">
-                ASTLINK
-              </span>
-            </div>
-            <div className="text-[#5FD0C8] text-[9px] font-bold tracking-[0.25em] -mt-0.5 ml-8">
-              MARKETPLACE
-            </div>
+          <div className="mb-6 flex justify-center">
+            <FastlinkLogo linked={false} className="h-10" />
           </div>
 
           <h2 className="text-white text-2xl font-bold text-center mb-6">Create Account</h2>

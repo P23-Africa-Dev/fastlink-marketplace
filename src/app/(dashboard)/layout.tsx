@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+
+import { FastlinkLogo } from "@/components/brand/fastlink-logo";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useState, Suspense } from "react";
 import {
@@ -380,22 +382,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <Menu size={24} />
           </button>
           
-          <Link href="/" className="flex flex-col select-none border border-white/30 rounded-2xl px-4 py-1.5 md:py-2">
-            <div className="flex items-center gap-1.5 justify-center">
-              {/* Official Fastlink Arrow Icon */}
-              <svg width="26" height="22" viewBox="0 0 26 22" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M2 11L10 3L18 11L10 19" stroke="#5FD0C8" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M10 11H24" stroke="#5FD0C8" strokeWidth="2.5" strokeLinecap="round"/>
-                <path d="M2 6H12" stroke="white" strokeWidth="2" strokeLinecap="round" opacity="0.7"/>
-              </svg>
-              <span className="text-white font-display font-extrabold text-xl md:text-2xl tracking-wide leading-none">
-                ASTLINK
-              </span>
-            </div>
-            <span className="ml-[30px] text-[8px] font-bold tracking-[0.25em] text-[#5FD0C8] leading-none">
-              MARKETPLACE
-            </span>
-          </Link>
+          <FastlinkLogo className="h-9 md:h-10" />
         </div>
 
         {/* Center: Title */}
