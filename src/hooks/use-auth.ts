@@ -14,14 +14,17 @@ export function useMe() {
   return useQuery({
     queryKey: QUERY_KEYS.auth.user(),
     queryFn: async () => {
-      const { data } = await authApi.getMe();
-      if (token) setUser(data, token);
-      return data;
+      try {
+        const { data } = await authApi.getMe();
+        if (token) setUser(data, token);
+        return data;
+      } catch (error) {
+        // Invalid/expired token: clear session, stay on public pages.
+        logout();
+        throw error;
+      }
     },
     enabled: Boolean(token),
     retry: false,
-    meta: {
-      onUnauthorized: logout,
-    },
   });
 }

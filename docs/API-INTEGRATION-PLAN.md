@@ -6,7 +6,8 @@
 
 This document is the implementation standard for taking Fastlink from a UI-complete prototype to a working marketplace. Read it end to end before writing production code. If this plan is approved, implementation should follow the phases in order — do not skip Phase 0 or Phase 1. Scope for the first shippable product is **§6 MVP add list**.
 
-**Endpoint list:** see [`API-CATALOG.md`](./API-CATALOG.md) for every REST path (MVP + post-MVP), auth, and React Query mapping.  
+**Endpoint list:** see [`API-CATALOG.md`](./API-CATALOG.md) (summary) and [`API-REFERENCE.md`](./API-REFERENCE.md) (full per-endpoint docs for all 191 routes).  
+**QA:** see [`QA-TEST-PLAN.md`](./QA-TEST-PLAN.md) for the manual regression pack covering shipped Phases 0–15.  
 **Backlog:** see [`BACKLOG.md`](./BACKLOG.md) for deferred local infra (MySQL after health check).
 
 ---

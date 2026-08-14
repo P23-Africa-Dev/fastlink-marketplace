@@ -1,6 +1,7 @@
 # Fastlink Marketplace — API Catalog
 
 **Companion to:** [`API-INTEGRATION-PLAN.md`](./API-INTEGRATION-PLAN.md)  
+**Full endpoint docs:** [`API-REFERENCE.md`](./API-REFERENCE.md) (request/response detail for every live route)  
 **Base URL:** `http://localhost:8000/api` (frontend: `NEXT_PUBLIC_API_URL`)  
 **Auth:** `Authorization: Bearer {token}` unless marked **public**  
 **Response shape:** `{ success, message?, data }` — paginated lists also return `total`, `page`, `limit`, `totalPages`, `hasNextPage`, `hasPrevPage`  

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { homeForRole, isAdminPath, isLoginRequiredPath, isRiderPath, isSellerDashboardPath } from "@/lib/auth-session";
+import { isAdminPath, isLoginRequiredPath, isSellerDashboardPath } from "@/lib/auth-session";
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -21,9 +21,6 @@ export function proxy(request: NextRequest) {
     const dest = role === "seller" ? "/dashboard" : role === "rider" ? "/rider" : "/";
     return NextResponse.redirect(new URL(dest, request.url));
   }
-  if (isRiderPath(pathname) && pathname !== "/rider/register" && role !== "rider" && role !== "admin") {
-    return NextResponse.redirect(new URL(homeForRole(role), request.url));
-  }
   if (role === "buyer" && isSellerDashboardPath(pathname)) {
     return NextResponse.redirect(new URL("/", request.url));
   }
@@ -36,10 +33,7 @@ export function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/checkout",
-    "/checkout/:path*",
-    "/account",
-    "/account/:path*",
+    // Seller dashboard (src/app/(dashboard))
     "/dashboard",
     "/dashboard/:path*",
     "/orders",
@@ -60,14 +54,25 @@ export const config = {
     "/marketing/:path*",
     "/reviews",
     "/reviews/:path*",
+    "/returns",
+    "/returns/:path*",
     "/settings",
     "/settings/:path*",
     "/support",
     "/support/:path*",
+    "/growth",
+    "/growth/:path*",
+    "/promos",
+    "/promos/:path*",
+    "/inventory",
+    "/inventory/:path*",
+    "/disputes",
+    "/disputes/:path*",
+    "/team",
+    "/team/:path*",
+    "/products/:id/add-new-product",
+    // Admin control tower (src/app/(admin))
     "/admin",
     "/admin/:path*",
-    "/rider",
-    "/rider/:path*",
-    "/products/:id/add-new-product",
   ],
 };

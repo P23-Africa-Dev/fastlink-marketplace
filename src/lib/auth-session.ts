@@ -48,11 +48,9 @@ export function isRiderPath(pathname: string): boolean {
 }
 
 export function isLoginRequiredPath(pathname: string): boolean {
-  if (pathname === "/checkout" || pathname.startsWith("/checkout/")) return true;
-  if (pathname === "/account" || pathname.startsWith("/account/")) return true;
+  // Public shop (homepage, catalog, account, checkout, etc.) stays open without a token.
+  // Only seller dashboard + admin control tower require authentication.
   if (isAdminPath(pathname)) return true;
-  if (pathname === "/rider/register") return false;
-  if (isRiderPath(pathname)) return true;
   return isSellerDashboardPath(pathname);
 }
 

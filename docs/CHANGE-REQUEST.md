@@ -4,7 +4,7 @@
 **Status:** Shipped (Tier 0 — 13 August 2026) · Tier 1 complete (13 August 2026) · Tier 2 largely shipped (zones, inventory, checkout quote, KYC — 13 August 2026) · Tier 3 largely shipped (promos, referrals, cart recovery, insights, loyalty, recommendations, search suggest — 13 August 2026)  
 **Audience:** Product, engineering, design  
 **Last updated:** 13 August 2026  
-**Related docs:** [`API-INTEGRATION-PLAN.md`](./API-INTEGRATION-PLAN.md) · [`API-CATALOG.md`](./API-CATALOG.md) · [`BACKLOG.md`](./BACKLOG.md)
+**Related docs:** [`API-INTEGRATION-PLAN.md`](./API-INTEGRATION-PLAN.md) · [`API-CATALOG.md`](./API-CATALOG.md) · [`API-REFERENCE.md`](./API-REFERENCE.md) · [`BACKLOG.md`](./BACKLOG.md) · [`QA-TEST-PLAN.md`](./QA-TEST-PLAN.md)
 
 ---
 

@@ -56,6 +56,7 @@ import type {
   ShopCategoryItem,
   LocalStoreItem,
 } from "@/mocks/stores-data";
+import { clearAuthCookies, isLoginRequiredPath } from "@/lib/auth-session";
 
 // ---------------------------------------------------------------------------
 // Axios instance — swap baseURL for your real API when ready
@@ -63,7 +64,8 @@ import type {
 export const apiClient = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL ?? "/api",
   headers: { "Content-Type": "application/json" },
-  timeout: 10_000,
+  // Remote Supabase + php artisan serve can exceed 10s under parallel homepage load.
+  timeout: 30_000,
 });
 
 apiClient.interceptors.request.use((config) => {
@@ -84,12 +86,15 @@ apiClient.interceptors.response.use(
     const url = String(error.config?.url ?? "");
     const isPublicAuth = /\/auth\/(login|register|forgot-password|reset-password)/.test(url);
 
+    // Stale/missing tokens must not bounce shoppers off the homepage.
+    // Only force login on seller dashboard / admin routes.
     if (status === 401 && !isPublicAuth && typeof window !== "undefined") {
       localStorage.removeItem("auth_token");
-      document.cookie = "auth_token=; Path=/; Max-Age=0; SameSite=Lax";
-      document.cookie = "auth_role=; Path=/; Max-Age=0; SameSite=Lax";
-      if (!window.location.pathname.startsWith("/login")) {
-        const next = `${window.location.pathname}${window.location.search}`;
+      localStorage.removeItem("marketplace-auth");
+      clearAuthCookies();
+      const pathname = window.location.pathname;
+      if (isLoginRequiredPath(pathname) && !pathname.startsWith("/login")) {
+        const next = `${pathname}${window.location.search}`;
         window.location.href = `/login?next=${encodeURIComponent(next)}`;
       }
     }
