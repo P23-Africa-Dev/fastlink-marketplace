@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { isAdminPath, isLoginRequiredPath, isSellerDashboardPath } from "@/lib/auth-session";
+import { homeForRole, isAdminPath, isLoginRequiredPath, isSellerDashboardPath } from "@/lib/auth-session";
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -17,15 +17,15 @@ export function proxy(request: NextRequest) {
   }
 
   const role = request.cookies.get("auth_role")?.value;
+
+  // Vendors (and everyone else) cannot enter the admin control tower.
   if (isAdminPath(pathname) && role !== "admin") {
-    const dest = role === "seller" ? "/dashboard" : role === "rider" ? "/rider" : "/";
-    return NextResponse.redirect(new URL(dest, request.url));
+    return NextResponse.redirect(new URL(homeForRole(role), request.url));
   }
-  if (role === "buyer" && isSellerDashboardPath(pathname)) {
-    return NextResponse.redirect(new URL("/", request.url));
-  }
-  if (role === "rider" && isSellerDashboardPath(pathname)) {
-    return NextResponse.redirect(new URL("/rider", request.url));
+
+  // Admins cannot enter the vendor dashboard.
+  if (isSellerDashboardPath(pathname) && role !== "seller") {
+    return NextResponse.redirect(new URL(homeForRole(role), request.url));
   }
 
   return NextResponse.next();

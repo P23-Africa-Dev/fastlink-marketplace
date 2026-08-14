@@ -8,10 +8,18 @@ interface AuthStore {
   user: User | null;
   token: string | null;
   isAuthenticated: boolean;
+  hasHydrated: boolean;
 
   setUser: (user: User, token: string) => void;
   logout: () => void;
   updateUser: (updates: Partial<User>) => void;
+  setHasHydrated: (value: boolean) => void;
+}
+
+function syncSession(token: string, role: string) {
+  if (typeof window === "undefined") return;
+  localStorage.setItem("auth_token", token);
+  writeAuthCookies(token, role);
 }
 
 export const useAuthStore = create<AuthStore>()(
@@ -20,12 +28,10 @@ export const useAuthStore = create<AuthStore>()(
       user: null,
       token: null,
       isAuthenticated: false,
+      hasHydrated: false,
 
       setUser: (user, token) => {
-        if (typeof window !== "undefined") {
-          localStorage.setItem("auth_token", token);
-          writeAuthCookies(token, user.role);
-        }
+        syncSession(token, user.role);
         set({ user, token, isAuthenticated: true });
       },
 
@@ -41,10 +47,12 @@ export const useAuthStore = create<AuthStore>()(
         set((state) => {
           const user = state.user ? { ...state.user, ...updates } : null;
           if (user && state.token) {
-            writeAuthCookies(state.token, user.role);
+            syncSession(state.token, user.role);
           }
           return { user };
         }),
+
+      setHasHydrated: (value) => set({ hasHydrated: value }),
     }),
     {
       name: "marketplace-auth",
@@ -54,6 +62,11 @@ export const useAuthStore = create<AuthStore>()(
         token: state.token,
         isAuthenticated: state.isAuthenticated,
       }),
+      onRehydrateStorage: () => (state, error) => {
+        if (!error && state?.token && state.user?.role) {
+          syncSession(state.token, state.user.role);
+        }
+      },
     },
   ),
 );

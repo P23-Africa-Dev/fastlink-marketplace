@@ -76,13 +76,24 @@ export function safePostLoginPath(next: string | null, role?: string | null): st
   }
 
   const pathname = next.split("?")[0] ?? next;
-  if (role === "buyer" && (isSellerDashboardPath(pathname) || isAdminPath(pathname) || pathname === "/rider")) {
-    return fallback;
+
+  // Role isolation: never send a user into another role's control surface.
+  if (role === "admin") {
+    return isAdminPath(pathname) ? next : fallback;
   }
-  if (role === "seller" && (isAdminPath(pathname) || pathname === "/rider")) {
-    return fallback;
+
+  if (role === "seller") {
+    if (isAdminPath(pathname) || isRiderPath(pathname)) return fallback;
+    return next;
   }
-  if (role === "rider" && (isSellerDashboardPath(pathname) || isAdminPath(pathname))) {
+
+  if (role === "rider") {
+    if (isSellerDashboardPath(pathname) || isAdminPath(pathname)) return fallback;
+    return next;
+  }
+
+  // buyer / unknown
+  if (isSellerDashboardPath(pathname) || isAdminPath(pathname) || isRiderPath(pathname)) {
     return fallback;
   }
 

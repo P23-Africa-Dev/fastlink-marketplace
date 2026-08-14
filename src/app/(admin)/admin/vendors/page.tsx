@@ -2,13 +2,31 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
-import { Loader2, Store, Search, ShieldCheck, Building2, CheckCircle2, XCircle, AlertOctagon, User, ArrowUpRight } from "lucide-react";
+import {
+  Loader2,
+  Store,
+  Search,
+  ShieldCheck,
+  Building2,
+  CheckCircle2,
+  XCircle,
+  AlertOctagon,
+  User,
+  AlertTriangle,
+  X,
+} from "lucide-react";
 
 import { useAdminCatalog, useAdminStoreActions, useAdminStores } from "@/hooks/use-admin";
 import { apiErrorMessage } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { Pagination } from "@/components/dashboard/pagination";
 import { StatCard } from "@/components/dashboard/stat-card";
+
+type VendorModal =
+  | { type: "approve"; store: any }
+  | { type: "reject"; store: any }
+  | { type: "suspend"; store: any }
+  | null;
 
 export default function AdminVendorsPage() {
   const [q, setQ] = useState("");
@@ -17,30 +35,48 @@ export default function AdminVendorsPage() {
   const { malls } = useAdminCatalog();
   const actions = useAdminStoreActions();
   const [error, setError] = useState("");
-  const [processingId, setProcessingId] = useState<string | null>(null);
   const [mallPick, setMallPick] = useState<Record<string, string>>({});
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [modalState, setModalState] = useState<VendorModal>(null);
+  const [rejectionReason, setRejectionReason] = useState("");
+  const [processing, setProcessing] = useState(false);
 
   const mallOptions = malls.data ?? [];
   const rawStores = data?.data ?? [];
 
-  async function run(id: string, fn: () => Promise<unknown>) {
+  function closeModal() {
+    if (processing) return;
+    setModalState(null);
+    setRejectionReason("");
     setError("");
-    setProcessingId(id);
+  }
+
+  async function handleConfirmModal() {
+    if (!modalState) return;
+    setError("");
+    setProcessing(true);
+
     try {
-      await fn();
-      refetch();
+      const storeId = modalState.store.id;
+      if (modalState.type === "approve") {
+        const mallId = mallPick[storeId];
+        await actions.approve.mutateAsync(mallId ? { id: storeId, mallId } : storeId);
+      } else if (modalState.type === "reject") {
+        await actions.reject.mutateAsync(
+          rejectionReason.trim() ? { id: storeId, reason: rejectionReason.trim() } : storeId,
+        );
+      } else if (modalState.type === "suspend") {
+        await actions.suspend.mutateAsync(storeId);
+      }
+
+      await refetch();
+      closeModal();
     } catch (err) {
       setError(apiErrorMessage(err, "Store action failed."));
     } finally {
-      setProcessingId(null);
+      setProcessing(false);
     }
-  }
-
-  async function approve(storeId: string) {
-    const mallId = mallPick[storeId];
-    await run(storeId, () => actions.approve.mutateAsync(mallId ? { id: storeId, mallId } : storeId));
   }
 
   const filteredStores = useMemo(() => {
@@ -122,7 +158,7 @@ export default function AdminVendorsPage() {
         />
       </div>
 
-      {error && (
+      {error && !modalState && (
         <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl text-rose-700 text-xs font-semibold">
           {error}
         </div>
@@ -261,24 +297,19 @@ export default function AdminVendorsPage() {
                               <div className="flex items-center gap-2">
                                 <button
                                   type="button"
-                                  disabled={processingId === store.id}
-                                  onClick={() => approve(store.id)}
-                                  className="inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 rounded-xl font-bold text-xs transition disabled:opacity-50"
+                                  onClick={() => setModalState({ type: "approve", store })}
+                                  className="inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 rounded-xl font-bold text-xs transition active:scale-95"
                                 >
-                                  {processingId === store.id ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle2 size={13} />}
+                                  <CheckCircle2 size={13} />
                                   <span>Approve</span>
                                 </button>
                                 <button
                                   type="button"
-                                  disabled={processingId === store.id}
                                   onClick={() => {
-                                    const reason = window.prompt("Rejection reason (optional):");
-                                    if (reason === null) return;
-                                    run(store.id, () =>
-                                      actions.reject.mutateAsync(reason ? { id: store.id, reason } : store.id),
-                                    );
+                                    setRejectionReason("");
+                                    setModalState({ type: "reject", store });
                                   }}
-                                  className="inline-flex items-center gap-1 px-3 py-1.5 bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-200 rounded-xl font-bold text-xs transition disabled:opacity-50"
+                                  className="inline-flex items-center gap-1 px-3 py-1.5 bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-200 rounded-xl font-bold text-xs transition active:scale-95"
                                 >
                                   <XCircle size={13} />
                                   <span>Reject</span>
@@ -288,9 +319,8 @@ export default function AdminVendorsPage() {
                           ) : store.status === "approved" ? (
                             <button
                               type="button"
-                              disabled={processingId === store.id}
-                              onClick={() => run(store.id, () => actions.suspend.mutateAsync(store.id))}
-                              className="inline-flex items-center gap-1 px-3 py-1.5 bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 rounded-xl font-bold text-xs transition disabled:opacity-50"
+                              onClick={() => setModalState({ type: "suspend", store })}
+                              className="inline-flex items-center gap-1 px-3 py-1.5 bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 rounded-xl font-bold text-xs transition active:scale-95"
                             >
                               <AlertOctagon size={13} />
                               <span>Suspend</span>
@@ -319,6 +349,142 @@ export default function AdminVendorsPage() {
           </>
         )}
       </div>
+
+      {/* ── Confirmation Modal ───────────────────────────────────── */}
+      {modalState && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) closeModal();
+          }}
+        >
+          <div className="bg-white rounded-[2rem] border border-[#ebd7fa] shadow-2xl p-6 sm:p-8 max-w-md w-full space-y-5 animate-in zoom-in-95 duration-200">
+            {/* Modal Header */}
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-3">
+                {modalState.type === "approve" ? (
+                  <div className="h-12 w-12 rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center shrink-0">
+                    <CheckCircle2 size={24} />
+                  </div>
+                ) : (
+                  <div className="h-12 w-12 rounded-2xl bg-rose-50 text-rose-600 border border-rose-200 flex items-center justify-center shrink-0">
+                    <AlertTriangle size={24} />
+                  </div>
+                )}
+                <div>
+                  <h3 className="font-bold text-lg text-slate-900">
+                    {modalState.type === "approve" && "Approve Vendor Store"}
+                    {modalState.type === "reject" && "Reject Store Application"}
+                    {modalState.type === "suspend" && "Suspend Vendor Store"}
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Store: <span className="font-bold text-slate-800">{modalState.store?.name}</span>
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={closeModal}
+                disabled={processing}
+                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg transition"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Modal Description */}
+            <div className="text-xs text-slate-600 leading-relaxed bg-[#faf6ff] p-4 rounded-2xl border border-[#ebd7fa]">
+              {modalState.type === "approve" && (
+                <p>
+                  Approving this store will grant seller permissions, allowing them to publish products and receive orders.
+                  {mallPick[modalState.store?.id] && (
+                    <span className="block mt-1 text-[#7a3dbf] font-semibold">
+                      Mall: {mallOptions.find((m) => m.id === mallPick[modalState.store?.id])?.name}
+                    </span>
+                  )}
+                </p>
+              )}
+              {modalState.type === "reject" && (
+                <p>
+                  Rejecting will decline this store&apos;s registration application.
+                </p>
+              )}
+              {modalState.type === "suspend" && (
+                <p>
+                  Suspending will temporarily hide this store&apos;s listings and prevent new orders.
+                </p>
+              )}
+            </div>
+
+            {/* Rejection Reason Input */}
+            {modalState.type === "reject" && (
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold text-slate-700">
+                  Rejection Reason (Optional)
+                </label>
+                <textarea
+                  value={rejectionReason}
+                  onChange={(e) => setRejectionReason(e.target.value)}
+                  placeholder="e.g. Please provide a verified government identity document."
+                  rows={3}
+                  className="w-full rounded-xl border border-[#ebd7fa] bg-[#faf6ff] p-3 text-xs font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#7a3dbf]/20"
+                />
+              </div>
+            )}
+
+            {error && (
+              <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-xs font-semibold">
+                {error}
+              </div>
+            )}
+
+            {/* Modal Action Buttons */}
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                disabled={processing}
+                onClick={closeModal}
+                className="px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition active:scale-95 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+
+              {modalState.type === "approve" ? (
+                <button
+                  type="button"
+                  disabled={processing}
+                  onClick={handleConfirmModal}
+                  className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs shadow-md shadow-emerald-600/20 transition active:scale-95 disabled:opacity-50"
+                >
+                  {processing ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
+                  <span>{processing ? "Approving..." : "Confirm Approval"}</span>
+                </button>
+              ) : modalState.type === "reject" ? (
+                <button
+                  type="button"
+                  disabled={processing}
+                  onClick={handleConfirmModal}
+                  className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold text-xs shadow-md shadow-amber-600/20 transition active:scale-95 disabled:opacity-50"
+                >
+                  {processing ? <Loader2 size={14} className="animate-spin" /> : <XCircle size={14} />}
+                  <span>{processing ? "Rejecting..." : "Confirm Rejection"}</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  disabled={processing}
+                  onClick={handleConfirmModal}
+                  className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold text-xs shadow-md shadow-rose-600/20 transition active:scale-95 disabled:opacity-50"
+                >
+                  {processing ? <Loader2 size={14} className="animate-spin" /> : <AlertOctagon size={14} />}
+                  <span>{processing ? "Suspending..." : "Confirm Suspension"}</span>
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

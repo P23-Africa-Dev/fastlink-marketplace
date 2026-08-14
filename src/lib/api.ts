@@ -86,14 +86,14 @@ apiClient.interceptors.response.use(
     const url = String(error.config?.url ?? "");
     const isPublicAuth = /\/auth\/(login|register|forgot-password|reset-password)/.test(url);
 
-    // Stale/missing tokens must not bounce shoppers off the homepage.
-    // Only force login on seller dashboard / admin routes.
+    // Stale tokens must not bounce shoppers off public pages.
+    // Only force login on seller dashboard / admin routes — and only for real 401s.
     if (status === 401 && !isPublicAuth && typeof window !== "undefined") {
-      localStorage.removeItem("auth_token");
-      localStorage.removeItem("marketplace-auth");
-      clearAuthCookies();
       const pathname = window.location.pathname;
       if (isLoginRequiredPath(pathname) && !pathname.startsWith("/login")) {
+        localStorage.removeItem("auth_token");
+        localStorage.removeItem("marketplace-auth");
+        clearAuthCookies();
         const next = `${pathname}${window.location.search}`;
         window.location.href = `/login?next=${encodeURIComponent(next)}`;
       }

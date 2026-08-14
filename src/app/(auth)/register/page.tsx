@@ -8,7 +8,7 @@ import Image from "next/image";
 
 import signUpBg from "@/assets/sign-up-bg.png";
 import { authApi, apiErrorMessage } from "@/lib/api";
-import { homeForRole } from "@/lib/auth-session";
+import { safePostLoginPath } from "@/lib/auth-session";
 import { QUERY_KEYS, queryClient } from "@/lib/query-client";
 import { useAuthStore } from "@/store/auth-store";
 
@@ -50,10 +50,10 @@ export default function RegisterPage() {
       queryClient.setQueryData(QUERY_KEYS.auth.user(), data.user);
       const next = searchParams.get("next");
       if (role === "seller") {
-        router.push(next || "/vendor/register");
+        router.push(next?.startsWith("/vendor") ? next : "/vendor/register");
         return;
       }
-      router.push(next || homeForRole(data.user.role));
+      router.push(safePostLoginPath(next, data.user.role));
     } catch (err) {
       setError(apiErrorMessage(err, "Something went wrong. Please try again."));
     } finally {

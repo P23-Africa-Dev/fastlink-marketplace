@@ -40,6 +40,7 @@ import logoSvg from "@/assets/logo.svg";
 import { useAuthStore } from "@/store/auth-store";
 import { authApi } from "@/lib/api";
 import { queryClient } from "@/lib/query-client";
+import { homeForRole } from "@/lib/auth-session";
 import { cn } from "@/lib/utils";
 
 interface AdminNavSection {
@@ -166,19 +167,28 @@ function HeaderTitleContent() {
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, logout, token } = useAuthStore();
+  const { user, logout, token, hasHydrated, isAuthenticated } = useAuthStore();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   useEffect(() => {
-    if (!token) {
+    if (!hasHydrated) return;
+    if (!token || !isAuthenticated) {
       router.replace("/login?next=/admin");
       return;
     }
     if (user && user.role !== "admin") {
-      router.replace(user.role === "seller" ? "/dashboard" : user.role === "rider" ? "/rider" : "/");
+      router.replace(homeForRole(user.role));
     }
-  }, [token, user, router]);
+  }, [hasHydrated, token, isAuthenticated, user, router]);
+
+  if (!hasHydrated || !token || !isAuthenticated || (user && user.role !== "admin")) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#faf6ff] text-[#6D349F] font-semibold text-sm">
+        Loading…
+      </div>
+    );
+  }
 
   async function handleLogout() {
     setShowLogoutConfirm(false);

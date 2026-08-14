@@ -39,6 +39,7 @@ import { useConversations } from "@/hooks/use-conversations";
 import { authApi } from "@/lib/api";
 import { queryClient } from "@/lib/query-client";
 import { PendingStoreBanner } from "@/components/dashboard/pending-store-banner";
+import { homeForRole } from "@/lib/auth-session";
 import type { SellerPermission } from "@/types/user";
 
 interface NavItem {
@@ -402,16 +403,29 @@ function HeaderTitleContent() {
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { logout, user, isAuthenticated } = useAuthStore();
+  const { logout, user, isAuthenticated, hasHydrated, token } = useAuthStore();
   const { itemCount } = useCartStore();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   useEffect(() => {
-    if (isAuthenticated && user?.role === "buyer") {
-      router.replace("/");
+    if (!hasHydrated) return;
+    if (!token || !isAuthenticated) {
+      router.replace(`/login?next=${encodeURIComponent(pathname || "/dashboard")}`);
+      return;
     }
-  }, [isAuthenticated, user?.role, router]);
+    if (user && user.role !== "seller") {
+      router.replace(homeForRole(user.role));
+    }
+  }, [hasHydrated, token, isAuthenticated, user, router, pathname]);
+
+  if (!hasHydrated || !token || !isAuthenticated || (user && user.role !== "seller")) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#faf6ff] text-[#6D349F] font-semibold text-sm">
+        Loading…
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen w-full flex-col bg-[#faf6ff] font-sans overflow-hidden">
