@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 
 import signUpBg from "@/assets/sign-up-bg.png";
+import logoSvg from "@/assets/logo.svg";
 import { authApi, apiErrorMessage } from "@/lib/api";
 import { safePostLoginPath } from "@/lib/auth-session";
 import { QUERY_KEYS, queryClient } from "@/lib/query-client";
@@ -62,154 +63,167 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="flex min-h-screen w-full flex-col font-sans relative">
-      {/* Background & Main Content Area */}
-      <div className="flex-1 relative flex items-center justify-center p-6 sm:p-10 min-h-[700px]">
-        {/* Background Image */}
-        <Image
-          src={signUpBg}
-          fill
-          className="object-cover"
-          alt="Register background"
-          priority
-        />
-        {/* Subtle purple tint overlay */}
-        <div className="absolute inset-0 bg-purple-900/10 z-0" />
-
-        {/* Back to Menu */}
-        <div className="absolute top-6 left-6 md:top-8 md:left-8 z-10">
-          <Link href="/" className="flex items-center text-[#9355d9] font-bold text-lg hover:text-[#7a3dbf] transition-colors">
-            <span className="bg-[#9355d9] text-white rounded p-1 mr-3 flex items-center justify-center shadow-sm">
-              <ChevronLeft size={18} strokeWidth={3} />
-            </span>
-            Back to Menu
-          </Link>
+    <div className="flex min-h-screen w-full flex-col font-sans">
+      <div className="flex flex-1 flex-col md:flex-row">
+        
+        {/* Left Side - Image */}
+        <div className="hidden md:block md:w-[45%] lg:w-1/2 relative bg-white border-r border-slate-100 overflow-hidden">
+          <Image
+            src={signUpBg}
+            fill
+            className="object-cover"
+            alt="Register background"
+            priority
+          />
+          <div className="absolute inset-0 bg-[#3B1C5A]/10 mix-blend-multiply" />
         </div>
 
-        {/* Center Registration Card */}
-        <div className="w-full max-w-md rounded-[2.5rem] bg-[#9e67e3]/85 backdrop-blur-md p-8 sm:p-12 shadow-2xl z-10">
+        {/* Right Side - Form Container */}
+        <div className="flex flex-col w-full md:w-[55%] lg:w-1/2 relative bg-white">
           
-          {/* Logo & Brand Name */}
-          <div className="text-center mb-6 flex flex-col items-center">
-            <div className="flex items-center gap-1.5 justify-center">
-              {/* Official Fastlink Arrow Icon */}
-              <svg width="32" height="28" viewBox="0 0 26 22" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M2 11L10 3L18 11L10 19" stroke="#5FD0C8" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M10 11H24" stroke="#5FD0C8" strokeWidth="2.5" strokeLinecap="round"/>
-                <path d="M2 6H12" stroke="white" strokeWidth="2" strokeLinecap="round" opacity="0.7"/>
-              </svg>
-              <span className="text-white font-display font-extrabold text-3xl tracking-wide">
-                ASTLINK
-              </span>
-            </div>
-            <div className="text-[#5FD0C8] text-[9px] font-bold tracking-[0.25em] -mt-0.5 ml-8">
-              MARKETPLACE
-            </div>
+          {/* Back to Menu */}
+          <div className="absolute top-6 left-6 md:top-8 md:left-8 z-10">
+            <Link href="/" className="flex items-center text-[#7a3dbf] font-semibold text-sm hover:text-[#682fad] transition-colors bg-white/80 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-100 shadow-sm">
+              <ChevronLeft size={16} strokeWidth={2.5} className="mr-1" />
+              Back to Menu
+            </Link>
           </div>
 
-          <h2 className="text-white text-2xl font-bold text-center mb-6">Create Account</h2>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {error && (
-              <div className="rounded border border-white/50 bg-white/10 px-4 py-3 text-sm text-white font-medium text-center">
-                {error}
+          <div className="flex flex-1 items-center justify-center p-6 sm:p-12 md:p-16 mt-12 md:mt-0">
+            {/* The Form Content (No Card Border) */}
+            <div className="w-full max-w-[440px]">
+              
+              {/* Logo */}
+              <div className="flex justify-center mb-10">
+                <Image
+                  src={logoSvg}
+                  alt="Fastlink Marketplace"
+                  width={180}
+                  height={40}
+                  className="h-10 w-auto object-contain"
+                  priority
+                />
               </div>
-            )}
 
-            <div>
-              <input
-                type="text"
-                value={form.name}
-                onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
-                placeholder="Username"
-                required
-                className="w-full bg-transparent border border-white rounded font-medium text-white placeholder:text-white px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-white/50 transition-all text-center"
-              />
+              <div className="text-center mb-8">
+                <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Create Account</h2>
+                <p className="text-slate-500 text-sm mt-1.5">Join Fastlink to buy and sell with ease</p>
+              </div>
+
+              <form onSubmit={handleSubmit} className="space-y-4">
+                {error && (
+                  <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-600 font-semibold text-center">
+                    {error}
+                  </div>
+                )}
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block ml-1">
+                    Username
+                  </label>
+                  <input
+                    type="text"
+                    value={form.name}
+                    onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
+                    placeholder="E.g. RabiuSM"
+                    required
+                    className="w-full bg-[#faf6ff] border border-[#ebd7fa] rounded-xl px-4 py-3 text-sm font-semibold text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#7a3dbf]/40 focus:border-[#7a3dbf] transition-all"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block ml-1">
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    value={form.email}
+                    onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
+                    placeholder="Enter your email"
+                    required
+                    className="w-full bg-[#faf6ff] border border-[#ebd7fa] rounded-xl px-4 py-3 text-sm font-semibold text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#7a3dbf]/40 focus:border-[#7a3dbf] transition-all"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block ml-1">
+                      Password
+                    </label>
+                    <input
+                      type="password"
+                      value={form.password}
+                      onChange={(e) => setForm((p) => ({ ...p, password: e.target.value }))}
+                      placeholder="••••••••"
+                      required
+                      className="w-full bg-[#faf6ff] border border-[#ebd7fa] rounded-xl px-4 py-3 text-sm font-semibold text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#7a3dbf]/40 focus:border-[#7a3dbf] transition-all"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block ml-1">
+                      Confirm
+                    </label>
+                    <input
+                      type="password"
+                      value={form.confirmPassword}
+                      onChange={(e) => setForm((p) => ({ ...p, confirmPassword: e.target.value }))}
+                      placeholder="••••••••"
+                      required
+                      className="w-full bg-[#faf6ff] border border-[#ebd7fa] rounded-xl px-4 py-3 text-sm font-semibold text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#7a3dbf]/40 focus:border-[#7a3dbf] transition-all"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5 pb-2">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block ml-1">
+                    Referral Code (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={form.referralCode}
+                    onChange={(e) => setForm((p) => ({ ...p, referralCode: e.target.value.toUpperCase() }))}
+                    className="w-full bg-[#faf6ff] border border-[#ebd7fa] rounded-xl px-4 py-3 text-sm font-semibold text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#7a3dbf]/40 focus:border-[#7a3dbf] transition-all"
+                    placeholder="e.g. FASTLINK100"
+                  />
+                </div>
+
+                <div className="flex justify-start pb-2">
+                  <label className="flex items-center gap-2 cursor-pointer group">
+                    <input
+                      type="checkbox"
+                      checked={form.sellOnFastlink}
+                      onChange={(e) => setForm(p => ({ ...p, sellOnFastlink: e.target.checked }))}
+                      className="rounded border-[#ebd7fa] h-4 w-4 text-[#7a3dbf] focus:ring-[#7a3dbf] cursor-pointer bg-white"
+                    />
+                    <span className="text-sm font-medium text-slate-600 group-hover:text-slate-800 transition-colors">I want to sell on Fastlink (Merchant)</span>
+                  </label>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl bg-[#7a3dbf] hover:bg-[#682fad] text-white text-sm font-bold shadow-md shadow-purple-600/20 transition-all active:scale-95 disabled:opacity-70 disabled:pointer-events-none"
+                >
+                  {isLoading ? <Loader2 size={18} className="animate-spin" /> : "Sign Up"}
+                </button>
+
+                <div className="text-center pt-4">
+                  <span className="text-slate-500 text-sm font-medium">Already have an account? </span>
+                  <Link href="/login" className="text-[#7a3dbf] text-sm font-bold hover:underline">
+                    Log In
+                  </Link>
+                </div>
+              </form>
             </div>
-
-            <div>
-              <input
-                type="email"
-                value={form.email}
-                onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
-                placeholder="Email"
-                required
-                className="w-full bg-transparent border border-white rounded font-medium text-white placeholder:text-white px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-white/50 transition-all text-center"
-              />
-            </div>
-
-            <div>
-              <input
-                type="password"
-                value={form.password}
-                onChange={(e) => setForm((p) => ({ ...p, password: e.target.value }))}
-                placeholder="Password"
-                required
-                className="w-full bg-transparent border border-white rounded font-medium text-white placeholder:text-white px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-white/50 transition-all text-center"
-              />
-            </div>
-
-            <div>
-              <input
-                type="password"
-                value={form.confirmPassword}
-                onChange={(e) => setForm((p) => ({ ...p, confirmPassword: e.target.value }))}
-                placeholder="Confirm password"
-                required
-                className="w-full bg-transparent border border-white rounded font-medium text-white placeholder:text-white px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-white/50 transition-all text-center"
-              />
-            </div>
-
-            <div>
-              <input
-                type="text"
-                value={form.referralCode}
-                onChange={(e) => setForm((p) => ({ ...p, referralCode: e.target.value.toUpperCase() }))}
-                placeholder="Referral code (optional)"
-                className="w-full bg-transparent border border-white rounded font-medium text-white placeholder:text-white px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-white/50 transition-all text-center"
-              />
-            </div>
-
-            <label className="flex items-center justify-center gap-2 text-white text-sm font-medium cursor-pointer">
-              <input
-                type="checkbox"
-                checked={form.sellOnFastlink}
-                onChange={(e) => setForm((p) => ({ ...p, sellOnFastlink: e.target.checked }))}
-                className="h-4 w-4 accent-white"
-              />
-              Sell on Fastlink
-            </label>
-
-            <div className="text-center pt-1">
-              <Link href="/forgot-password" className="text-white text-sm font-medium hover:underline">
-                Forgotten Password?
-              </Link>
-            </div>
-
-            <div className="flex justify-center pt-4">
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="border-2 border-white rounded-[1.5rem] text-white px-12 py-2 font-bold text-lg hover:bg-white hover:text-[#9e67e3] transition-colors flex items-center justify-center disabled:opacity-70 min-w-[140px]"
-              >
-                {isLoading ? <Loader2 size={20} className="animate-spin" /> : "Sign Up"}
-              </button>
-            </div>
-
-            <div className="text-center pt-2">
-              <span className="text-white text-sm font-medium">Already have account? </span>
-              <Link href="/login" className="text-white text-sm font-bold hover:underline">
-                Login
-              </Link>
-            </div>
-          </form>
+          </div>
         </div>
       </div>
 
       {/* Footer Banner */}
-      <div className="w-full bg-[#3a1b66] text-[#e5dcf5] px-6 py-5 text-[13px] flex flex-col md:flex-row justify-between items-center z-20">
-        <div className="mb-2 md:mb-0">2026 Fastlink market place alright reserved</div>
-        <div className="text-center md:text-right">
+      <div className="w-full bg-[#3a1b66] text-[#e5dcf5] px-6 py-4 text-xs flex flex-col md:flex-row justify-between items-center shrink-0">
+        <div className="mb-2 md:mb-0 font-medium">© 2026 Fastlink marketplace all rights reserved</div>
+        <div className="text-center md:text-right font-medium">
           Powered: Rabiu SM (Aljauromanee), A Software Engineer and Visual Brand Designer
         </div>
       </div>

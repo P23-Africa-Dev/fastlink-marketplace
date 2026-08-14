@@ -66,24 +66,25 @@ export function NotificationBell({
         type="button"
         onClick={() => setOpen((v) => !v)}
         className={cn(
-          "group relative flex items-center gap-2",
-          compact && "rounded-xl border border-white/20 bg-white/10 px-2.5 py-2 hover:bg-white/15",
+          "group relative flex items-center justify-center transition-all",
+          compact
+            ? "rounded-xl border border-white/20 bg-white/10 p-2 hover:bg-white/15"
+            : "p-1 hover:opacity-90",
         )}
         aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ""}`}
         aria-expanded={open}
       >
-        <Bell
-          size={compact ? 20 : 24}
-          className="stroke-[#F59E0B] stroke-[2.2] transition-transform group-hover:scale-110"
-        />
-        {unreadCount > 0 && (
-          <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#F59E0B] px-1 text-[10px] font-bold text-white">
-            {unreadCount > 9 ? "9+" : unreadCount}
-          </span>
-        )}
-        {!compact && (
-          <span className="hidden text-sm font-bold text-white md:inline">Alerts</span>
-        )}
+        <div className="relative flex items-center justify-center">
+          <Bell
+            size={compact ? 20 : 24}
+            className="stroke-[#F59E0B] stroke-[2.2] transition-transform group-hover:scale-110"
+          />
+          {unreadCount > 0 && (
+            <span className="absolute -right-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#F59E0B] px-1 text-[10px] font-bold text-white shadow-sm">
+              {unreadCount > 9 ? "9+" : unreadCount}
+            </span>
+          )}
+        </div>
       </button>
 
       {open && (
