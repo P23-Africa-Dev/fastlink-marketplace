@@ -34,8 +34,10 @@ import {
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { apiErrorMessage } from "@/lib/api";
+import { apiErrorCode, apiErrorMessage } from "@/lib/api";
 import { useCreateSellerProduct } from "@/hooks/use-seller-products";
+import { useSellerStore } from "@/hooks/use-dashboard";
+import Link from "next/link";
 
 interface VariantType {
   name: string;
@@ -71,6 +73,9 @@ export default function AddNewProductPage() {
   const params = useParams();
   const id = params?.id as string;
   const createProduct = useCreateSellerProduct();
+  const { data: storeRes } = useSellerStore();
+  const canSell = Boolean(storeRes?.data?.canSell);
+  const [kycBlocked, setKycBlocked] = useState(false);
 
   const [activeSection, setActiveSection] = useState("basic-info");
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("saved");
@@ -347,9 +352,37 @@ export default function AddNewProductPage() {
     setTimeout(() => setToast(""), 3000);
   };
 
-  const handleSaveDraft = () => triggerToast("Draft saved successfully to dashboard index!");
+  const handleSaveDraft = async () => {
+    if (!productName.trim()) {
+      triggerToast("Add a product name before saving a draft.");
+      return;
+    }
+    try {
+      await createProduct.mutateAsync({
+        name: productName,
+        description,
+        price: basePrice,
+        compare_at_price: comparePrice || null,
+        cost_price: costPrice || null,
+        stock: hasVariants ? variantCombinations.reduce((sum, item) => sum + (item.stock || 0), 0) : baseStock,
+        category: categoryPath[0],
+        subcategory: categoryPath[1],
+        brand: brand || undefined,
+        tags,
+        status: "draft",
+        image_urls: uploadedImages.map((img) => img.url).filter(Boolean),
+      });
+      triggerToast("Draft saved. You can publish after KYC is approved.");
+    } catch (error) {
+      triggerToast(apiErrorMessage(error, "Could not save draft."));
+    }
+  };
 
   const handlePublish = async () => {
+    if (!canSell) {
+      setKycBlocked(true);
+      return;
+    }
     if (completionPercentage < 100) {
       triggerToast("Please fill all required basic fields before publishing!");
       return;
@@ -372,6 +405,10 @@ export default function AddNewProductPage() {
       triggerToast("Listing published successfully! Redirecting...");
       setTimeout(() => router.push("/all-products"), 1200);
     } catch (error) {
+      if (apiErrorCode(error) === "KYC_REQUIRED") {
+        setKycBlocked(true);
+        return;
+      }
       triggerToast(apiErrorMessage(error, "Could not publish listing."));
     }
   };
@@ -420,6 +457,43 @@ export default function AddNewProductPage() {
             <CheckCircle size={14} />
           </div>
           <span>{toast}</span>
+        </div>
+      )}
+
+      {kycBlocked && (
+        <div className="fixed inset-0 z-[70] bg-black/40 flex items-center justify-center p-4">
+          <div className="max-w-md w-full rounded-3xl bg-white border border-[#ebd7fa] p-6 space-y-4 shadow-xl">
+            <p className="text-lg font-extrabold text-[#3B1C5A]">KYC verification required</p>
+            <p className="text-sm text-[#8A79A5]">
+              Complete your business verification before you can add and publish products on the marketplace.
+              You can still save this listing as a draft.
+            </p>
+            <div className="flex flex-wrap gap-2 justify-end">
+              <button
+                type="button"
+                onClick={() => setKycBlocked(false)}
+                className="rounded-xl border border-[#ebd7fa] px-4 py-2 text-xs font-bold text-[#6D349F]"
+              >
+                Close
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setKycBlocked(false);
+                  void handleSaveDraft();
+                }}
+                className="rounded-xl border border-[#ebd7fa] px-4 py-2 text-xs font-bold text-[#6D349F]"
+              >
+                Save draft
+              </button>
+              <Link
+                href="/vendor/register"
+                className="rounded-xl bg-[#7a3dbf] px-4 py-2 text-xs font-bold text-white"
+              >
+                Complete KYC
+              </Link>
+            </div>
+          </div>
         </div>
       )}
 

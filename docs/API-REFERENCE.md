@@ -331,7 +331,7 @@ Revokes all tokens on success.
 ### `GET /auth/me`
 
 | **Auth** | Sanctum |
-| **Success** | `UserResource` including `sellerAccess` when applicable |
+| **Success** | `UserResource` including `sellerAccess`, `storeStatus`, `kycStatus`, `kycRejectionReason`, `canSell` when the user has a store |
 
 ---
 
@@ -761,14 +761,26 @@ Earn: **1 point per ₦100 paid**. Redeem: **1 point = ₦1**.
 | Field | Rules |
 |-------|--------|
 | `business_name`, `phone` | required |
-| `bank_name`, `bank_account_number`, `bank_account_name` | required |
+| `bank_name`, `bank_account_number`, `bank_account_name` | optional (required when `submit_kyc=true`) |
+| `submit_kyc` | optional boolean — defaults to true when bank details are present |
 | `type` | `mall_store` \| `independent` \| `nationwide` \| `emerging` |
 | `mall_id` | required when `mall_store` |
 | `category_id`, `location`, `description` | optional |
 
-Creates store (`pending` outside `testing`), upgrades user to `seller`, notifies admins.
+Creates store immediately. KYC can be skipped (`submit_kyc=false` → `kyc_status: not_started`) so the seller can use a **limited dashboard** before verification. Outside `testing`, submitted KYC sets `status: pending` + `kyc_status: under_review` and notifies admins.
 
-`201` — `{ store: { id, name, slug, status, type }, user: { id, role } }`.
+`201` — `{ store: { id, name, slug, status, kycStatus, type, canSell }, user: { id, role } }`.
+
+### `POST /seller/kyc/submit`
+
+**Auth:** Sanctum (seller with an existing store).
+
+| Field | Rules |
+|-------|--------|
+| `bank_name`, `bank_account_number`, `bank_account_name` | optional if already on store; all three required to submit |
+| `phone` | optional |
+
+Marks KYC submitted (`under_review`, or auto-approved in `testing`). Used when the vendor skipped KYC at onboard.
 
 ### `GET /seller/dashboard`
 
@@ -792,9 +804,9 @@ Current store profile (owner store or first staffed store).
 | Method | Path | Notes |
 |--------|------|--------|
 | `GET` | `/seller/products` | Query: `q`, `status`, page |
-| `POST` | `/seller/products` | Create (store must be **approved**) |
+| `POST` | `/seller/products` | **Drafts** allowed before KYC; `active`/`submitted` require `canSell` or `403` + `KYC_REQUIRED` |
 | `GET` | `/seller/products/{product}` | Detail |
-| `PUT` / `PATCH` | `/seller/products/{product}` | Update |
+| `PUT` / `PATCH` | `/seller/products/{product}` | Update (publishing gated by KYC) |
 | `DELETE` | `/seller/products/{product}` | Soft-archive |
 | `POST` | `/seller/products/{product}/images` | Multipart `images[]` |
 | `PATCH` | `/seller/products/{product}/stock` | See below |
@@ -856,7 +868,7 @@ Query: `product_id`, `page`, `limit`. Audit trail of stock changes.
 |--------|------|--------|
 | `GET` | `/seller/payments` | List + `summary` + chart |
 | `GET` | `/seller/payouts` | List + available/pending/transferred |
-| `POST` | `/seller/payouts` | Body `{ "amount": number }` — stays **pending** until admin; needs bank on store |
+| `POST` | `/seller/payouts` | Body `{ "amount": number }` — requires `canSell` (`KYC_REQUIRED` otherwise); stays **pending** until admin |
 | `GET` | `/seller/analytics` | Query `range`: `today` \| `7days` \| `30days` \| `1year` |
 
 Finance staff **cannot** change payout bank accounts (that is `manage`).
@@ -1155,6 +1167,7 @@ Alphabetical by path (191 routes). Auth key: **P** public · **S** sanctum · **
 | GET/POST | `/seller/marketing/campaigns` | Sel:manage |
 | PATCH | `/seller/marketing/campaigns/{campaign}` | Sel:manage |
 | POST | `/seller/onboard` | S |
+| POST | `/seller/kyc/submit` | S |
 | GET | `/seller/orders` | Sel:orders |
 | GET | `/seller/orders/{order}` | Sel:orders |
 | PATCH | `/seller/orders/{order}/status` | Sel:orders |

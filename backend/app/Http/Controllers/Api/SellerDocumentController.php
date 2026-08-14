@@ -49,6 +49,10 @@ class SellerDocumentController extends Controller
             'status' => 'pending',
         ]);
 
+        if (in_array($store->kyc_status, ['not_started', null, ''], true)) {
+            $store->update(['kyc_status' => 'in_progress']);
+        }
+
         return ApiResponse::success($this->serialize($doc), 'Document uploaded.', 201);
     }
 

@@ -27,6 +27,8 @@ class StoreFactory extends Factory
             'slug' => Str::slug($name).'-'.fake()->unique()->numerify('###'),
             'type' => 'independent',
             'status' => 'approved',
+            'kyc_status' => 'approved',
+            'kyc_verified_at' => now(),
             'location' => 'Kano',
             'delivery_tag' => 'Same Day',
         ];

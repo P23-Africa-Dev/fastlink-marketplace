@@ -115,6 +115,14 @@ export function apiErrorMessage(error: unknown, fallback: string): string {
   return fallback;
 }
 
+export function apiErrorCode(error: unknown): string | null {
+  if (axios.isAxiosError(error)) {
+    const code = error.response?.data?.code;
+    if (typeof code === "string" && code.trim()) return code;
+  }
+  return null;
+}
+
 // ---------------------------------------------------------------------------
 // Mock API functions — replace with real axios calls when your API is ready
 // ---------------------------------------------------------------------------
@@ -380,21 +388,43 @@ export const sellerApi = {
   onboard: async (payload: {
     business_name: string;
     phone: string;
-    bank_name: string;
-    bank_account_number: string;
-    bank_account_name: string;
+    bank_name?: string;
+    bank_account_number?: string;
+    bank_account_name?: string;
     type?: "mall_store" | "independent" | "nationwide" | "emerging";
     mall_id?: number;
     category_id?: number;
     location?: string;
     description?: string;
+    submit_kyc?: boolean;
   }) => {
     const { data } = await apiClient.post<
       ApiResponse<{
-        store: { id: string; name: string; slug: string; status: string };
+        store: {
+          id: string;
+          name: string;
+          slug: string;
+          status: string;
+          kycStatus?: string;
+          canSell?: boolean;
+        };
         user: { id: string; role: string };
       }>
     >("/seller/onboard", payload);
+    return data;
+  },
+
+  submitKyc: async (payload: {
+    bank_name?: string;
+    bank_account_number?: string;
+    bank_account_name?: string;
+    phone?: string;
+  } = {}) => {
+    const { data } = await apiClient.post<
+      ApiResponse<{
+        store: { id: string; status: string; kycStatus?: string; canSell?: boolean };
+      }>
+    >("/seller/kyc/submit", payload);
     return data;
   },
 };

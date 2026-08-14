@@ -11,6 +11,7 @@ use App\Models\Store;
 use App\Services\InventoryService;
 use App\Support\ApiResponse;
 use App\Support\ProductQuery;
+use App\Support\SellerGate;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -67,9 +68,19 @@ class SellerProductController extends Controller
 
         $store = $this->resolveStore($request);
         $validated = $this->validatedPayload($request);
+        $status = $validated['status'] ?? ($store->canSell() ? 'active' : 'draft');
+
+        if (SellerGate::isPublicProductStatus($status) && ! $store->canSell()) {
+            return ApiResponse::error(
+                'Complete KYC verification before publishing products.',
+                403,
+                null,
+                'KYC_REQUIRED',
+            );
+        }
 
         $product = Product::query()->create([
-            ...$this->productAttributes($validated),
+            ...$this->productAttributes([...$validated, 'status' => $status]),
             'store_id' => $store->id,
             'slug' => Product::uniqueSlug($validated['name']),
             'sku' => Product::uniqueSku($validated['sku'] ?? null),
@@ -96,6 +107,21 @@ class SellerProductController extends Controller
         $this->authorize('update', $product);
 
         $validated = $this->validatedPayload($request, $product);
+        $nextStatus = $validated['status'] ?? $product->status;
+
+        if (
+            SellerGate::isPublicProductStatus($nextStatus)
+            && $nextStatus !== $product->status
+            && ! $product->store?->canSell()
+        ) {
+            return ApiResponse::error(
+                'Complete KYC verification before publishing products.',
+                403,
+                null,
+                'KYC_REQUIRED',
+            );
+        }
+
         $product->fill($this->productAttributes($validated));
 
         if (isset($validated['name']) && $validated['name'] !== $product->getOriginal('name') && empty($validated['slug'])) {
@@ -195,6 +221,15 @@ class SellerProductController extends Controller
     {
         $this->authorize('update', $product);
 
+        if (! $product->store?->canSell()) {
+            return ApiResponse::error(
+                'Complete KYC verification before submitting products for review.',
+                403,
+                null,
+                'KYC_REQUIRED',
+            );
+        }
+
         if (! in_array($product->status, ['draft', 'rejected'], true)) {
             throw ValidationException::withMessages([
                 'status' => 'Only draft or rejected products can be submitted for review.',
@@ -279,7 +314,7 @@ class SellerProductController extends Controller
                 ->value('id');
         }
 
-        $status = $validated['status'] ?? 'active';
+        $status = $validated['status'] ?? 'draft';
 
         return array_filter([
             'name' => $validated['name'] ?? null,

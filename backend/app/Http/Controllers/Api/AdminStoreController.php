@@ -75,10 +75,10 @@ class AdminStoreController extends Controller
             'mall_id' => ['nullable', 'integer', 'exists:malls,id'],
         ]);
 
-        $store->update([
-            'status' => 'approved',
-            'mall_id' => $validated['mall_id'] ?? $store->mall_id,
-        ]);
+        $store->markKycApproved();
+        if (! empty($validated['mall_id'])) {
+            $store->update(['mall_id' => $validated['mall_id']]);
+        }
 
         AuditLog::record($request->user(), 'store.approved', $store, [
             'mall_id' => $store->mall_id,
@@ -107,7 +107,7 @@ class AdminStoreController extends Controller
             'reason' => ['nullable', 'string', 'max:500'],
         ]);
 
-        $store->update(['status' => 'rejected']);
+        $store->markKycRejected($validated['reason'] ?? null);
         AuditLog::record($request->user(), 'store.rejected', $store, [
             'reason' => $validated['reason'] ?? null,
         ]);

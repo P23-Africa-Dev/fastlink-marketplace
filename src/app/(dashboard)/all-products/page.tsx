@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { apiErrorMessage } from "@/lib/api";
+import { apiErrorCode, apiErrorMessage } from "@/lib/api";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { Pagination } from "@/components/dashboard/pagination";
 import { toDashboardProduct } from "@/lib/product-map";
@@ -32,12 +32,17 @@ import {
   useSubmitSellerProduct,
   useUpdateSellerProduct,
 } from "@/hooks/use-seller-products";
+import { useSellerStore } from "@/hooks/use-dashboard";
 import type { Product as ApiProduct } from "@/types/product";
 import type { Product as DashboardProduct } from "@/lib/mock-products";
+import Link from "next/link";
 
 export default function AllProductsPage() {
   const router = useRouter();
   const { data: sellerPage } = useSellerProducts();
+  const { data: storeRes } = useSellerStore();
+  const canSell = Boolean(storeRes?.data?.canSell);
+  const [kycBlocked, setKycBlocked] = useState(false);
   const createProduct = useCreateSellerProduct();
   const updateProduct = useUpdateSellerProduct();
   const deleteProduct = useDeleteSellerProduct();
@@ -192,6 +197,11 @@ export default function AllProductsPage() {
     }
 
     try {
+      const wantsActive = newProduct.status !== "Draft";
+      if (wantsActive && !canSell) {
+        setKycBlocked(true);
+        return;
+      }
       await createProduct.mutateAsync({
         name: newProduct.name,
         sku: newProduct.sku,
@@ -203,12 +213,16 @@ export default function AllProductsPage() {
         category: newProduct.category,
         brand: newProduct.brand || undefined,
         tags: newProduct.tags,
-        status: newProduct.status === "Draft" ? "draft" : "active",
+        status: wantsActive ? "active" : "draft",
         image_urls: newProduct.image
           ? [newProduct.image, ...newProduct.images.map((img) => img.url)]
           : newProduct.images.map((img) => img.url),
       });
     } catch (error) {
+      if (apiErrorCode(error) === "KYC_REQUIRED") {
+        setKycBlocked(true);
+        return;
+      }
       triggerToast(apiErrorMessage(error, "Could not create product."));
       return;
     }
@@ -253,6 +267,11 @@ export default function AllProductsPage() {
     }
 
     try {
+      const wantsActive = editProduct.status !== "Draft";
+      if (wantsActive && !canSell) {
+        setKycBlocked(true);
+        return;
+      }
       await updateProduct.mutateAsync({
         id: editProduct.id,
         payload: {
@@ -265,10 +284,14 @@ export default function AllProductsPage() {
           category: editProduct.category,
           brand: editProduct.brand || undefined,
           tags: editProduct.tags,
-          status: editProduct.status === "Draft" ? "draft" : "active",
+          status: wantsActive ? "active" : "draft",
         },
       });
     } catch (error) {
+      if (apiErrorCode(error) === "KYC_REQUIRED") {
+        setKycBlocked(true);
+        return;
+      }
       triggerToast(apiErrorMessage(error, "Could not update product."));
       return;
     }
@@ -305,6 +328,32 @@ export default function AllProductsPage() {
         <div className="fixed top-6 right-6 z-50 bg-[#7a3dbf] text-white font-semibold text-xs px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-2.5 animate-in fade-in slide-in-from-top-4 duration-300">
           <CheckCircle2 size={18} className="text-purple-200" />
           <span>{toast}</span>
+        </div>
+      )}
+
+      {kycBlocked && (
+        <div className="fixed inset-0 z-[70] bg-black/40 flex items-center justify-center p-4">
+          <div className="max-w-md w-full rounded-3xl bg-white border border-[#ebd7fa] p-6 space-y-4 shadow-xl">
+            <p className="text-lg font-extrabold text-[#3B1C5A]">KYC verification required</p>
+            <p className="text-sm text-[#8A79A5]">
+              Complete your business verification before you can publish products on the marketplace.
+            </p>
+            <div className="flex flex-wrap gap-2 justify-end">
+              <button
+                type="button"
+                onClick={() => setKycBlocked(false)}
+                className="rounded-xl border border-[#ebd7fa] px-4 py-2 text-xs font-bold text-[#6D349F]"
+              >
+                Close
+              </button>
+              <Link
+                href="/vendor/register"
+                className="rounded-xl bg-[#7a3dbf] px-4 py-2 text-xs font-bold text-white"
+              >
+                Complete KYC
+              </Link>
+            </div>
+          </div>
         </div>
       )}
 
@@ -563,10 +612,18 @@ export default function AllProductsPage() {
                           {(catalogStatusById[p.id] === "draft" || catalogStatusById[p.id] === "rejected") && (
                             <button
                               onClick={async () => {
+                                if (!canSell) {
+                                  setKycBlocked(true);
+                                  return;
+                                }
                                 try {
                                   await submitProduct.mutateAsync(p.id);
                                   triggerToast("Submitted for admin review.");
                                 } catch (err) {
+                                  if (apiErrorCode(err) === "KYC_REQUIRED") {
+                                    setKycBlocked(true);
+                                    return;
+                                  }
                                   triggerToast(apiErrorMessage(err, "Could not submit for review."));
                                 }
                               }}

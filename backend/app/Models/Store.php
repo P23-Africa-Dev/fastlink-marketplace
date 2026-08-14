@@ -32,7 +32,73 @@ class Store extends Model
         'bank_account_number',
         'bank_account_name',
         'status',
+        'kyc_status',
+        'kyc_rejection_reason',
+        'kyc_submitted_at',
+        'kyc_verified_at',
     ];
+
+    public const KYC_STATUSES = [
+        'not_started',
+        'in_progress',
+        'submitted',
+        'under_review',
+        'approved',
+        'rejected',
+    ];
+
+    /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'kyc_submitted_at' => 'datetime',
+            'kyc_verified_at' => 'datetime',
+        ];
+    }
+
+    /** Can publish products, receive orders, and request payouts. */
+    public function canSell(): bool
+    {
+        return $this->status === 'approved' && $this->kyc_status === 'approved';
+    }
+
+    /** Can prepare catalog drafts while KYC/store approval is pending. */
+    public function canDraftProducts(): bool
+    {
+        return $this->status !== 'suspended';
+    }
+
+    public function markKycSubmitted(): void
+    {
+        $this->update([
+            'kyc_status' => 'under_review',
+            'kyc_submitted_at' => $this->kyc_submitted_at ?? now(),
+            'kyc_rejection_reason' => null,
+            'status' => $this->status === 'rejected' ? 'pending' : $this->status,
+        ]);
+    }
+
+    public function markKycApproved(): void
+    {
+        $this->update([
+            'status' => 'approved',
+            'kyc_status' => 'approved',
+            'kyc_verified_at' => now(),
+            'kyc_rejection_reason' => null,
+            'kyc_submitted_at' => $this->kyc_submitted_at ?? now(),
+        ]);
+    }
+
+    public function markKycRejected(?string $reason = null): void
+    {
+        $this->update([
+            'status' => 'rejected',
+            'kyc_status' => 'rejected',
+            'kyc_rejection_reason' => $reason,
+        ]);
+    }
 
     public function owner(): BelongsTo
     {

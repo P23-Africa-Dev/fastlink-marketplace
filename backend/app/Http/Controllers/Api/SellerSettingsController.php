@@ -49,6 +49,14 @@ class SellerSettingsController extends Controller
             'bank_account_number' => $validated['bank_account_number'] ?? null,
             'bank_account_name' => $validated['bank_account_name'] ?? null,
         ], fn ($value) => $value !== null));
+
+        if (
+            in_array($store->kyc_status, ['not_started', null, ''], true)
+            && (filled($store->bank_name) || filled($store->bank_account_number) || filled($store->bank_account_name))
+        ) {
+            $store->kyc_status = 'in_progress';
+        }
+
         $store->save();
 
         if (isset($validated['notifications'])) {

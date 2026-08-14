@@ -108,6 +108,7 @@ Route::post('/webhooks/paystack', PaystackWebhookController::class);
 
 Route::middleware('auth:sanctum')->group(function (): void {
     Route::post('/seller/onboard', [SellerOnboardController::class, 'store']);
+    Route::post('/seller/kyc/submit', [SellerOnboardController::class, 'submitKyc']);
 
     Route::get('/addresses', [AddressController::class, 'index']);
     Route::post('/addresses', [AddressController::class, 'store']);

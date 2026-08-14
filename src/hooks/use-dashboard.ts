@@ -32,6 +32,7 @@ export function useSellerStore() {
   return useQuery({
     queryKey: QUERY_KEYS.seller.store(),
     queryFn: sellerStoreApi.get,
+    retry: false,
   });
 }
 

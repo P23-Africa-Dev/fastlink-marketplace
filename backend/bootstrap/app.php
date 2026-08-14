@@ -56,7 +56,15 @@ return Application::configure(basePath: dirname(__DIR__))
                 return null;
             }
 
-            return ApiResponse::error('Forbidden.', 403);
+            $message = $e->getMessage();
+            $code = str_contains(strtolower($message), 'kyc') ? 'KYC_REQUIRED' : null;
+
+            return ApiResponse::error(
+                $message && $message !== 'This action is unauthorized.' ? $message : 'Forbidden.',
+                403,
+                null,
+                $code,
+            );
         });
 
         $exceptions->render(function (ModelNotFoundException|NotFoundHttpException $e, Request $request) {
@@ -72,6 +80,13 @@ return Application::configure(basePath: dirname(__DIR__))
                 return null;
             }
 
-            return ApiResponse::error($e->getMessage() ?: 'Request failed.', $e->getStatusCode());
+            $code = $e->getHeaders()['X-Error-Code'] ?? null;
+
+            return ApiResponse::error(
+                $e->getMessage() ?: 'Request failed.',
+                $e->getStatusCode(),
+                null,
+                is_string($code) ? $code : null,
+            );
         });
     })->create();

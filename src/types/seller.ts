@@ -68,6 +68,11 @@ export interface SellerStoreProfile {
   phone?: string | null;
   type?: string;
   status: string;
+  kycStatus?: string | null;
+  kycRejectionReason?: string | null;
+  kycSubmittedAt?: string | null;
+  kycVerifiedAt?: string | null;
+  canSell?: boolean;
   bankName?: string | null;
   bankAccountNumber?: string | null;
   bankAccountName?: string | null;

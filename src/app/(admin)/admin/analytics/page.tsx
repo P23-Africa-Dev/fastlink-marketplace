@@ -9,7 +9,7 @@ import { StatCard } from "@/components/dashboard/stat-card";
 
 export default function AdminAnalyticsPage() {
   const { data, isLoading, isError } = useAdminAnalytics();
-
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center py-24 gap-3">

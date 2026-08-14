@@ -6,6 +6,7 @@ use App\Models\Product;
 use App\Models\Store;
 use App\Models\User;
 use App\Support\SellerContext;
+use App\Support\SellerGate;
 
 class ProductPolicy
 {
@@ -36,7 +37,7 @@ class ProductPolicy
 
         $store = $user->store ?? Store::query()->whereIn('id', SellerContext::storeIds($user))->first();
 
-        return $store !== null && $store->status === 'approved';
+        return $store !== null && $store->canDraftProducts();
     }
 
     public function update(User $user, Product $product): bool
@@ -45,11 +46,22 @@ class ProductPolicy
             return false;
         }
 
-        return $product->store?->status === 'approved';
+        return $product->store?->canDraftProducts() === true;
     }
 
     public function delete(User $user, Product $product): bool
     {
         return $this->update($user, $product);
+    }
+
+    public function publish(User $user, ?Product $product = null): bool
+    {
+        if ($user->role === 'admin') {
+            return true;
+        }
+
+        $store = $product?->store ?? SellerGate::storeFor($user);
+
+        return $store?->canSell() === true;
     }
 }

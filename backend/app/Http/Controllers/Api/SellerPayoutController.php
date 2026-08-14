@@ -47,11 +47,20 @@ class SellerPayoutController extends Controller
 
     public function store(Request $request): JsonResponse
     {
+        $store = SellerContext::storeOrFail($request->user());
+
+        if (! $store->canSell()) {
+            return ApiResponse::error(
+                'Complete KYC verification before requesting payouts.',
+                403,
+                null,
+                'KYC_REQUIRED',
+            );
+        }
+
         $validated = $request->validate([
             'amount' => ['required', 'numeric', 'min:1'],
         ]);
-
-        $store = SellerContext::storeOrFail($request->user());
 
         if (! $store->bank_account_number || ! $store->bank_name) {
             throw ValidationException::withMessages([
@@ -108,11 +117,15 @@ class SellerPayoutController extends Controller
         ]);
 
         $store = SellerContext::storeOrFail($request->user());
-        $store->update([
+        $payload = [
             'bank_name' => $validated['bank_name'],
             'bank_account_number' => $validated['bank_account_number'],
             'bank_account_name' => $validated['bank_account_name'],
-        ]);
+        ];
+        if (in_array($store->kyc_status, ['not_started', null, ''], true)) {
+            $payload['kyc_status'] = 'in_progress';
+        }
+        $store->update($payload);
 
         return ApiResponse::success([
             'store' => (new SellerStoreResource($store->fresh()))->resolve(),

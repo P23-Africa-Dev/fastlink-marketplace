@@ -14,6 +14,10 @@ class UserResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $store = in_array($this->role, ['seller', 'admin'], true)
+            ? ($this->relationLoaded('store') ? $this->store : $this->store()->first())
+            : null;
+
         return [
             'id' => (string) $this->id,
             'name' => $this->name,
@@ -26,6 +30,10 @@ class UserResource extends JsonResource
             'sellerAccess' => in_array($this->role, ['seller', 'admin'], true)
                 ? SellerContext::accessPayload($this->resource)
                 : null,
+            'storeStatus' => $store?->status,
+            'kycStatus' => $store?->kyc_status,
+            'kycRejectionReason' => $store?->kyc_rejection_reason,
+            'canSell' => $store?->canSell() ?? false,
             'createdAt' => $this->created_at?->toIso8601String(),
         ];
     }

@@ -8,9 +8,21 @@ export interface User {
   phone?: string | null;
   loyaltyPoints?: number;
   sellerAccess?: SellerAccess | null;
+  storeStatus?: string | null;
+  kycStatus?: KycStatus | null;
+  kycRejectionReason?: string | null;
+  canSell?: boolean;
   createdAt: string;
   addresses?: Address[];
 }
+
+export type KycStatus =
+  | "not_started"
+  | "in_progress"
+  | "submitted"
+  | "under_review"
+  | "approved"
+  | "rejected";
 
 export type SellerPermission = "inventory" | "orders" | "finance" | "support" | "manage";
 

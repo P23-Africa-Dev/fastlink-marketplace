@@ -3,7 +3,7 @@
 **Document ID:** CR-1  
 **Status:** Shipped (Tier 0 — 13 August 2026) · Tier 1 complete (13 August 2026) · Tier 2 largely shipped (zones, inventory, checkout quote, KYC — 13 August 2026) · Tier 3 largely shipped (promos, referrals, cart recovery, insights, loyalty, recommendations, search suggest — 13 August 2026)  
 **Audience:** Product, engineering, design  
-**Last updated:** 13 August 2026  
+**Last updated:** 14 August 2026  
 **Related docs:** [`API-INTEGRATION-PLAN.md`](./API-INTEGRATION-PLAN.md) · [`API-CATALOG.md`](./API-CATALOG.md) · [`API-REFERENCE.md`](./API-REFERENCE.md) · [`BACKLOG.md`](./BACKLOG.md) · [`QA-TEST-PLAN.md`](./QA-TEST-PLAN.md)
 
 ---
@@ -123,8 +123,8 @@ Wallets, loyalty, gift cards, affiliates, auctions, subscriptions, B2B/RFQ, AI a
 | CR-0.6 | **Store detail / KYC review** | View owner, bank details, application data; approve/reject with reason; audit logged |
 | CR-0.7 | Seller onboard **wizard** | Steps: store type → mall (if mall store) → business info → KYC → submit → `pending` |
 | CR-0.8 | Rider onboard **enhancement** | Application fields + pending state; admin reject/suspend |
-| CR-0.9 | **Pending applicant UX** | Pending seller/rider sees holding page; cannot publish products or take deliveries |
-| CR-0.10 | **Publish gate** | `ProductPolicy` / API rejects create/publish unless `store.status === approved` |
+| CR-0.9 | **Limited vendor access pre-KYC** | Seller can log in and use a limited dashboard before KYC; banner + Complete KYC CTA; cannot sell/publish/payout |
+| CR-0.10 | **Publish / sell gate** | Drafts allowed when store not suspended; publish/submit/payout require `store.status === approved` **and** `kyc_status === approved`; API returns `403` + `code: KYC_REQUIRED` |
 | CR-0.11 | Production pending mode | No auto-approve for stores/riders outside `testing` env |
 | CR-0.12 | Application notifications | Admin notified on new application; applicant notified on approve/reject |
 
