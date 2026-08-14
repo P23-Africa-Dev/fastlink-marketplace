@@ -33,6 +33,7 @@ import {
   Tag,
   ShieldAlert,
   Sliders,
+  Bell,
   type LucideIcon,
 } from "lucide-react";
 
@@ -41,6 +42,7 @@ import { useAuthStore } from "@/store/auth-store";
 import { authApi } from "@/lib/api";
 import { queryClient } from "@/lib/query-client";
 import { homeForRole } from "@/lib/auth-session";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 import { cn } from "@/lib/utils";
 
 interface AdminNavSection {
@@ -57,6 +59,7 @@ const NAV_SECTIONS: AdminNavSection[] = [
     title: "OVERVIEW & ANALYTICS",
     items: [
       { href: "/admin", label: "Dashboard Overview", icon: LayoutDashboard },
+      { href: "/admin/notifications", label: "Notifications", icon: Bell },
       { href: "/admin/analytics", label: "Platform Analytics", icon: BarChart3 },
       { href: "/admin/malls", label: "Malls Directory", icon: Building2 },
     ],
@@ -252,8 +255,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </Suspense>
         </div>
 
-        {/* Right Side: Admin Badge */}
+        {/* Right Side: Alerts + Admin Badge */}
         <div className="flex items-center gap-3">
+          <NotificationBell viewAllHref="/admin/notifications" compact />
           <div className="hidden sm:flex flex-col text-right">
             <span className="text-sm font-bold text-white leading-tight">{user?.name ?? "Super Admin"}</span>
             <span className="text-[11px] font-medium text-purple-200">{user?.email ?? "admin@fastmarket.com"}</span>

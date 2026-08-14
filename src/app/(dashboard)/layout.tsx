@@ -28,6 +28,7 @@ import {
   Tag,
   Lightbulb,
   UserCog,
+  Bell,
   type LucideIcon,
 } from "lucide-react";
 
@@ -39,6 +40,7 @@ import { useConversations } from "@/hooks/use-conversations";
 import { authApi } from "@/lib/api";
 import { queryClient } from "@/lib/query-client";
 import { PendingStoreBanner } from "@/components/dashboard/pending-store-banner";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 import { homeForRole } from "@/lib/auth-session";
 import type { SellerPermission } from "@/types/user";
 
@@ -68,6 +70,7 @@ const NAV_SECTIONS: NavSection[] = [
       { href: "/inventory", label: "Inventory", icon: Boxes, perm: "inventory" },
       { href: "/customers", label: "Customers", icon: Users, perm: "orders" },
       { href: "/messages", label: "Messages", icon: MessageSquare, hasUnread: true, perm: "support" },
+      { href: "/notifications", label: "Notifications", icon: Bell },
     ],
   },
   {
@@ -464,8 +467,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </Suspense>
         </div>
 
-        {/* Far Right: Cart Link */}
+        {/* Far Right: Alerts + Cart */}
         <div className="flex items-center gap-4">
+          <NotificationBell viewAllHref="/notifications" />
           <Link
             href="/cart"
             className="group flex items-center gap-2"

@@ -70,6 +70,8 @@ export const config = {
     "/disputes/:path*",
     "/team",
     "/team/:path*",
+    "/notifications",
+    "/notifications/:path*",
     "/products/:id/add-new-product",
     // Admin control tower (src/app/(admin))
     "/admin",

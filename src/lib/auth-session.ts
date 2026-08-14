@@ -20,6 +20,7 @@ export const SELLER_PATH_PREFIXES = [
   "/inventory",
   "/disputes",
   "/team",
+  "/notifications",
 ];
 
 export function writeAuthCookies(token: string, role: string): void {
@@ -58,7 +59,7 @@ export function homeForRole(role?: string | null): string {
   if (role === "admin") return "/admin";
   if (role === "seller") return "/dashboard";
   if (role === "rider") return "/rider";
-  return "/";
+  return "/account";
 }
 
 export function accountHref(isAuthenticated: boolean, role?: string | null): string {
@@ -66,7 +67,7 @@ export function accountHref(isAuthenticated: boolean, role?: string | null): str
   if (role === "admin") return "/admin";
   if (role === "seller") return "/dashboard";
   if (role === "rider") return "/rider";
-  return "/account/orders";
+  return "/account";
 }
 
 export function safePostLoginPath(next: string | null, role?: string | null): string {

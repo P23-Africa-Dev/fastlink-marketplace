@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Bell } from "lucide-react";
 
@@ -11,8 +12,28 @@ import {
   useMarkNotificationRead,
   useNotifications,
 } from "@/hooks/use-notifications";
+import type { UserNotification } from "@/types/notifications";
 
-export function NotificationBell() {
+function notificationHref(n: UserNotification): string | null {
+  const data = n.data ?? {};
+  const candidates = [data.href, data.url, data.link, data.path];
+  for (const value of candidates) {
+    if (typeof value === "string" && value.startsWith("/")) return value;
+  }
+  return null;
+}
+
+type NotificationBellProps = {
+  viewAllHref?: string;
+  /** Compact icon-only control for dense admin/seller headers */
+  compact?: boolean;
+};
+
+export function NotificationBell({
+  viewAllHref = "/account/notifications",
+  compact = false,
+}: NotificationBellProps) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
   const { data, isLoading } = useNotifications();
@@ -32,24 +53,37 @@ export function NotificationBell() {
     return () => document.removeEventListener("mousedown", onClickOutside);
   }, [open]);
 
+  function handleItemClick(n: UserNotification) {
+    if (!n.readAt) markRead.mutate(n.id);
+    const href = notificationHref(n);
+    setOpen(false);
+    if (href) router.push(href);
+  }
+
   return (
     <div className="relative" ref={panelRef}>
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="group relative flex items-center gap-2"
+        className={cn(
+          "group relative flex items-center gap-2",
+          compact && "rounded-xl border border-white/20 bg-white/10 px-2.5 py-2 hover:bg-white/15",
+        )}
         aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ""}`}
+        aria-expanded={open}
       >
         <Bell
-          size={24}
+          size={compact ? 20 : 24}
           className="stroke-[#F59E0B] stroke-[2.2] transition-transform group-hover:scale-110"
         />
         {unreadCount > 0 && (
-          <span className="absolute -right-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#F59E0B] px-1 text-[10px] font-bold text-white">
+          <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#F59E0B] px-1 text-[10px] font-bold text-white">
             {unreadCount > 9 ? "9+" : unreadCount}
           </span>
         )}
-        <span className="hidden text-sm font-bold text-white md:inline">Alerts</span>
+        {!compact && (
+          <span className="hidden text-sm font-bold text-white md:inline">Alerts</span>
+        )}
       </button>
 
       {open && (
@@ -78,9 +112,7 @@ export function NotificationBell() {
               <button
                 key={n.id}
                 type="button"
-                onClick={() => {
-                  if (!n.readAt) markRead.mutate(n.id);
-                }}
+                onClick={() => handleItemClick(n)}
                 className={cn(
                   "block w-full border-b border-[#F5F1FA] px-4 py-3 text-left transition-colors hover:bg-[#FAF8FC]",
                   !n.readAt && "bg-[#FDF9FF]",
@@ -96,7 +128,7 @@ export function NotificationBell() {
           </div>
 
           <Link
-            href="/account/notifications"
+            href={viewAllHref}
             onClick={() => setOpen(false)}
             className="block border-t border-[#F0E8F8] px-4 py-3 text-center text-xs font-bold text-[#7a3dbf] hover:bg-[#FAF8FC]"
           >
