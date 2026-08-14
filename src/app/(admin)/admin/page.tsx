@@ -43,25 +43,8 @@ export default function AdminOverviewPage() {
 
   return (
     <div className="space-y-8 max-w-[1600px] mx-auto font-sans">
-      {/* ── Top Welcome & Telemetry Banner ───────────────────────── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-[2rem] border border-[#ebd7fa] shadow-sm">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="px-3 py-1 rounded-full bg-[#ebd7fa] text-[#7a3dbf] text-[11px] font-black uppercase tracking-wider">
-              Control Center
-            </span>
-            <span className="flex items-center gap-1 text-xs font-semibold text-emerald-600">
-              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-              Live Operations
-            </span>
-          </div>
-          <h2 className="text-2xl font-bold text-slate-800 mt-2">Platform Performance Overview</h2>
-          <p className="text-slate-500 text-xs sm:text-sm font-medium mt-1">
-            Real-time aggregate data for GMV, take rate, pending store verifications, and settlements.
-          </p>
-        </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex justify-end items-center  gap-3">
           <Link
             href="/admin/verification"
             className="flex items-center gap-2 px-4 py-2.5 bg-[#7a3dbf] hover:bg-[#682fad] text-white text-xs font-bold rounded-xl shadow-sm shadow-purple-600/20 transition active:scale-95"
@@ -77,7 +60,6 @@ export default function AdminOverviewPage() {
             Payouts Queue
           </Link>
         </div>
-      </div>
 
       {/* ── Metric Stat Cards Grid ───────────────────────────────── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
