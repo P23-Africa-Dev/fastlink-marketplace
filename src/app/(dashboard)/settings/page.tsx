@@ -23,6 +23,7 @@ import {
 import { useAuthStore } from "@/store/auth-store";
 import { cn } from "@/lib/utils";
 import { apiErrorMessage, authApi } from "@/lib/api";
+import { PasswordInput } from "@/components/ui/password-input";
 import { useSellerSettings, useUpdateSellerSettings } from "@/hooks/use-dashboard";
 
 // Interface definitions for settings configuration
@@ -548,8 +549,7 @@ function SettingsPageContent() {
               <form onSubmit={handleChangePassword} className="space-y-4">
                 <div>
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Current Password</label>
-                  <input
-                    type="password"
+                  <PasswordInput
                     value={currPassword}
                     readOnly
                     className="w-full bg-slate-100 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-500 focus:outline-none cursor-not-allowed select-none"
@@ -558,11 +558,11 @@ function SettingsPageContent() {
 
                 <div>
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">New Password</label>
-                  <input
-                    type="password"
+                  <PasswordInput
                     placeholder="New Password"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
+                    autoComplete="new-password"
                     className="w-full bg-[#faf6ff] border border-[#ebd7fa] rounded-xl px-3 py-2 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#7a3dbf]"
                     required
                   />
@@ -570,11 +570,11 @@ function SettingsPageContent() {
 
                 <div>
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Confirm Password</label>
-                  <input
-                    type="password"
+                  <PasswordInput
                     placeholder="Confirm Password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
+                    autoComplete="new-password"
                     className="w-full bg-[#faf6ff] border border-[#ebd7fa] rounded-xl px-3 py-2 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#7a3dbf]"
                     required
                   />

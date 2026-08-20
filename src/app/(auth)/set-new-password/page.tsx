@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 
 import loginFrame from "@/assets/login-frame.png";
+import { PasswordInput } from "@/components/ui/password-input";
 import { authApi, apiErrorMessage } from "@/lib/api";
 
 export default function SetNewPasswordPage() {
@@ -112,24 +113,26 @@ export default function SetNewPasswordPage() {
                 )}
 
                 <div>
-                  <input
-                    type="password"
+                  <PasswordInput
                     value={form.password}
                     onChange={(e) => setForm((p) => ({ ...p, password: e.target.value }))}
                     placeholder="New Password"
                     required
+                    autoComplete="new-password"
                     className="w-full bg-transparent border border-white/90 rounded font-medium text-white placeholder:text-white px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-white/50 transition-all text-center"
+                    toggleClassName="text-white/80 hover:text-white"
                   />
                 </div>
 
                 <div>
-                  <input
-                    type="password"
+                  <PasswordInput
                     value={form.confirmPassword}
                     onChange={(e) => setForm((p) => ({ ...p, confirmPassword: e.target.value }))}
                     placeholder="Confirm Password"
                     required
+                    autoComplete="new-password"
                     className="w-full bg-transparent border border-white/90 rounded font-medium text-white placeholder:text-white px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-white/50 transition-all text-center"
+                    toggleClassName="text-white/80 hover:text-white"
                   />
                 </div>
 

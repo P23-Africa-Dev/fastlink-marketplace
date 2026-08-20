@@ -8,6 +8,7 @@ import Image from "next/image";
 
 import loginFrame from "@/assets/login-frame.png";
 import logoSvg from "@/assets/logo.svg";
+import { PasswordInput } from "@/components/ui/password-input";
 import { authApi, apiErrorMessage } from "@/lib/api";
 import { safePostLoginPath } from "@/lib/auth-session";
 import { QUERY_KEYS, queryClient } from "@/lib/query-client";
@@ -112,12 +113,12 @@ export default function LoginPage() {
                   <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block ml-1">
                     Password
                   </label>
-                  <input
-                    type="password"
+                  <PasswordInput
                     value={form.password}
                     onChange={(e) => setForm((p) => ({ ...p, password: e.target.value }))}
                     placeholder="••••••••"
                     required
+                    autoComplete="current-password"
                     className="w-full bg-[#faf6ff] border border-[#ebd7fa] rounded-xl px-4 py-3 text-sm font-semibold text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#7a3dbf]/40 focus:border-[#7a3dbf] transition-all"
                   />
                 </div>
