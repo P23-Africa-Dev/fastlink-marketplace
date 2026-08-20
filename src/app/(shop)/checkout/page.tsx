@@ -10,6 +10,7 @@ import { Check, ChevronRight, Lock, ArrowLeft, ShieldCheck, Loader2 } from "luci
 import { useCartStore } from "@/store/cart-store";
 import { useAuthStore } from "@/store/auth-store";
 import { formatPrice, cn } from "@/lib/utils";
+import { COUNTRIES, DEFAULT_COUNTRY } from "@/lib/countries";
 import { apiErrorMessage, checkoutApi } from "@/lib/api";
 import { useMe } from "@/hooks/use-auth";
 import { useCheckout, useCreateAddress, useCheckoutQuote, useInitializeCheckout } from "@/hooks/use-orders";
@@ -77,7 +78,7 @@ export default function CheckoutPage() {
     city: "",
     state: "",
     postalCode: "",
-    country: "Nigeria",
+    country: DEFAULT_COUNTRY,
     cardNumber: "",
     cardExpiry: "",
     cardCvc: "",
@@ -448,12 +449,23 @@ export default function CheckoutPage() {
                     onChange={(v) => update("postalCode", v)}
                     placeholder="700213"
                   />
-                  <FormField
-                    label="Country"
-                    value={form.country}
-                    onChange={(v) => update("country", v)}
-                    placeholder="Nigeria"
-                  />
+                  <div>
+                    <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#8A79A5]">
+                      Country
+                    </label>
+                    <select
+                      value={form.country}
+                      onChange={(e) => update("country", e.target.value)}
+                      required
+                      className="w-full rounded-xl border border-[#D8C2EF] bg-white px-4 py-3 text-xs text-[#3B1C5A] focus:border-[#7E37C9] focus:outline-none transition-colors font-montserrat"
+                    >
+                      {COUNTRIES.map((country) => (
+                        <option key={country} value={country}>
+                          {country}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
                 <button
                   onClick={continueFromShipping}

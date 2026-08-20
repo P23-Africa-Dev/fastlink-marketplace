@@ -20,7 +20,7 @@ import {
 import { cn } from "@/lib/utils";
 import { toDashboardProduct } from "@/lib/product-map";
 import { useSellerProducts } from "@/hooks/use-seller-products";
-import type { Product } from "@/lib/mock-products";
+import type { DashboardProduct } from "@/types/seller-dashboard-product";
 
 const TAG_COLORS = [
   "bg-[#faf6ff] text-[#7a3dbf] border-[#ebd7fa]",

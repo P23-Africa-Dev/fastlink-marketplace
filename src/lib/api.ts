@@ -57,7 +57,7 @@ import type {
   NationwideBrand,
   ShopCategoryItem,
   LocalStoreItem,
-} from "@/mocks/stores-data";
+} from "@/types/catalog";
 import { clearAuthCookies, isLoginRequiredPath } from "@/lib/auth-session";
 
 // ---------------------------------------------------------------------------
@@ -126,7 +126,7 @@ export function apiErrorCode(error: unknown): string | null {
 }
 
 // ---------------------------------------------------------------------------
-// Mock API functions — replace with real axios calls when your API is ready
+// API functions
 // ---------------------------------------------------------------------------
 
 function compactParams(params: Record<string, unknown>) {
@@ -510,6 +510,12 @@ export const sellerCustomersApi = {
     const { data } = await apiClient.get<ApiResponse<PaginatedResponse<SellerCustomer>>>("/seller/customers", {
       params: compactParams({ q, limit: 100 }),
     });
+    return data.data;
+  },
+  get: async (id: string) => {
+    const { data } = await apiClient.get<
+      ApiResponse<SellerCustomer & { orders?: ApiOrder[] }>
+    >(`/seller/customers/${id}`);
     return data.data;
   },
 };

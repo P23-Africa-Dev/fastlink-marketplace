@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Store } from "lucide-react";
-import { BrandPartner } from "@/mocks/stores-data";
+import type { BrandPartner } from "@/types/catalog";
 import { DynamicHero } from "@/components/marketplace/dynamic-hero";
 import { useBrands, useCategories } from "@/hooks/use-catalog";
 

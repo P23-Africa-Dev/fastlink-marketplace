@@ -1,5 +1,5 @@
 import type { Product as ShopProduct } from "@/types/product";
-import type { Product as DashboardProduct } from "@/lib/mock-products";
+import type { DashboardProduct } from "@/types/seller-dashboard-product";
 
 function inventoryStatus(product: ShopProduct): DashboardProduct["status"] {
   if (product.status === "draft") return "Draft";

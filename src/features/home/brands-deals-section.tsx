@@ -4,7 +4,7 @@ import { useRef, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { ChevronRight, ChevronLeft, ShoppingCart } from "lucide-react";
-import type { BrandPartner } from "@/mocks/stores-data";
+import type { BrandPartner } from "@/types/catalog";
 import {
   useBrands,
   useDeals,

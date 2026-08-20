@@ -123,11 +123,7 @@ function SettingsPageContent() {
   ]);
 
   // Connected Apps State
-  const [connectedApps, setConnectedApps] = useState<ConnectedApp[]>([
-    { id: "stripe", name: "Stripe", connected: true },
-    { id: "paypal", name: "PayPal", connected: true },
-    { id: "analytics", name: "Google Analytics", connected: true },
-  ]);
+  const [connectedApps, setConnectedApps] = useState<ConnectedApp[]>([]);
 
   // Security passwords state
   const [currPassword, setCurrPassword] = useState("••••••••••••");
@@ -136,12 +132,12 @@ function SettingsPageContent() {
   const [is2faEnabled, setIs2faEnabled] = useState(false);
 
   // --- PROFILE DASHBOARD STATES (View 2) ---
-  const [profFirstName, setProfFirstName] = useState("Roken");
-  const [profSecondName, setProfSecondName] = useState("Balan");
-  const [profLastName, setProfLastName] = useState("Balan");
-  const [profPhone, setProfPhone] = useState("+1 (555) 019-2834");
-  const [address1, setAddress1] = useState("120 Pine Street, Suite 400");
-  const [address2, setAddress2] = useState("San Francisco, CA 94111");
+  const [profFirstName, setProfFirstName] = useState("");
+  const [profSecondName, setProfSecondName] = useState("");
+  const [profLastName, setProfLastName] = useState("");
+  const [profPhone, setProfPhone] = useState("");
+  const [address1, setAddress1] = useState("");
+  const [address2, setAddress2] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
 
   // Simulated alert triggers

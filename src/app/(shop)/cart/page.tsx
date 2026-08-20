@@ -9,13 +9,13 @@ import { useCartStore } from "@/store/cart-store";
 import { formatPrice } from "@/lib/utils";
 import { apiErrorMessage } from "@/lib/api";
 import { ShopProductCard } from "@/components/product/shop-product-card";
-import { MOCK_PRODUCTS } from "@/mocks/data";
+import { useRecommendations } from "@/hooks/use-products";
 import { useCartSync, usePromoPreview } from "@/hooks/use-growth";
 import { useAuthStore } from "@/store/auth-store";
 
-const SUGGESTED = MOCK_PRODUCTS.filter((p) => p.isBestseller).slice(0, 4);
-
 export default function CartPage() {
+  const { data: recommendations } = useRecommendations();
+  const suggested = recommendations?.forYou?.slice(0, 4) ?? [];
   const { items, removeItem, updateQuantity, clearCart, subtotal, shipping, tax, total, couponCode, discount, setCoupon, clearCoupon } =
     useCartStore();
   const [codeInput, setCodeInput] = useState(couponCode);
@@ -68,7 +68,7 @@ export default function CartPage() {
               </h2>
             </div>
             <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
-              {SUGGESTED.map((p) => (
+              {suggested.map((p) => (
                 <ShopProductCard key={p.id} product={p} />
               ))}
             </div>

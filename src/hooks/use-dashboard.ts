@@ -28,6 +28,14 @@ export function useSellerCustomers(q?: string) {
   });
 }
 
+export function useSellerCustomer(id?: string) {
+  return useQuery({
+    queryKey: [...QUERY_KEYS.seller.customers(), "detail", id ?? ""],
+    queryFn: () => sellerCustomersApi.get(id!),
+    enabled: Boolean(id),
+  });
+}
+
 export function useSellerStore() {
   return useQuery({
     queryKey: QUERY_KEYS.seller.store(),

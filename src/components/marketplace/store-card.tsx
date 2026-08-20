@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Clock, MapPin } from "lucide-react";
-import type { LocalStoreItem } from "@/mocks/stores-data";
+import type { LocalStoreItem } from "@/types/catalog";
 
 interface StoreCardProps {
   store: LocalStoreItem;

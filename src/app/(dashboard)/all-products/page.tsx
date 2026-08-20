@@ -34,7 +34,7 @@ import {
 } from "@/hooks/use-seller-products";
 import { useSellerStore } from "@/hooks/use-dashboard";
 import type { Product as ApiProduct } from "@/types/product";
-import type { Product as DashboardProduct } from "@/lib/mock-products";
+import type { DashboardProduct } from "@/types/seller-dashboard-product";
 import Link from "next/link";
 
 export default function AllProductsPage() {
