@@ -8,7 +8,7 @@ import { ReactNode, useState, useMemo } from "react";
 export interface DynamicHeroProps {
   title: ReactNode;
   subtitle?: ReactNode;
-  backgroundImage: string | any;
+  backgroundImage?: string | any;
   backLink?: string;
   backLabel?: string;
   children?: ReactNode;

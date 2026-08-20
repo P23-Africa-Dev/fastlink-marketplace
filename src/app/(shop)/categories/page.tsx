@@ -32,7 +32,7 @@ export default function CategoriesPage() {
       <DynamicHero
         title="Shop By Category"
         subtitle="Browse products across all brands and stores — no mall navigation required"
-        backgroundImage={categories[0]?.image || "https://images.unsplash.com/photo-1468495244123-6c6c332eeece?w=1600&auto=format&fit=crop"}
+        backgroundImage={categories[0]?.image || undefined}
         backLink="/"
         backLabel="Back to Homepage"
       />

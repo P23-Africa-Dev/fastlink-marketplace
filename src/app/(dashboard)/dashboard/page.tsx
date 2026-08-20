@@ -1,24 +1,18 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
-  ShoppingCart,
   ShoppingBag,
-  Receipt,
   Boxes,
   Users,
   Package,
   TrendingUp,
-  Truck,
-  Wallet,
   ChevronRight,
-  Plus,
-  Clock,
-  Sparkles,
-  Download,
   ArrowUpRight,
+  Receipt,
+  Truck,
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -31,7 +25,6 @@ import {
 } from "recharts";
 
 import { StatCard } from "@/components/dashboard/stat-card";
-import headphonesImg from "@/assets/headphones.png";
 import { useDashboardStats } from "@/hooks/use-dashboard";
 import { formatOrderDate } from "@/lib/order-map";
 
@@ -65,31 +58,13 @@ export default function DashboardPage() {
     };
   });
 
-  // Countdown timer for Hot Deals
-  const [timeLeft, setTimeLeft] = useState({ hours: 4, minutes: 22, seconds: 15 });
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev.seconds > 0) {
-          return { ...prev, seconds: prev.seconds - 1 };
-        } else if (prev.minutes > 0) {
-          return { ...prev, minutes: 59, seconds: 59 };
-        } else if (prev.hours > 0) {
-          return { ...prev, hours: prev.hours - 1, minutes: 59, seconds: 59 };
-        }
-        return prev;
-      });
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const formatTime = (num: number) => String(num).padStart(2, "0");
-
   const filteredOrders = orders.filter((o) => {
     if (orderFilter === "All") return true;
     return o.status === orderFilter;
   });
+
+  const topProducts = stats?.topProducts ?? [];
+  const activity = stats?.activitySummary;
 
   return (
     <div className="space-y-8 max-w-[1600px] mx-auto pb-6">
@@ -369,82 +344,61 @@ export default function DashboardPage() {
               </ResponsiveContainer>
             </div>
 
-            {/* Stats Row */}
-            {/* <div className="grid grid-cols-3 gap-2 mt-6 pt-4 border-t border-slate-100 text-center">
-              <div className="p-2 rounded-xl bg-[#faf6ff]/60 border border-[#ebd7fa]/40">
-                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Visitors</p>
-                <p className="text-sm sm:text-base font-semibold text-slate-800 mt-0.5">12,540</p>
-                <span className="text-[10px] font-semibold text-emerald-600 flex items-center justify-center gap-0.5 mt-0.5">
-                  <TrendingUp size={10} /> 12.5%
-                </span>
+            {activity && (
+              <div className="mt-4 grid grid-cols-3 gap-2 border-t border-slate-100 pt-4">
+                <div className="rounded-xl bg-[#faf6ff] px-2.5 py-2 text-center">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Views</p>
+                  <p className="text-sm font-semibold text-slate-800">{activity.pageViews7d}</p>
+                </div>
+                <div className="rounded-xl bg-[#faf6ff] px-2.5 py-2 text-center">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Checkouts</p>
+                  <p className="text-sm font-semibold text-slate-800">{activity.checkoutStarts7d}</p>
+                </div>
+                <div className="rounded-xl bg-[#faf6ff] px-2.5 py-2 text-center">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Reviews</p>
+                  <p className="text-sm font-semibold text-slate-800">{activity.reviews7d}</p>
+                </div>
               </div>
-              <div className="p-2 rounded-xl bg-[#faf6ff]/60 border border-[#ebd7fa]/40">
-                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Orders</p>
-                <p className="text-sm sm:text-base font-semibold text-slate-800 mt-0.5">1,248</p>
-                <span className="text-[10px] font-semibold text-emerald-600 flex items-center justify-center gap-0.5 mt-0.5">
-                  <TrendingUp size={10} /> 18.6%
-                </span>
-              </div>
-              <div className="p-2 rounded-xl bg-[#faf6ff]/60 border border-[#ebd7fa]/40">
-                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Revenue</p>
-                <p className="text-sm sm:text-base font-semibold text-slate-800 mt-0.5">₦2.45M</p>
-                <span className="text-[10px] font-semibold text-emerald-600 flex items-center justify-center gap-0.5 mt-0.5">
-                  <TrendingUp size={10} /> 24.8%
-                </span>
-              </div>
-            </div> */}
+            )}
           </div>
 
-          {/* Hot Deals Banner */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <h2 className="text-slate-800 text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5">
-                <Sparkles size={14} className="text-[#7a3dbf]" />
-                Hot Deals & Promotions
+              <h2 className="text-slate-800 text-xs font-semibold uppercase tracking-wider">
+                Top Products
               </h2>
-              <Link href="/products?deals=true" className="text-[#7a3dbf] text-xs font-semibold hover:underline flex items-center gap-0.5">
+              <Link href="/all-products" className="text-[#7a3dbf] text-xs font-semibold hover:underline flex items-center gap-0.5">
                 View All <ArrowUpRight size={13} />
               </Link>
             </div>
-            
-            <div className="relative bg-gradient-to-br from-[#7a3dbf] via-[#682fad] to-[#52237a] rounded-[2.2rem] p-6 shadow-xl text-white flex items-center justify-between overflow-hidden min-h-[195px] group">
-              {/* Animated glow effects */}
-              <div className="absolute top-0 right-0 w-48 h-48 bg-yellow-400/20 rounded-full blur-3xl group-hover:scale-125 transition-transform duration-700 pointer-events-none" />
-              <div className="absolute -bottom-10 -left-10 w-36 h-36 bg-purple-400/20 rounded-full blur-2xl pointer-events-none" />
 
-              <div className="flex flex-col items-start justify-center max-w-[58%] z-10 space-y-3">
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-yellow-400/20 border border-yellow-300/30 text-yellow-300 text-[10px] font-semibold uppercase tracking-widest backdrop-blur-md">
-                  <Clock size={11} />
-                  <span>Ends in {formatTime(timeLeft.hours)}h:{formatTime(timeLeft.minutes)}m:{formatTime(timeLeft.seconds)}s</span>
-                </div>
-
-                <div>
-                  <h3 className="text-lg sm:text-xl font-semibold leading-tight tracking-tight">
-                    Big Savings on Top Products
-                  </h3>
-                  <p className="text-purple-200 text-xs font-medium mt-1">
-                    Boost sales with featured discounts up to 40% Off!
-                  </p>
-                </div>
-
-                <Link
-                  href="/products?deals=true"
-                  className="bg-yellow-400 hover:bg-yellow-300 text-purple-950 font-semibold text-xs rounded-full px-5 py-2.5 transition-all flex items-center gap-2 shadow-lg shadow-yellow-500/20 hover:scale-105 active:scale-95 shrink-0"
-                >
-                  <span>Shop Deals</span>
-                  <ShoppingCart size={14} />
-                </Link>
-              </div>
-
-              {/* Headphones Product Image */}
-              <div className="absolute right-1 bottom-1 w-[155px] h-[175px] z-10 pointer-events-none">
-                <Image
-                  src={headphonesImg}
-                  alt="Hot deals headphones"
-                  fill
-                  className="object-contain transform rotate-[-6deg] group-hover:rotate-0 group-hover:scale-110 transition-all duration-500 drop-shadow-2xl"
-                />
-              </div>
+            <div className="bg-white rounded-[2.2rem] border border-[#ebd7fa] shadow-sm divide-y divide-slate-100 overflow-hidden">
+              {topProducts.length === 0 ? (
+                <p className="px-5 py-8 text-center text-sm text-slate-400">
+                  No paid product sales yet.
+                </p>
+              ) : (
+                topProducts.map((product) => (
+                  <div key={product.id} className="flex items-center gap-3 px-5 py-3.5">
+                    <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-xl bg-[#faf6ff]">
+                      {product.image ? (
+                        <Image src={product.image} alt={product.name} fill className="object-cover" />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-[#7a3dbf]">
+                          <Package size={16} />
+                        </div>
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold text-slate-800">{product.name}</p>
+                      <p className="text-[11px] text-slate-400">{product.sales} sold</p>
+                    </div>
+                    <p className="shrink-0 text-sm font-semibold text-slate-800">
+                      ₦{Math.round(product.revenue).toLocaleString()}
+                    </p>
+                  </div>
+                ))
+              )}
             </div>
           </div>
 

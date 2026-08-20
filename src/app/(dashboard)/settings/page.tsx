@@ -23,6 +23,7 @@ import {
 import { useAuthStore } from "@/store/auth-store";
 import { cn } from "@/lib/utils";
 import { apiErrorMessage, authApi } from "@/lib/api";
+import { formatOrderDate } from "@/lib/order-map";
 import { PasswordInput } from "@/components/ui/password-input";
 import { useSellerSettings, useUpdateSellerSettings } from "@/hooks/use-dashboard";
 
@@ -80,7 +81,7 @@ function SettingsPageContent() {
   const [genName, setGenName] = useState("");
   const [genEmail, setGenEmail] = useState("");
   const [genPhone, setGenPhone] = useState("");
-  const [avatarSeed, setAvatarSeed] = useState("Sarah");
+  const [avatarSeed, setAvatarSeed] = useState(user?.name || "user");
 
   // Load defaults or store values
   useEffect(() => {
@@ -126,7 +127,7 @@ function SettingsPageContent() {
   const [connectedApps, setConnectedApps] = useState<ConnectedApp[]>([]);
 
   // Security passwords state
-  const [currPassword, setCurrPassword] = useState("••••••••••••");
+  const [currPassword, setCurrPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [is2faEnabled, setIs2faEnabled] = useState(false);
@@ -356,7 +357,10 @@ function SettingsPageContent() {
 
                   <div className="flex flex-col sm:flex-row items-center justify-between pt-4 border-t border-slate-100 gap-4">
                     <span className="text-xs font-semibold text-slate-400">
-                      Member Since: <strong className="text-slate-600">Oct 15, 2021</strong>
+                      Member Since:{" "}
+                      <strong className="text-slate-600">
+                        {user?.createdAt ? formatOrderDate(user.createdAt) : "—"}
+                      </strong>
                     </span>
                     <button
                       type="submit"
@@ -501,7 +505,12 @@ function SettingsPageContent() {
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Connected Integrations</span>
 
                     {/* App links */}
-                    {connectedApps.map((app) => (
+                    {connectedApps.length === 0 ? (
+                      <p className="text-xs text-slate-400 font-semibold rounded-xl border border-dashed border-[#ebd7fa] p-4 bg-[#faf6ff]">
+                        No integrations available yet.
+                      </p>
+                    ) : (
+                      connectedApps.map((app) => (
                       <div key={app.id} className="flex items-center justify-between border border-[#ebd7fa] rounded-xl p-3 bg-[#faf6ff]">
                         <div className="flex items-center gap-2">
                           <Link2 size={14} className="text-[#7a3dbf]" />
@@ -520,7 +529,8 @@ function SettingsPageContent() {
                           {app.connected ? "Disconnect" : "Connect"}
                         </button>
                       </div>
-                    ))}
+                    ))
+                    )}
                   </div>
 
                   <div className="text-[10px] text-slate-400 font-semibold leading-relaxed">
@@ -546,9 +556,11 @@ function SettingsPageContent() {
                 <div>
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Current Password</label>
                   <PasswordInput
+                    placeholder="Current password"
                     value={currPassword}
-                    readOnly
-                    className="w-full bg-slate-100 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-500 focus:outline-none cursor-not-allowed select-none"
+                    onChange={(e) => setCurrPassword(e.target.value)}
+                    autoComplete="current-password"
+                    className="w-full bg-[#faf6ff] border border-[#ebd7fa] rounded-xl px-3 py-2 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#7a3dbf]"
                   />
                 </div>
 
@@ -588,50 +600,15 @@ function SettingsPageContent() {
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <span className="text-xs font-bold text-slate-700 block">Two-Factor Authentication (2FA)</span>
-                    <span className="text-[10px] text-slate-400 font-semibold">Secure your store with a secondary code</span>
+                    <span className="text-[10px] text-slate-400 font-semibold">Not available yet</span>
                   </div>
-                  
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (!is2faEnabled) {
-                        setActiveModal("2fa");
-                      } else {
-                        setIs2faEnabled(false);
-                        triggerToast("2FA disabled.");
-                      }
-                    }}
-                    className={cn(
-                      "w-10 h-5.5 rounded-full p-0.5 transition-colors relative flex items-center cursor-pointer",
-                      is2faEnabled ? "bg-[#7a3dbf]" : "bg-slate-200"
-                    )}
-                  >
-                    <span className={cn(
-                      "h-4.5 w-4.5 rounded-full bg-white shadow-sm transition-transform duration-200",
-                      is2faEnabled ? "translate-x-4.5" : "translate-x-0.5"
-                    )} />
-                  </button>
+                  <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded-lg">Soon</span>
                 </div>
               </div>
 
-              {/* Session History */}
               <div className="border-t border-slate-100 pt-4 space-y-3">
                 <span className="text-xs font-bold text-slate-700 block">Session History</span>
-                
-                <div className="space-y-2">
-                  {[
-                    "San Francisco, CA - Jul 10, 2023, 11:30 AM",
-                    "San Francisco, CA - Jul 10, 2023, 9:15 AM",
-                    "Jul 10, 2023, 5:30 AM",
-                    "San Francisco, CA - Jul 10, 2023, 5:35 PM",
-                    "Jul 10, 2023, 7:00 AM",
-                  ].map((session, idx) => (
-                    <div key={idx} className="flex items-center gap-2 text-[10px] font-semibold text-slate-400">
-                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" />
-                      <span>{session}</span>
-                    </div>
-                  ))}
-                </div>
+                <p className="text-[10px] font-semibold text-slate-400">No session history available from the API yet.</p>
               </div>
             </div>
 
@@ -679,7 +656,9 @@ function SettingsPageContent() {
                         Owner & Admin
                       </span>
                     </div>
-                    <p className="text-xs text-slate-400 font-semibold">Member Since: Jan 2021</p>
+                    <p className="text-xs text-slate-400 font-semibold">
+                      Member Since: {user?.createdAt ? formatOrderDate(user.createdAt) : "—"}
+                    </p>
                     
                     <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 pt-2">
                       <Activity size={14} className="text-[#7a3dbf]" />
@@ -879,72 +858,15 @@ function SettingsPageContent() {
               </h2>
 
               <div className="divide-y divide-slate-100">
-                {/* Alert 1: Verify login */}
-                {!isDeviceVerified ? (
-                  <div className="py-3.5 flex items-center justify-between gap-4">
-                    <div className="min-w-0">
-                      <span className="text-xs font-bold text-slate-800 block">Verify New Device Login</span>
-                      <span className="text-[10px] text-slate-400 font-semibold block mt-0.5">Verify New Device Login</span>
-                    </div>
-                    <button
-                      onClick={() => setActiveModal("verify")}
-                      className="bg-[#7a3dbf] hover:bg-[#682fad] text-white font-bold text-xs px-3.5 py-1.5 rounded-lg transition-all shadow-sm shrink-0 active:scale-95"
-                    >
-                      Verify
-                    </button>
+                {user?.kycStatus && user.kycStatus !== "approved" ? (
+                  <div className="py-3.5">
+                    <span className="text-xs font-bold text-slate-800 block">Business verification</span>
+                    <span className="text-[10px] text-amber-600 font-semibold block mt-0.5 capitalize">
+                      Status: {user.kycStatus.replace(/_/g, " ")}
+                    </span>
                   </div>
                 ) : (
-                  <div className="py-3.5 flex items-center gap-3 text-slate-400">
-                    <CheckCircle className="text-green-500 shrink-0" size={16} />
-                    <div className="min-w-0">
-                      <span className="text-xs font-bold line-through">Verify New Device Login</span>
-                      <span className="text-[9px] text-green-500 font-bold block mt-0.5">Approved successfully</span>
-                    </div>
-                  </div>
-                )}
-
-                {/* Alert 2: 2FA */}
-                {!is2faAlertSolved ? (
-                  <button
-                    onClick={() => setActiveModal("2fa")}
-                    className="w-full py-3.5 flex items-center justify-between gap-4 text-left hover:bg-slate-50/50 transition-all rounded-lg"
-                  >
-                    <div className="min-w-0">
-                      <span className="text-xs font-bold text-slate-800 block">Set Up Two-Factor Authentication</span>
-                      <span className="text-[10px] text-slate-400 font-semibold block mt-0.5">Set Up Two-Factor Authentication</span>
-                    </div>
-                    <ChevronRight className="text-slate-400 shrink-0" size={16} />
-                  </button>
-                ) : (
-                  <div className="py-3.5 flex items-center gap-3 text-slate-400">
-                    <CheckCircle className="text-green-500 shrink-0" size={16} />
-                    <div className="min-w-0">
-                      <span className="text-xs font-bold line-through">Set Up Two-Factor Authentication</span>
-                      <span className="text-[9px] text-green-500 font-bold block mt-0.5">2FA set up completed</span>
-                    </div>
-                  </div>
-                )}
-
-                {/* Alert 3: Tax Information */}
-                {!isTaxAlertSolved ? (
-                  <button
-                    onClick={() => setActiveModal("tax")}
-                    className="w-full py-3.5 flex items-center justify-between gap-4 text-left hover:bg-slate-50/50 transition-all rounded-lg"
-                  >
-                    <div className="min-w-0">
-                      <span className="text-xs font-bold text-slate-800 block">Complete Tax Information</span>
-                      <span className="text-[10px] text-slate-400 font-semibold block mt-0.5">Complete Tax Information</span>
-                    </div>
-                    <ChevronRight className="text-slate-400 shrink-0" size={16} />
-                  </button>
-                ) : (
-                  <div className="py-3.5 flex items-center gap-3 text-slate-400">
-                    <CheckCircle className="text-green-500 shrink-0" size={16} />
-                    <div className="min-w-0">
-                      <span className="text-xs font-bold line-through">Complete Tax Information</span>
-                      <span className="text-[9px] text-green-500 font-bold block mt-0.5">Tax forms filed (W-9)</span>
-                    </div>
-                  </div>
+                  <p className="py-3.5 text-xs text-slate-400 font-semibold">No pending account tasks.</p>
                 )}
               </div>
             </div>
@@ -1104,55 +1026,16 @@ function SettingsPageContent() {
             <div className="space-y-1">
               <h3 className="text-slate-800 font-bold text-base flex items-center gap-1.5">
                 <Smartphone className="text-[#7a3dbf]" size={18} />
-                <span>Set Up Two-Factor Authentication</span>
+                <span>Two-Factor Authentication</span>
               </h3>
-              <p className="text-xs text-slate-400">Scan this bar/QR code in Google Authenticator or Duo to secure your account.</p>
+              <p className="text-xs text-slate-400">Two-factor authentication is not available yet.</p>
             </div>
-
-            {/* Fake QR Code */}
-            <div className="flex flex-col items-center justify-center py-4 bg-slate-50 rounded-xl border border-slate-100 gap-2">
-              <div className="h-28 w-28 bg-white border border-slate-200 p-2 flex flex-wrap gap-1 items-center justify-center select-none shadow-sm">
-                {/* Visual mock QR grids */}
-                {Array.from({ length: 49 }).map((_, i) => (
-                  <div
-                    key={i}
-                    className={cn(
-                      "h-3 w-3 rounded-sm",
-                      (i % 3 === 0 || i % 7 === 1 || i % 5 === 0) && i > 4 ? "bg-slate-800" : "bg-transparent"
-                    )}
-                  />
-                ))}
-              </div>
-              <span className="text-[10px] font-bold text-[#7a3dbf] tracking-wide uppercase">Key: HYD7-22KS-OP91-KL99</span>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Verify Authenticator Code</label>
-              <input
-                type="text"
-                placeholder="6-digit pin"
-                maxLength={6}
-                className="w-full bg-[#faf6ff] border border-[#ebd7fa] rounded-xl px-4 py-2 text-center text-xs font-bold tracking-[0.25em]"
-                id="authenticator-input"
-              />
-            </div>
-
             <button
               type="button"
-              onClick={() => {
-                const val = (document.getElementById("authenticator-input") as HTMLInputElement)?.value;
-                if (!val || val.length < 6) {
-                  triggerToast("Please enter the 6-digit confirmation code.");
-                  return;
-                }
-                setIs2faEnabled(true);
-                setIs2faAlertSolved(true);
-                setActiveModal(null);
-                triggerToast("2FA setup successfully finalized!");
-              }}
+              onClick={() => setActiveModal(null)}
               className="w-full bg-[#7a3dbf] hover:bg-[#682fad] text-white font-bold text-xs py-2.5 rounded-xl transition-all shadow-md active:scale-95"
             >
-              Verify & Activate
+              Close
             </button>
           </div>
         </div>

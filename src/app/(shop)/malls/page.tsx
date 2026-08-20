@@ -62,7 +62,7 @@ export default function MallsPage() {
             </p>
           </>
         }
-        backgroundImage={malls[0]?.image || "https://images.unsplash.com/photo-1581417478175-a9ef18f210c2?w=1600&auto=format&fit=crop"}
+        backgroundImage={malls[0]?.image || undefined}
         backLink="/"
         backLabel="Back to Homepage"
       />

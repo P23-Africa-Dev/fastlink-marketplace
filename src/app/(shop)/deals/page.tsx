@@ -53,13 +53,19 @@ export default function DealsPage() {
               <div>
                 {/* Product image */}
                 <div className="relative aspect-square w-full overflow-hidden bg-purple-100">
+                  {deal.image ? (
                     <Image
-                      src={deal.image || "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=500&auto=format"}
+                      src={deal.image}
                       alt={deal.name}
-                    fill
-                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                    className="object-cover transition-transform duration-500 group-hover:scale-105"
-                  />
+                      fill
+                      sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                      className="object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-[#6D349F]/40">
+                      <Tag size={32} />
+                    </div>
+                  )}
                   {/* Top Right Pill Tag */}
                   <div className="absolute right-2.5 top-2.5 rounded-full bg-white/90 backdrop-blur px-3 py-1 text-[10px] font-bold text-[#6D349F] shadow-sm">
                     {deal.category}

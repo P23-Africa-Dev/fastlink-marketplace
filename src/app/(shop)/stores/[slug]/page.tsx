@@ -53,7 +53,6 @@ export default function StoreProductsPage(props: PageProps) {
       <div className="bg-[#EADBF8] min-h-screen pb-16">
         <DynamicHero
           title={displayName}
-          backgroundImage="https://images.unsplash.com/photo-1555529669-e69e7aa0ba9a?w=1600&auto=format&fit=crop"
           backLink="/malls"
           backLabel="Back to Malls"
         />

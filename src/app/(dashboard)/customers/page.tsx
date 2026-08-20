@@ -33,11 +33,22 @@ import {
 } from "recharts";
 
 import { cn } from "@/lib/utils";
-import { useSellerCustomers, useSellerCustomer } from "@/hooks/use-dashboard";
+import { useDashboardStats, useSellerCustomers, useSellerCustomer } from "@/hooks/use-dashboard";
 import { useCampaigns, useCreateCampaign } from "@/hooks/use-inbox";
 import { apiErrorMessage } from "@/lib/api";
 import { formatOrderDate } from "@/lib/order-map";
 import type { SellerCustomer } from "@/types/seller";
+
+function percentChange(current: number, previous: number): number {
+  if (previous === 0) return current > 0 ? 100 : 0;
+  return ((current - previous) / previous) * 100;
+}
+
+function formatChange(value: number): string {
+  if (value === 0) return "0%";
+  const sign = value > 0 ? "+" : "";
+  return `${sign}${value.toFixed(1)}%`;
+}
 
 const TIER_COLORS: Record<string, string> = {
   VIP: "text-blue-600 bg-blue-50 border-blue-200",
@@ -75,6 +86,8 @@ function toDirectoryCustomer(row: SellerCustomer) {
 }
 
 export default function CustomersPage() {
+  const { data: statsRes } = useDashboardStats("30d");
+  const stats = statsRes?.data;
   const { data: customerPage } = useSellerCustomers();
   const rawCustomers = customerPage?.data ?? [];
   const customers = rawCustomers.map(toDirectoryCustomer);
@@ -91,18 +104,22 @@ export default function CustomersPage() {
   }, [rawCustomers]);
 
   const segmentsData = useMemo(() => {
-    const total = rawCustomers.length || 1;
     const tiers = [
       { name: "VIP", color: "#7a3dbf" },
       { name: "Gold", color: "#10b981" },
       { name: "Silver", color: "#f59e0b" },
       { name: "Bronze", color: "#3b82f6" },
     ];
-    return tiers.map((tier) => ({
-      name: tier.name,
-      value: Math.round((rawCustomers.filter((c) => c.tier === tier.name).length / total) * 100),
-      color: tier.color,
-    }));
+    const total = rawCustomers.length;
+    return tiers.map((tier) => {
+      const count = rawCustomers.filter((c) => c.tier === tier.name).length;
+      return {
+        name: tier.name,
+        count,
+        value: total > 0 ? Math.round((count / total) * 100) : 0,
+        color: tier.color,
+      };
+    });
   }, [rawCustomers]);
 
   const [activeTab, setActiveTab] = useState<"directory" | "campaigns">("directory");
@@ -156,12 +173,10 @@ export default function CustomersPage() {
   const handleSendEmail = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedCustomer) return;
-    
-    // Trigger mock success toast
-    setToastMessage(`Email successfully sent to ${selectedCustomer.name}!`);
+
+    setToastMessage("Customer email sending is not available yet.");
     setTimeout(() => setToastMessage(""), 4000);
 
-    // Reset composer
     setSelectedCustomer(null);
     setEmailSubject("");
     setEmailBody("");
@@ -220,10 +235,23 @@ export default function CustomersPage() {
     setTimeout(() => setToastMessage(""), 4000);
   };
 
-  // Metrics calculations
+  // Metrics calculations (from API customer list + dashboard revenue trend)
   const totalSpend = customers.reduce((sum, c) => sum + c.spent, 0);
   const activeCount = customers.filter((c) => c.status === "Active").length;
   const vipCount = customers.filter((c) => c.tier === "VIP").length;
+
+  const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
+  const nowMs = Date.now();
+  const newCustomersLast30 = rawCustomers.filter((c) => {
+    const t = new Date(c.joinDate).getTime();
+    return !Number.isNaN(t) && nowMs - t <= thirtyDaysMs;
+  }).length;
+  const newCustomersPrev30 = rawCustomers.filter((c) => {
+    const t = new Date(c.joinDate).getTime();
+    return !Number.isNaN(t) && nowMs - t > thirtyDaysMs && nowMs - t <= 2 * thirtyDaysMs;
+  }).length;
+  const customersChange = percentChange(newCustomersLast30, newCustomersPrev30);
+  const revenueChange = stats?.revenueChange ?? 0;
 
   return (
     <div className="space-y-8 max-w-[1600px] mx-auto font-sans relative">
@@ -263,7 +291,14 @@ export default function CustomersPage() {
           <div className="flex-1 min-w-0">
             <p className="text-[10px] sm:text-xs font-bold text-[#7a3dbf] uppercase tracking-wider truncate">Total Customers</p>
             <p className="text-xl sm:text-2xl font-extrabold text-slate-800 mt-0.5">{customers.length}</p>
-            <span className="text-[10px] font-bold text-green-500 mt-0.5 block">+ 18.6% vs last month</span>
+            <span
+              className={cn(
+                "text-[10px] font-bold mt-0.5 block",
+                customersChange >= 0 ? "text-green-500" : "text-rose-500",
+              )}
+            >
+              {formatChange(customersChange)} vs prior 30 days
+            </span>
           </div>
         </div>
 
@@ -274,8 +309,8 @@ export default function CustomersPage() {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-[10px] sm:text-xs font-bold text-[#7a3dbf] uppercase tracking-wider truncate">Active Customers</p>
-            <p className="text-xl sm:text-2xl font-extrabold text-slate-800 mt-0.5">{activeCount + 951}</p>
-            <span className="text-[10px] font-bold text-green-500 mt-0.5 block">+ 12.3% vs last month</span>
+            <p className="text-xl sm:text-2xl font-extrabold text-slate-800 mt-0.5">{activeCount}</p>
+            <span className="text-[10px] font-bold text-slate-400 mt-0.5 block">Ordered in last 30 days</span>
           </div>
         </div>
 
@@ -286,20 +321,27 @@ export default function CustomersPage() {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-[10px] sm:text-xs font-bold text-[#7a3dbf] uppercase tracking-wider truncate">VIP Customers</p>
-            <p className="text-xl sm:text-2xl font-extrabold text-slate-800 mt-0.5">{vipCount + 82}</p>
-            <span className="text-[10px] font-bold text-green-500 mt-0.5 block">+ 5.7% vs last month</span>
+            <p className="text-xl sm:text-2xl font-extrabold text-slate-800 mt-0.5">{vipCount}</p>
+            <span className="text-[10px] font-bold text-slate-400 mt-0.5 block">₦500k+ lifetime spend</span>
           </div>
         </div>
 
         {/* Total Value Contributed */}
         <div className="bg-white rounded-[1.5rem] p-4 sm:p-5 shadow-sm border border-[#ebd7fa] flex items-center gap-3 sm:gap-4 hover:shadow-md transition-all duration-200">
           <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-[#fff3e0] flex items-center justify-center shrink-0">
-            <Users className="text-[#e65100]" size={20} />
+            <TrendingUp className="text-[#e65100]" size={20} />
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-[10px] sm:text-xs font-bold text-[#7a3dbf] uppercase tracking-wider truncate">Value Contributed</p>
-            <p className="text-xl sm:text-2xl font-extrabold text-slate-800 mt-0.5">₦{(totalSpend + 3260000).toLocaleString()}</p>
-            <span className="text-[10px] font-bold text-green-500 mt-0.5 block">+ 24.8% vs last month</span>
+            <p className="text-xl sm:text-2xl font-extrabold text-slate-800 mt-0.5">₦{Math.round(totalSpend).toLocaleString()}</p>
+            <span
+              className={cn(
+                "text-[10px] font-bold mt-0.5 block",
+                revenueChange >= 0 ? "text-green-500" : "text-rose-500",
+              )}
+            >
+              {formatChange(revenueChange)} store revenue (30d)
+            </span>
           </div>
         </div>
 
@@ -341,13 +383,16 @@ export default function CustomersPage() {
             {/* Left Card: Customer Acquisition (BarChart) */}
             <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-[#ebd7fa] lg:col-span-2 flex flex-col justify-between">
               <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
-                <h2 className="text-slate-800 text-lg font-bold">Acquisition Traffic</h2>
-                <span className="text-[#7a3dbf] text-xs font-bold bg-[#f3eafb] px-3 py-1 rounded-lg">Monthly Cohort</span>
+                <h2 className="text-slate-800 text-lg font-bold">New Customers by Month</h2>
+                <span className="text-[#7a3dbf] text-xs font-bold bg-[#f3eafb] px-3 py-1 rounded-lg">From orders</span>
               </div>
 
               <div className="w-full h-[200px] select-none mt-2">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={acquisitionData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
+                  <BarChart
+                    data={acquisitionData.length ? acquisitionData : [{ month: "—", count: 0 }]}
+                    margin={{ top: 10, right: 10, left: -25, bottom: 0 }}
+                  >
                     <CartesianGrid strokeDasharray="3 3" stroke="#f1eafc" vertical={false} />
                     <XAxis
                       dataKey="month"
@@ -395,7 +440,11 @@ export default function CustomersPage() {
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
-                        data={segmentsData}
+                        data={
+                          rawCustomers.length > 0
+                            ? segmentsData
+                            : [{ name: "No customers", value: 1, color: "#e2e8f0", count: 0 }]
+                        }
                         cx="50%"
                         cy="50%"
                         innerRadius={36}
@@ -403,12 +452,20 @@ export default function CustomersPage() {
                         paddingAngle={3}
                         dataKey="value"
                       >
-                        {segmentsData.map((entry, index) => (
+                        {(rawCustomers.length > 0
+                          ? segmentsData
+                          : [{ name: "No customers", value: 1, color: "#e2e8f0", count: 0 }]
+                        ).map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={entry.color} />
                         ))}
                       </Pie>
                     </PieChart>
                   </ResponsiveContainer>
+                  {rawCustomers.length === 0 && (
+                    <div className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-slate-400">
+                      No data
+                    </div>
+                  )}
                 </div>
 
                 {/* Solid Color Legend List */}
@@ -419,7 +476,10 @@ export default function CustomersPage() {
                         <span className="h-3 w-3 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
                         <span>{item.name}</span>
                       </div>
-                      <span>{item.value}%</span>
+                      <span>
+                        {item.count}
+                        {rawCustomers.length > 0 ? ` · ${item.value}%` : ""}
+                      </span>
                     </div>
                   ))}
                 </div>

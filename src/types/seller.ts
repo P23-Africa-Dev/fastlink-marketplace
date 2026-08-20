@@ -32,6 +32,8 @@ export interface StorePage {
 export interface DashboardStats {
   totalRevenue: number;
   totalOrders: number;
+  pendingOrders: number;
+  averageOrderValue: number;
   totalProducts: number;
   totalCustomers: number;
   revenueChange: number;
@@ -39,6 +41,12 @@ export interface DashboardStats {
   recentOrders: RecentOrder[];
   topProducts: TopProduct[];
   chart?: { name: string; value: number }[];
+  orderChart?: { name: string; value: number }[];
+  activitySummary?: {
+    pageViews7d: number;
+    checkoutStarts7d: number;
+    reviews7d: number;
+  };
 }
 
 export interface SellerCustomer {

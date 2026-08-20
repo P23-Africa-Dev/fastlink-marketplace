@@ -84,58 +84,39 @@ export default function AddNewProductPage() {
   const [zoomImage, setZoomImage] = useState<string | null>(null);
   const [lastSaved, setLastSaved] = useState<string>("");
 
-  const [categoryPath, setCategoryPath] = useState<string[]>(["Electronics", "Smartphones"]);
+  const [categoryPath, setCategoryPath] = useState<string[]>([]);
   const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
 
   const [productName, setProductName] = useState("");
   const [brand, setBrand] = useState("");
   const [condition, setCondition] = useState("New");
   const [description, setDescription] = useState("");
-  const [tags, setTags] = useState<string[]>(["Apple", "Premium", "iOS"]);
+  const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
 
-  const [uploadedImages, setUploadedImages] = useState<ImageFile[]>([
-    {
-      id: "img-1",
-      url: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=300&auto=format",
-      name: "iphone_main.jpg",
-      size: "142 KB"
-    },
-    {
-      id: "img-2",
-      url: "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=300&auto=format",
-      name: "display_spec.jpg",
-      size: "205 KB"
-    }
-  ]);
+  const [uploadedImages, setUploadedImages] = useState<ImageFile[]>([]);
   const [dragActive, setDragActive] = useState(false);
   const [videoFile, setVideoFile] = useState<{ name: string; size: string } | null>(null);
 
-  const [basePrice, setBasePrice] = useState<number>(1100000);
-  const [comparePrice, setComparePrice] = useState<number>(1250000);
-  const [costPrice, setCostPrice] = useState<number>(750000);
-  const [baseStock, setBaseStock] = useState<number>(50);
+  const [basePrice, setBasePrice] = useState<number>(0);
+  const [comparePrice, setComparePrice] = useState<number>(0);
+  const [costPrice, setCostPrice] = useState<number>(0);
+  const [baseStock, setBaseStock] = useState<number>(0);
   const [barcode, setBarcode] = useState("");
   const [alertThreshold, setAlertThreshold] = useState<number>(5);
   const [currency, setCurrency] = useState("NGN (₦)");
 
   const [hasVariants, setHasVariants] = useState(false);
-  const [variantTypes, setVariantTypes] = useState<VariantType[]>([
-    { name: "Color", values: ["Midnight Blue", "Titanium Gray"] },
-    { name: "Size", values: ["128GB", "256GB"] }
-  ]);
+  const [variantTypes, setVariantTypes] = useState<VariantType[]>([]);
   const [newTypeName, setNewTypeName] = useState("");
   const [variantCombinations, setVariantCombinations] = useState<VariantCombination[]>([]);
 
-  const [colorSwatches, setColorSwatches] = useState<{ [colorName: string]: string }>({
-    "Midnight Blue": "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=100&auto=format",
-    "Titanium Gray": "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=100&auto=format"
-  });
+  const [colorSwatches, setColorSwatches] = useState<{ [colorName: string]: string }>({});
 
-  const [weight, setWeight] = useState<number>(0.2);
-  const [length, setLength] = useState<number>(15);
-  const [width, setWidth] = useState<number>(7.5);
-  const [height, setHeight] = useState<number>(0.8);
+  const [weight, setWeight] = useState<number>(0);
+  const [length, setLength] = useState<number>(0);
+  const [width, setWidth] = useState<number>(0);
+  const [height, setHeight] = useState<number>(0);
   const [shippingClass, setShippingClass] = useState("Standard");
   const [specialHandling, setSpecialHandling] = useState(false);
 
@@ -1475,9 +1456,19 @@ function PreviewCard({
   return (
     <div className="w-full">
       <div className="relative aspect-[4/3] bg-slate-100 overflow-hidden">
-        <Image
-          src={uploadedImages[0]?.url || "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=300&auto=format"}
-          alt="preview" fill className="object-cover" sizes="300px" />
+        {uploadedImages[0]?.url ? (
+          <Image
+            src={uploadedImages[0].url}
+            alt="preview"
+            fill
+            className="object-cover"
+            sizes="300px"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center text-slate-300">
+            <Package size={40} />
+          </div>
+        )}
         <span className="absolute top-2 left-2 bg-[#7a3dbf] text-white text-[8px] font-semibold px-2 py-0.5 rounded-full uppercase">
           {categoryPath[1] || "Product"}
         </span>

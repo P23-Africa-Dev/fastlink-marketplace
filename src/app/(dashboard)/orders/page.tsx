@@ -6,10 +6,7 @@ import {
   Search,
   Eye,
   Edit2,
-  ChevronLeft,
-  ChevronRight,
   Download,
-  TrendingUp,
   MoreVertical,
   CheckCircle2,
   X,
@@ -31,23 +28,10 @@ import { toDashboardOrder, type Order } from "@/lib/order-map";
 import { Pagination } from "@/components/dashboard/pagination";
 import { apiErrorMessage } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { useDashboardStats } from "@/hooks/use-dashboard";
 import { useSellerOrders, useUpdateOrderStatus } from "@/hooks/use-orders";
 
-const WEEKLY_DATA = [
-  { day: "Mon", volume: 60 },
-  { day: "Tue", volume: 130 },
-  { day: "Wed", volume: 80 },
-  { day: "Thu", volume: 150 },
-  { day: "Fri", volume: 110 },
-  { day: "Sat", volume: 170 },
-  { day: "Sun", volume: 105 },
-];
-
-const TRAFFIC_DATA = [
-  { name: "Organic Search", value: 45, color: "#2196f3" },
-  { name: "Paid Social", value: 35, color: "#7a3dbf" },
-  { name: "Direct Email", value: 20, color: "#94a3b8" },
-];
+const ACTIVITY_COLORS = ["#2196f3", "#7a3dbf", "#94a3b8"] as const;
 
 const STATUS_STYLES: Record<string, string> = {
   Successful: "bg-emerald-50 text-emerald-700 border-emerald-200",
@@ -58,6 +42,9 @@ const STATUS_STYLES: Record<string, string> = {
 };
 
 export default function DashboardOrdersPage() {
+  const [range, setRange] = useState<"7d" | "30d" | "1y">("7d");
+  const { data: statsRes } = useDashboardStats(range);
+  const stats = statsRes?.data;
   const { data: sellerPage, isLoading } = useSellerOrders();
   const updateStatus = useUpdateOrderStatus();
   const orders = (sellerPage?.data ?? []).map(toDashboardOrder);
@@ -65,6 +52,41 @@ export default function DashboardOrdersPage() {
   const [statusFilter, setStatusFilter] = useState<string>("All");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
+
+  const weeklyData = useMemo(
+    () =>
+      (stats?.orderChart ?? stats?.chart ?? []).map((point) => ({
+        day: point.name,
+        volume: point.value,
+      })),
+    [stats?.orderChart, stats?.chart],
+  );
+
+  const chartMax = useMemo(() => {
+    const peak = Math.max(0, ...weeklyData.map((d) => d.volume));
+    if (peak <= 0) return 5;
+    return Math.ceil(peak / 5) * 5;
+  }, [weeklyData]);
+
+  const activityData = useMemo(() => {
+    const summary = stats?.activitySummary;
+    const rows = [
+      { name: "Page views", value: summary?.pageViews7d ?? 0, color: ACTIVITY_COLORS[0] },
+      { name: "Checkout starts", value: summary?.checkoutStarts7d ?? 0, color: ACTIVITY_COLORS[1] },
+      { name: "Reviews", value: summary?.reviews7d ?? 0, color: ACTIVITY_COLORS[2] },
+    ];
+    const total = rows.reduce((sum, row) => sum + row.value, 0);
+    return {
+      total,
+      rows: rows.map((row) => ({
+        ...row,
+        percent: total > 0 ? Math.round((row.value / total) * 100) : 0,
+      })),
+    };
+  }, [stats?.activitySummary]);
+
+  const rangeLabel =
+    range === "7d" ? "Past 7 days" : range === "1y" ? "Past year" : "Past 30 days";
 
   // Active dropdown row ID state
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
@@ -142,6 +164,17 @@ export default function DashboardOrdersPage() {
     return counts;
   }, [orders]);
 
+  const totalOrders = stats?.totalOrders ?? orders.length;
+  const pendingOrders = stats?.pendingOrders ?? statusCounts.Pending ?? 0;
+  const averageOrderValue = stats?.averageOrderValue ?? 0;
+  const ordersChange = stats?.ordersChange ?? 0;
+
+  const formatChange = (value: number) => {
+    if (value === 0) return "0%";
+    const sign = value > 0 ? "+" : "";
+    return `${sign}${value.toFixed(1)}%`;
+  };
+
   return (
     <div className="space-y-8 max-w-[1600px] mx-auto font-sans pb-8">
       
@@ -163,9 +196,27 @@ export default function DashboardOrdersPage() {
               <h2 className="text-slate-800 text-base sm:text-lg font-semibold">Overall Order Overview</h2>
               <p className="text-slate-400 text-xs font-normal">Order volume telemetry and key performance metrics</p>
             </div>
-            <button className="bg-[#f3eafb] text-[#7a3dbf] hover:bg-[#ebd7fa] transition-colors rounded-xl px-3.5 py-1.5 text-xs font-semibold shadow-sm">
-              Past 6 months
-            </button>
+            <div className="flex items-center gap-1.5">
+              {([
+                { id: "7d", label: "7d" },
+                { id: "30d", label: "30d" },
+                { id: "1y", label: "1y" },
+              ] as const).map((option) => (
+                <button
+                  key={option.id}
+                  type="button"
+                  onClick={() => setRange(option.id)}
+                  className={cn(
+                    "rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors",
+                    range === option.id
+                      ? "bg-[#7a3dbf] text-white"
+                      : "bg-[#f3eafb] text-[#7a3dbf] hover:bg-[#ebd7fa]",
+                  )}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -173,15 +224,18 @@ export default function DashboardOrdersPage() {
             {/* Weekly Order Volume Graph */}
             <div className="md:col-span-2 space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-slate-700 text-xs sm:text-sm font-semibold">Weekly Order Volume</span>
+                <span className="text-slate-700 text-xs sm:text-sm font-semibold">Order Volume</span>
                 <span className="text-[#7a3dbf] text-[11px] font-semibold bg-[#f3eafb] px-2.5 py-0.5 rounded-lg">
-                  Past 6 months
+                  {rangeLabel}
                 </span>
               </div>
               
               <div className="w-full h-[185px] select-none">
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={WEEKLY_DATA} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
+                  <AreaChart
+                    data={weeklyData.length ? weeklyData : [{ day: "—", volume: 0 }]}
+                    margin={{ top: 10, right: 10, left: -25, bottom: 0 }}
+                  >
                     <defs>
                       <linearGradient id="orderVolumeGradient" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor="#7a3dbf" stopOpacity={0.35} />
@@ -200,8 +254,8 @@ export default function DashboardOrdersPage() {
                       axisLine={false}
                       tickLine={false}
                       tick={{ fill: "#94a3b8", fontSize: 10, fontWeight: "600" }}
-                      domain={[0, 200]}
-                      ticks={[0, 50, 100, 150, 200]}
+                      domain={[0, chartMax]}
+                      allowDecimals={false}
                     />
                     <Tooltip
                       contentStyle={{
@@ -238,24 +292,42 @@ export default function DashboardOrdersPage() {
               <div className="bg-[#faf6ff] rounded-2xl p-3 border border-[#ebd7fa] shadow-sm hover:border-purple-300 transition-colors">
                 <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Total Orders</p>
                 <div className="flex items-baseline justify-between mt-0.5">
-                  <p className="text-lg font-semibold text-slate-800">2,845</p>
-                  <span className="text-[10px] font-semibold text-emerald-600">+12.4%</span>
+                  <p className="text-lg font-semibold text-slate-800">{totalOrders.toLocaleString()}</p>
+                  <span
+                    className={cn(
+                      "text-[10px] font-semibold",
+                      ordersChange >= 0 ? "text-emerald-600" : "text-rose-600",
+                    )}
+                  >
+                    {formatChange(ordersChange)}
+                  </span>
                 </div>
               </div>
 
               <div className="bg-[#faf6ff] rounded-2xl p-3 border border-[#ebd7fa] shadow-sm hover:border-purple-300 transition-colors">
                 <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Pending Orders</p>
                 <div className="flex items-baseline justify-between mt-0.5">
-                  <p className="text-lg font-semibold text-slate-800">14</p>
-                  <span className="text-[10px] font-semibold text-amber-600">Requires Action</span>
+                  <p className="text-lg font-semibold text-slate-800">{pendingOrders.toLocaleString()}</p>
+                  <span className="text-[10px] font-semibold text-amber-600">
+                    {pendingOrders > 0 ? "Requires Action" : "All clear"}
+                  </span>
                 </div>
               </div>
 
               <div className="bg-[#faf6ff] rounded-2xl p-3 border border-[#ebd7fa] shadow-sm hover:border-purple-300 transition-colors">
                 <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Average Order Value</p>
                 <div className="flex items-baseline justify-between mt-0.5">
-                  <p className="text-lg font-semibold text-slate-800">₦118,300</p>
-                  <span className="text-[10px] font-semibold text-emerald-600">+5.2%</span>
+                  <p className="text-lg font-semibold text-slate-800">
+                    ₦{Math.round(averageOrderValue).toLocaleString()}
+                  </p>
+                  <span
+                    className={cn(
+                      "text-[10px] font-semibold",
+                      (stats?.revenueChange ?? 0) >= 0 ? "text-emerald-600" : "text-rose-600",
+                    )}
+                  >
+                    {formatChange(stats?.revenueChange ?? 0)}
+                  </span>
                 </div>
               </div>
             </div>
@@ -263,24 +335,28 @@ export default function DashboardOrdersPage() {
           </div>
         </div>
 
-        {/* Right Card: Order Traffic Sources */}
+        {/* Right Card: Store activity (API-backed; no acquisition-channel endpoint yet) */}
         <div className="bg-white rounded-[2.2rem] p-6 shadow-sm border border-[#ebd7fa] flex flex-col justify-between hover:shadow-md transition-all">
           <div className="border-b border-slate-100 pb-3 mb-4 flex items-center justify-between">
             <div>
-              <h2 className="text-slate-800 text-base sm:text-lg font-semibold">Order Traffic Sources</h2>
-              <p className="text-slate-400 text-xs font-normal">Customer acquisition breakdown</p>
+              <h2 className="text-slate-800 text-base sm:text-lg font-semibold">Store Activity</h2>
+              <p className="text-slate-400 text-xs font-normal">Last 7 days from tracked events</p>
             </div>
           </div>
 
           <div className="space-y-4">
-            <span className="text-slate-700 text-xs sm:text-sm font-semibold">Top 3 Acquisition Channels</span>
+            <span className="text-slate-700 text-xs sm:text-sm font-semibold">Activity mix</span>
             
             <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
               <div className="w-[130px] h-[130px] shrink-0 relative">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
-                      data={TRAFFIC_DATA}
+                      data={
+                        activityData.total > 0
+                          ? activityData.rows
+                          : [{ name: "No activity", value: 1, color: "#e2e8f0", percent: 0 }]
+                      }
                       cx="50%"
                       cy="50%"
                       innerRadius={42}
@@ -288,32 +364,43 @@ export default function DashboardOrdersPage() {
                       paddingAngle={3}
                       dataKey="value"
                     >
-                      {TRAFFIC_DATA.map((entry, index) => (
+                      {(activityData.total > 0
+                        ? activityData.rows
+                        : [{ name: "No activity", value: 1, color: "#e2e8f0", percent: 0 }]
+                      ).map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
                   </PieChart>
                 </ResponsiveContainer>
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
-                  <span className="text-xs font-semibold text-slate-800">100%</span>
-                  <span className="text-[9px] font-normal text-slate-400">Total</span>
+                  <span className="text-xs font-semibold text-slate-800">
+                    {activityData.total.toLocaleString()}
+                  </span>
+                  <span className="text-[9px] font-normal text-slate-400">Events</span>
                 </div>
               </div>
 
               <div className="flex-1 w-full space-y-2.5">
-                {TRAFFIC_DATA.map((item) => (
+                {activityData.rows.map((item) => (
                   <div key={item.name} className="space-y-1">
                     <div className="flex items-center justify-between text-xs font-semibold text-slate-700">
                       <div className="flex items-center gap-2">
                         <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
                         <span className="truncate">{item.name}</span>
                       </div>
-                      <span className="shrink-0">{item.value}%</span>
+                      <span className="shrink-0">
+                        {item.value.toLocaleString()}
+                        {activityData.total > 0 ? ` · ${item.percent}%` : ""}
+                      </span>
                     </div>
                     <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
                       <div
                         className="h-full rounded-full transition-all duration-500"
-                        style={{ width: `${item.value}%`, backgroundColor: item.color }}
+                        style={{
+                          width: `${activityData.total > 0 ? item.percent : 0}%`,
+                          backgroundColor: item.color,
+                        }}
                       />
                     </div>
                   </div>
@@ -403,7 +490,35 @@ export default function DashboardOrdersPage() {
 
           {/* Export CSV Button (Placed on Table Control Bar) */}
           <button
-            onClick={() => alert("Exporting order records to CSV...")}
+            type="button"
+            onClick={() => {
+              const rows = [
+                ["Order ID", "Date", "Customer", "Email", "Address", "Amount", "Status"],
+                ...filteredOrders.map((order) => [
+                  order.id,
+                  order.date,
+                  order.customerName,
+                  order.email,
+                  order.address,
+                  String(order.amount),
+                  order.status,
+                ]),
+              ];
+              const csv = rows
+                .map((row) =>
+                  row
+                    .map((cell) => `"${String(cell).replace(/"/g, '""')}"`)
+                    .join(","),
+                )
+                .join("\n");
+              const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+              const url = URL.createObjectURL(blob);
+              const link = document.createElement("a");
+              link.href = url;
+              link.download = `orders-${new Date().toISOString().slice(0, 10)}.csv`;
+              link.click();
+              URL.revokeObjectURL(url);
+            }}
             className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-[#faf6ff] hover:bg-[#f3eafb] text-[#7a3dbf] border border-[#ebd7fa] text-xs font-semibold transition-all active:scale-95 shrink-0"
           >
             <Download size={15} />

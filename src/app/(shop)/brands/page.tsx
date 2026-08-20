@@ -59,7 +59,7 @@ export default function BrandsPage() {
       <DynamicHero
         title="Official Retail & Brand Partners"
         subtitle="Shop authentic products directly from verified global and national brand partners."
-        backgroundImage={categories[2]?.image || "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1600&auto=format&fit=crop"}
+        backgroundImage={categories[2]?.image || categories[0]?.image || undefined}
         backLink="/"
         backLabel="Back to Homepage"
       />

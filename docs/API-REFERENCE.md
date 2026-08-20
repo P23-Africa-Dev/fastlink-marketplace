@@ -791,10 +791,11 @@ Marks KYC submitted (`under_review`, or auto-approved in `testing`). Used when t
 **Auth:** `role:seller,admin`  
 **Query:** `range` = `7d` \| `30d` \| `1y`
 
-Revenue, orders, customers, products, chart, recent orders, top products (paid orders).
+Revenue, orders, customers, products, revenue `chart`, order-count `orderChart`, recent orders, top products (paid orders).
 
 Also includes:
 
+- `pendingOrders`, `averageOrderValue`
 - `activitySummary` (`pageViews7d`, `checkoutStarts7d`, `reviews7d`)
 - `recentActivity` feed (typed events from activity pipeline)
 

@@ -189,7 +189,7 @@ Thin MVP: buyer requests; seller or admin approves; full refund or none.
 
 | Method | Path | Auth | Scope | Purpose |
 |--------|------|------|-------|---------|
-| `GET` | `/seller/dashboard` | seller | MVP | Revenue, orders, products, customers, recent orders, top products, `activitySummary`, `recentActivity` |
+| `GET` | `/seller/dashboard` | seller | MVP | Revenue, orders, pending/AOV, products, customers, revenue `chart`, `orderChart`, recent orders, top products, `activitySummary`, `recentActivity` |
 | `GET` | `/seller/customers` | seller | MVP | Buyers who ordered from this store |
 | `GET` | `/seller/customers/{id}` | seller | MVP | Customer + order history with this store |
 | `GET` | `/seller/store` | seller | MVP | Store profile |

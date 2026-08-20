@@ -56,14 +56,22 @@ class SellerDashboardController extends Controller
             ->limit(5)
             ->get();
 
+        $totalOrders = (clone $orders)->where('status', '!=', 'cancelled')->count();
+        $paidCount = (clone $paid)->count();
+        $totalRevenue = (float) (clone $paid)->sum('total');
+        $pendingOrders = (clone $orders)->where('status', 'pending')->count();
+
         return ApiResponse::success([
-            'totalRevenue' => (float) (clone $paid)->sum('total'),
-            'totalOrders' => (clone $orders)->where('status', '!=', 'cancelled')->count(),
+            'totalRevenue' => $totalRevenue,
+            'totalOrders' => $totalOrders,
+            'pendingOrders' => $pendingOrders,
+            'averageOrderValue' => $paidCount > 0 ? round($totalRevenue / $paidCount, 2) : 0.0,
             'totalProducts' => Product::query()->whereIn('store_id', $storeIds)->count(),
             'totalCustomers' => (int) (clone $orders)->select('buyer_id')->distinct()->count('buyer_id'),
             'revenueChange' => $this->percentChange((float) $currentRevenue, (float) $previousRevenue),
             'ordersChange' => $this->percentChange($currentOrderCount, $previousOrderCount),
-            'chart' => $this->chart($storeIds->all(), $range),
+            'chart' => $this->chart($storeIds->all(), $range, 'revenue'),
+            'orderChart' => $this->chart($storeIds->all(), $range, 'orders'),
             'recentOrders' => $recent->map(function (Order $order) {
                 $item = $order->items->first();
 
@@ -143,9 +151,10 @@ class SellerDashboardController extends Controller
 
     /**
      * @param  list<int|string>  $storeIds
+     * @param  'revenue'|'orders'  $metric
      * @return list<array{name: string, value: float}>
      */
-    private function chart(array $storeIds, string $range): array
+    private function chart(array $storeIds, string $range, string $metric = 'revenue'): array
     {
         $start = match ($range) {
             '7d' => now()->subDays(6)->startOfDay(),
@@ -155,16 +164,20 @@ class SellerDashboardController extends Controller
 
         $orders = Order::query()
             ->whereIn('store_id', $storeIds)
-            ->where('payment_status', 'paid')
+            ->when($metric === 'revenue', fn ($query) => $query->where('payment_status', 'paid'))
             ->where('created_at', '>=', $start)
             ->get(['created_at', 'total']);
+
+        $add = function (array &$buckets, string $key, Order $order) use ($metric): void {
+            $buckets[$key] = ($buckets[$key] ?? 0) + ($metric === 'orders' ? 1.0 : (float) $order->total);
+        };
 
         if ($range === '7d') {
             $buckets = [];
             foreach ($orders as $order) {
                 $key = $order->created_at?->toDateString();
                 if ($key) {
-                    $buckets[$key] = ($buckets[$key] ?? 0) + (float) $order->total;
+                    $add($buckets, $key, $order);
                 }
             }
 
@@ -182,7 +195,7 @@ class SellerDashboardController extends Controller
             foreach ($orders as $order) {
                 $key = $order->created_at?->format('Y-m');
                 if ($key) {
-                    $buckets[$key] = ($buckets[$key] ?? 0) + (float) $order->total;
+                    $add($buckets, $key, $order);
                 }
             }
 
@@ -199,7 +212,7 @@ class SellerDashboardController extends Controller
         foreach ($orders as $order) {
             $key = $order->created_at?->toDateString();
             if ($key) {
-                $buckets[$key] = ($buckets[$key] ?? 0) + (float) $order->total;
+                $add($buckets, $key, $order);
             }
         }
 
