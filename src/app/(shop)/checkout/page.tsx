@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import axios from "axios";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -158,9 +159,7 @@ export default function CheckoutPage() {
     setIsSubmitting(true);
 
     try {
-      let groupId = pendingGroupId;
-
-      if (!groupId) {
+      const createOrderGroup = async () => {
         const addressId = shippingAddressId ?? (await ensureAddressAndQuote());
 
         const placed = await checkout.mutateAsync({
@@ -176,12 +175,33 @@ export default function CheckoutPage() {
           })),
         });
 
-        groupId = placed.data.groupId;
+        return placed.data.groupId;
+      };
+
+      let groupId = pendingGroupId;
+      if (!groupId) {
+        groupId = await createOrderGroup();
         setPendingGroupId(groupId);
         sessionStorage.setItem("fastlink_checkout_group", groupId);
       }
 
-      const initialized = await initializeCheckout.mutateAsync(groupId);
+      let initialized;
+      try {
+        initialized = await initializeCheckout.mutateAsync(groupId);
+      } catch (error) {
+        // Stale group IDs can survive refresh/reload in sessionStorage.
+        if (axios.isAxiosError(error) && error.response?.status === 404 && pendingGroupId) {
+          sessionStorage.removeItem("fastlink_checkout_group");
+          setPendingGroupId(null);
+          groupId = await createOrderGroup();
+          setPendingGroupId(groupId);
+          sessionStorage.setItem("fastlink_checkout_group", groupId);
+          initialized = await initializeCheckout.mutateAsync(groupId);
+        } else {
+          throw error;
+        }
+      }
+
       if (initialized.data.alreadyPaid) {
         sessionStorage.removeItem("fastlink_checkout_group");
         setPendingGroupId(null);

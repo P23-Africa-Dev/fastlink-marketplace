@@ -21,13 +21,17 @@ class PageViewRecorder
         ?array $meta = null,
     ): void
     {
-        PageView::query()->create([
-            'store_id' => $store?->id ?? $product?->store_id,
-            'product_id' => $product?->id,
-            'viewer_id' => $viewer?->id,
-            'event_type' => $eventType,
-            'path' => $path,
-            'meta' => $meta,
-        ]);
+        try {
+            PageView::query()->create([
+                'store_id' => $store?->id ?? $product?->store_id,
+                'product_id' => $product?->id,
+                'viewer_id' => $viewer?->id,
+                'event_type' => $eventType,
+                'path' => $path,
+                'meta' => $meta,
+            ]);
+        } catch (\Throwable) {
+            // Activity logging must never block checkout or other core flows.
+        }
     }
 }
