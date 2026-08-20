@@ -7,6 +7,7 @@ use App\Http\Resources\TrustReportResource;
 use App\Models\Product;
 use App\Models\Store;
 use App\Models\TrustReport;
+use App\Support\PageViewRecorder;
 use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -34,6 +35,19 @@ class TrustReportController extends Controller
             throw ValidationException::withMessages(['subject_id' => 'Reported item was not found.']);
         }
 
+        $duplicateOpenReport = TrustReport::query()
+            ->where('reporter_id', $request->user()->id)
+            ->where('subject_type', $validated['subject_type'])
+            ->where('subject_id', $validated['subject_id'])
+            ->whereIn('status', ['open', 'investigating'])
+            ->exists();
+
+        if ($duplicateOpenReport) {
+            throw ValidationException::withMessages([
+                'subject_id' => 'You already submitted a report for this item. Please wait for review.',
+            ]);
+        }
+
         $report = TrustReport::query()->create([
             'reporter_id' => $request->user()->id,
             'subject_type' => $validated['subject_type'],
@@ -42,6 +56,15 @@ class TrustReportController extends Controller
             'details' => $validated['details'] ?? null,
             'status' => 'open',
         ]);
+
+        PageViewRecorder::record(
+            $request->user(),
+            $validated['subject_type'] === 'store' ? $subject : ($subject->store ?? null),
+            $validated['subject_type'] === 'product' ? $subject : null,
+            '/trust-reports',
+            'trust_report_submitted',
+            ['reportId' => (string) $report->id, 'reason' => $validated['reason']],
+        );
 
         return ApiResponse::success(
             (new TrustReportResource($report->load('reporter')))->resolve(),

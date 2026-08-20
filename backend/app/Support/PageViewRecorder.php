@@ -9,13 +9,25 @@ use App\Models\User;
 
 class PageViewRecorder
 {
-    public static function record(?User $viewer, ?Store $store, ?Product $product, ?string $path = null): void
+    /**
+     * @param  array<string, mixed>|null  $meta
+     */
+    public static function record(
+        ?User $viewer,
+        ?Store $store,
+        ?Product $product,
+        ?string $path = null,
+        string $eventType = 'page_view',
+        ?array $meta = null,
+    ): void
     {
         PageView::query()->create([
             'store_id' => $store?->id ?? $product?->store_id,
             'product_id' => $product?->id,
             'viewer_id' => $viewer?->id,
+            'event_type' => $eventType,
             'path' => $path,
+            'meta' => $meta,
         ]);
     }
 }

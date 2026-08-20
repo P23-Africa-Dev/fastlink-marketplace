@@ -130,6 +130,7 @@ export interface ApiOrder {
   updatedAt: string;
   paidAt: string | null;
   estimatedDelivery?: string;
+  deliveryEstimate?: { minDays: number; maxDays: number; label: string } | null;
 }
 
 export interface CheckoutResult {
@@ -152,6 +153,7 @@ export interface CheckoutQuoteStore {
   tax: number;
   discount?: number;
   total: number;
+  deliveryEstimate?: { minDays: number; maxDays: number; label: string } | null;
 }
 
 export interface CheckoutQuote {
@@ -168,6 +170,7 @@ export interface CheckoutQuote {
   availablePoints?: number;
   total: number;
   deliveryZone?: { id: string; name: string; fee: number } | null;
+  deliveryEstimate?: { minDays: number; maxDays: number; label: string } | null;
 }
 
 export interface AddressPayload {

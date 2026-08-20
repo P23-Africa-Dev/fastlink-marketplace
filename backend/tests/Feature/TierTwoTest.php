@@ -33,7 +33,8 @@ class TierTwoTest extends TestCase
 
         $response->assertJsonPath('data.orderCount', 2)
             ->assertJsonPath('data.groupPreview', true)
-            ->assertJsonCount(2, 'data.stores');
+            ->assertJsonCount(2, 'data.stores')
+            ->assertJsonStructure(['data' => ['deliveryEstimate' => ['minDays', 'maxDays', 'label']]]);
     }
 
     public function test_checkout_creates_inventory_movements(): void
@@ -69,6 +70,27 @@ class TierTwoTest extends TestCase
         $this->assertSame(1, StoreDocument::query()->count());
     }
 
+    public function test_seller_replaces_pending_document_of_same_type(): void
+    {
+        Storage::fake('public');
+        $seller = User::factory()->create(['role' => 'seller']);
+        Store::factory()->create(['owner_id' => $seller->id, 'status' => 'approved']);
+
+        Sanctum::actingAs($seller);
+        $this->postJson('/api/seller/documents', [
+            'type' => 'cac',
+            'document' => UploadedFile::fake()->create('cac-v1.pdf', 120, 'application/pdf'),
+        ])->assertCreated();
+
+        $this->postJson('/api/seller/documents', [
+            'type' => 'cac',
+            'document' => UploadedFile::fake()->create('cac-v2.pdf', 120, 'application/pdf'),
+        ])->assertCreated()
+            ->assertJsonPath('data.type', 'cac');
+
+        $this->assertSame(1, StoreDocument::query()->count());
+    }
+
     public function test_admin_can_list_delivery_zones(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
@@ -76,7 +98,33 @@ class TierTwoTest extends TestCase
 
         $this->getJson('/api/admin/delivery-zones')
             ->assertOk()
-            ->assertJsonStructure(['data' => [['id', 'name', 'fee']]]);
+            ->assertJsonStructure(['data' => [['id', 'name', 'fee', 'etaMinDays', 'etaMaxDays']]]);
+    }
+
+    public function test_seller_inventory_summary_includes_low_stock_snapshot(): void
+    {
+        $seller = User::factory()->create(['role' => 'seller']);
+        $store = Store::factory()->create(['owner_id' => $seller->id, 'status' => 'approved']);
+        $low = Product::factory()->create(['store_id' => $store->id, 'status' => 'active', 'stock' => 2]);
+        Product::factory()->create(['store_id' => $store->id, 'status' => 'active', 'stock' => 0]);
+        InventoryMovement::query()->create([
+            'product_id' => $low->id,
+            'store_id' => $store->id,
+            'type' => 'restock',
+            'quantity_delta' => 2,
+            'quantity_after' => 2,
+            'reference_type' => null,
+            'reference_id' => null,
+            'note' => 'Initial stock',
+            'created_at' => now(),
+        ]);
+
+        Sanctum::actingAs($seller);
+        $this->getJson('/api/seller/inventory/summary')
+            ->assertOk()
+            ->assertJsonPath('data.lowStockCount', 1)
+            ->assertJsonPath('data.outOfStockCount', 1)
+            ->assertJsonPath('data.lowStockProducts.0.id', (string) $low->id);
     }
 
     public function test_city_zone_overrides_state_shipping_fee(): void

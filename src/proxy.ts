@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { homeForRole, isAdminPath, isLoginRequiredPath, isSellerDashboardPath } from "@/lib/auth-session";
+import { homeForRole, isAdminPath, isLoginRequiredPath, isRiderPath, isSellerDashboardPath } from "@/lib/auth-session";
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -25,6 +25,11 @@ export function proxy(request: NextRequest) {
 
   // Admins cannot enter the vendor dashboard.
   if (isSellerDashboardPath(pathname) && role !== "seller") {
+    return NextResponse.redirect(new URL(homeForRole(role), request.url));
+  }
+
+  // Only riders can enter rider routes.
+  if (isRiderPath(pathname) && role !== "rider") {
     return NextResponse.redirect(new URL(homeForRole(role), request.url));
   }
 
@@ -73,6 +78,9 @@ export const config = {
     "/notifications",
     "/notifications/:path*",
     "/products/:id/add-new-product",
+    // Rider portal
+    "/rider",
+    "/rider/:path*",
     // Admin control tower (src/app/(admin))
     "/admin",
     "/admin/:path*",

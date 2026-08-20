@@ -5,7 +5,7 @@ import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { CartDrawer } from "@/components/cart/cart-drawer";
 
-const KYC_ROUTES = ["/vendor/register", "/vendor/pending", "/rider/register"];
+const KYC_ROUTES = ["/vendor/register", "/vendor/pending", "/rider/register", "/rider/pending"];
 
 export default function ShopLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();

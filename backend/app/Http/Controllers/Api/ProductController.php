@@ -8,6 +8,7 @@ use App\Models\Product;
 use App\Support\ApiResponse;
 use App\Support\PageViewRecorder;
 use App\Support\ProductQuery;
+use App\Services\SearchSuggestService;
 use App\Services\ReputationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -63,7 +64,39 @@ class ProductController extends Controller
             'q' => $request->query('q', $request->query('query')),
         ]);
 
-        return $this->index($request);
+        $response = $this->index($request);
+        $payload = $response->getData(true);
+        $term = trim((string) ($request->query('q') ?? ''));
+
+        if (($payload['data']['total'] ?? 0) > 0 || mb_strlen($term) < 3) {
+            $payload['data']['typoToleranceApplied'] = false;
+
+            return response()->json($payload, $response->status());
+        }
+
+        $suggest = app(SearchSuggestService::class);
+        $ids = $suggest->fuzzyProductIds($term, 12);
+        if ($ids === []) {
+            $payload['data']['typoToleranceApplied'] = false;
+
+            return response()->json($payload, $response->status());
+        }
+
+        $products = Product::query()
+            ->with(['images', 'variants', 'store', 'brand', 'category'])
+            ->active()
+            ->whereIn('id', $ids)
+            ->get()
+            ->sortBy(fn (Product $product) => array_search($product->id, $ids, true))
+            ->values();
+
+        return ApiResponse::success([
+            'data' => ProductResource::collection($products)->resolve(),
+            'total' => $products->count(),
+            'page' => 1,
+            'limit' => max(1, (int) $request->query('limit', 12)),
+            'typoToleranceApplied' => true,
+        ]);
     }
 
     public function suggest(Request $request, \App\Services\SearchSuggestService $suggest): JsonResponse

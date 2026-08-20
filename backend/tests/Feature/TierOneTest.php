@@ -100,16 +100,19 @@ class TierOneTest extends TestCase
         Sanctum::actingAs($seller);
         $this->postJson("/api/seller/products/{$product->id}/submit")
             ->assertOk()
-            ->assertJsonPath('data.status', 'submitted');
+            ->assertJsonPath('data.status', 'submitted')
+            ->assertJsonStructure(['data' => ['submittedAt']]);
 
         Sanctum::actingAs($admin);
         $this->getJson('/api/admin/products/moderation')
             ->assertOk()
             ->assertJsonPath('data.pendingCount', 1);
 
-        $this->postJson("/api/admin/products/{$product->id}/approve")
+        $this->postJson("/api/admin/products/{$product->id}/approve", ['note' => 'Looks good for catalog standards.'])
             ->assertOk()
-            ->assertJsonPath('data.status', 'published');
+            ->assertJsonPath('data.status', 'published')
+            ->assertJsonPath('data.moderationNote', 'Looks good for catalog standards.')
+            ->assertJsonPath('data.moderatedBy', (string) $admin->id);
 
         $this->getJson('/api/products/'.$product->slug)
             ->assertOk();
@@ -122,7 +125,7 @@ class TierOneTest extends TestCase
 
         $this->getJson('/api/products/'.$product->slug)
             ->assertOk()
-            ->assertJsonStructure(['data' => ['storeReputation' => ['score', 'badge', 'metrics']]]);
+            ->assertJsonStructure(['data' => ['storeReputation' => ['score', 'badge', 'metrics' => ['responseRate']]]]);
     }
 
     /**

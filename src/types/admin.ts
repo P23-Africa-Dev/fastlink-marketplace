@@ -55,6 +55,8 @@ export interface DeliveryZoneRow {
   city?: string | null;
   fee: number;
   freeAbove?: number | null;
+  etaMinDays: number;
+  etaMaxDays: number;
   isActive: boolean;
   sortOrder: number;
 }
@@ -67,6 +69,15 @@ export interface InventoryMovementRow {
   note?: string | null;
   product?: { id: string; name: string; sku?: string | null } | null;
   createdAt?: string | null;
+}
+
+export interface SellerInventorySummary {
+  totalProducts: number;
+  outOfStockCount: number;
+  lowStockCount: number;
+  movementCount7d: number;
+  lastMovementAt?: string | null;
+  lowStockProducts: Array<{ id: string; name: string; sku?: string | null; stock: number }>;
 }
 
 export interface AdminMallDetail {
@@ -85,6 +96,8 @@ export interface AdminVerificationQueue {
     vehicleType: string;
     city?: string | null;
     user?: { id: string; name: string; email: string } | null;
+    documents?: KycDocumentRow[];
+    hasRequiredIdCard?: boolean;
     createdAt: string;
   }>;
   counts: { stores: number; riders: number; total: number };
@@ -202,6 +215,8 @@ export interface WebhookEventRow {
   reference?: string | null;
   status: string;
   error?: string | null;
+  matchedPayments?: number;
+  paidPayments?: number;
   createdAt: string;
 }
 
@@ -211,6 +226,15 @@ export interface AdminWebhooksResponse {
   page: number;
   limit: number;
   failedCount: number;
+}
+
+export interface WebhookReconciliationSummary {
+  events24h: number;
+  processed24h: number;
+  failed24h: number;
+  orphanEvents24h: number;
+  pendingPayments24h: number;
+  paidPayments24h: number;
 }
 
 export interface ChargebackRow {
@@ -244,6 +268,7 @@ export interface StoreReputation {
     reviewCount: number;
     fulfillmentRate: number;
     cancellationRate: number;
+    responseRate: number;
     totalOrders: number;
   };
 }

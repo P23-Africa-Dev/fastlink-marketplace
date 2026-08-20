@@ -1,10 +1,12 @@
 # Fastlink Marketplace — API Integration Plan
 
-**Status:** Proposal (not yet implemented)  
+**Status:** Living plan + implementation record (many sections already shipped)  
 **Audience:** Engineering, product, and anyone reviewing how we connect the Next.js UI to the Laravel API  
-**Last updated:** 13 August 2026
+**Last updated:** 20 August 2026
 
 This document is the implementation standard for taking Fastlink from a UI-complete prototype to a working marketplace. Read it end to end before writing production code. If this plan is approved, implementation should follow the phases in order — do not skip Phase 0 or Phase 1. Scope for the first shippable product is **§6 MVP add list**.
+
+> Note: some sections preserve original planning language for historical context. Where that conflicts with current behavior, trust the latest “Shipped” notes, this file’s recent updates, `API-REFERENCE.md`, and `QA-TEST-PLAN.md`.
 
 **Endpoint list:** see [`API-CATALOG.md`](./API-CATALOG.md) (summary) and [`API-REFERENCE.md`](./API-REFERENCE.md) (full per-endpoint docs for all 191 routes).  
 **QA:** see [`QA-TEST-PLAN.md`](./QA-TEST-PLAN.md) for the manual regression pack covering shipped Phases 0–15.  
@@ -24,14 +26,14 @@ Almost every screen still reads **mock data** (inline arrays, Zustand stores, or
 
 Not because login is the most exciting feature, but because:
 
-1. This is a multi-role platform (buyer, seller/vendor, admin, later rider). Identity must exist before anyone can “add products to the store.”
+1. This is a multi-role platform (buyer, seller/vendor, admin, rider). Identity must exist before anyone can “add products to the store.”
 2. The dashboard is currently **public** — there is no `middleware.ts`, no role check, and no redirect to `/login`.
 3. Every later endpoint (products, orders, payouts, admin monitoring) needs `auth:sanctum` and policies. Building catalog first would force a rewrite of ownership and permissions.
 4. The frontend already has login, register, forgot-password, and an auth store. Wiring those first proves the API contract, tokens, CORS, and role routing with the smallest blast radius.
 
 After auth works, the next real product value is **catalog + seller product CRUD**, then **checkout/orders**, then **admin monitoring**, then money (payments/payouts).
 
-**MVP scope is locked in [§6 MVP add list](#6-mvp-add-list).** Phases 0–8 plus thin returns, buyer My Orders, seller onboarding, and a single commission rate are in MVP. Analytics extras, marketing, riders, messages/support, and the “do not put on MVP” list are post-MVP.
+**MVP scope is locked in [§6 MVP add list](#6-mvp-add-list).** This document now contains both original planning and shipped status notes; treat each “Shipped” note and QA/API references as the source of truth for current behavior.
 
 ---
 
@@ -49,9 +51,9 @@ After auth works, the next real product value is **catalog + seller product CRUD
 | Client / session state | Zustand | Auth, cart, wishlist (persisted); orders/messages stores are in-memory mocks to replace |
 | Auth session | `src/store/auth-store.ts` | Zustand + persist → localStorage `marketplace-auth` + `auth_token` |
 | Cart / wishlist | Zustand + persist | Client-only until optional server sync |
-| Route protection | — | **None.** Dashboard is open without login |
+| Route protection | `src/proxy.ts` + auth session helpers | Seller, rider, and admin surfaces are role-guarded; public shop remains open |
 | Admin UI | — | **Does not exist** (role type exists: `buyer \| seller \| admin`) |
-| Rider / vendor register | Linked from homepage CTA | **404** (`/vendor/register`, `/rider/register`) |
+| Rider / vendor register | Linked from homepage CTA | Implemented (`/vendor/register`, `/rider/register`, `/rider/pending`) |
 
 **Shop routes that must eventually hit the API**
 
@@ -96,14 +98,14 @@ After auth works, the next real product value is **catalog + seller product CRUD
 |------|--------|
 | `GET /api/health` | Implemented; JSON shape matches frontend `{ success, data, message }` |
 | CORS | Configured for `FRONTEND_URL` (default `http://localhost:3000`) |
-| Auth packages | **None.** No Sanctum, Passport, JWT, Fortify |
-| Models | Stock `User` only (`name`, `email`, `password`) |
-| Migrations | Default Laravel: users, sessions, cache, jobs |
-| Marketplace tables | **None** |
-| API auth | Frontend expects `Bearer` tokens; backend cannot issue or validate them |
+| Auth packages | Sanctum-based token auth is implemented |
+| Models | Marketplace domain models are implemented (users/stores/products/orders/payouts/riders/etc.) |
+| Migrations | Marketplace migrations are present and in active use |
+| Marketplace tables | Implemented |
+| API auth | Bearer token auth is implemented and used by frontend |
 | README | Documents `NEXT_PUBLIC_API_URL=http://localhost:8000/api` |
 
-The backend is a **scaffold**, not a marketplace API.
+The backend is now a working marketplace API with ongoing iteration.
 
 ### 2.3 Intended product (from current UI + this request)
 
@@ -114,7 +116,7 @@ Fastlink is a **multi-sided marketplace**:
 | **Buyer** | Browse malls/stores/brands/categories, add to cart, checkout, track orders, review, message sellers |
 | **Seller / vendor** | Register a store, add products, fulfil orders, see customers, receive payouts, reply to reviews/messages |
 | **Admin** | Monitor everything: users, stores, products, orders, payments, payouts, disputes, platform settings |
-| **Rider** (later) | Delivery partner onboarding — UI CTA exists, do not build in early phases |
+| **Rider** | Delivery partner onboarding + approval workflow |
 
 Navigation rules already in the UI (do not break these):
 
@@ -166,7 +168,8 @@ avatar_path: nullable string
 **Registration**
 
 - Default role: `buyer`.
-- Seller onboarding: register as seller **or** convert later (`POST /api/seller/onboard`) and create a `stores` row with `status=pending` until admin approves (configurable; start with auto-approve in local/dev).
+- Seller onboarding: register as seller **or** convert later (`POST /api/seller/onboard`) and create a store with staged KYC status. Limited seller dashboard is available pre-approval; publish/payout remain gated until approved.
+- Rider onboarding: user signs up first, then applies via `/rider/register`; role becomes `rider`, status is pending outside testing, and admin approval is required before assignment.
 
 ### 3.3 API conventions (match existing frontend types)
 
@@ -408,7 +411,7 @@ Each phase has: goal, backend work, frontend work, API list, acceptance criteria
 
 Do not start Phase N+1 until Phase N acceptance criteria pass locally (frontend talking to Laravel, not mocks).
 
-**MVP cap:** implement through Phase 8 plus the should-haves in [§6](#6-mvp-add-list) (My Orders, addresses, thin returns, audit log, notifications). Phases 9–10 are post-MVP.
+**Historical MVP cap note:** original plan stopped at Phase 8 plus should-haves in [§6](#6-mvp-add-list). Current repository status includes shipped pieces from later phases as documented in shipped notes and QA/API references.
 
 ---
 
@@ -485,7 +488,7 @@ Reject `role=admin` from public register. Admin is seeded only.
   - `admin` → `/admin` (placeholder redirect until Phase 8; temporarily `/dashboard` with a banner is acceptable if documented)
   - `buyer` → `/` or `/products` (not seller dashboard)
 - Register: send role from the form (add a “Sell on Fastlink” toggle or query `?role=seller`).
-- **Build `/vendor/register`** (homepage CTA currently 404s): business name, phone, bank account → `POST /api/seller/onboard` with store `status=pending`.
+- `/vendor/register` is already implemented with staged KYC (draft-first + submit-later). Continue iterating on UX/validation rather than recreating route scaffolding.
 - Forgot/reset pages: call real endpoints; keep existing UI.
 - **Add Next.js `middleware.ts`:** protect `/dashboard`, `/orders`, `/all-products`, `/customers`, `/messages`, `/payments`, `/payouts`, `/analytics`, `/marketing`, `/reviews`, `/settings`, `/support`. Unauthenticated → `/login`.
 - Dashboard layout: if role is `buyer`, redirect away.
@@ -793,7 +796,7 @@ Seller:
 
 ---
 
-### Phase 9 — Messages and support (post-MVP)
+### Phase 9 — Messages and support (historical post-MVP plan)
 
 **Goal:** Dashboard Messages and Support become real.
 
@@ -812,7 +815,7 @@ Seller:
 
 ---
 
-### Phase 10 — Analytics, marketing, polish (post-MVP)
+### Phase 10 — Analytics, marketing, polish (historical post-MVP plan)
 
 **Analytics (`/analytics`)**
 
@@ -894,7 +897,8 @@ Seller:
 **Trust & Safety MVP (CR-1.1)**
 
 - `trust_reports` table; buyer `POST /trust-reports`.
-- Admin queue `GET/PATCH /admin/trust-reports` + `/admin/trust-reports` UI.
+- Duplicate open/investigating reports for same reporter+subject now blocked (`422`) to reduce queue spam.
+- Admin queue `GET/PATCH /admin/trust-reports` + `/admin/trust-reports` UI; added server-side filters by `subject_type` and reason contains.
 
 **Marketplace config center (CR-1.7, partial)**
 
@@ -913,18 +917,20 @@ Seller:
 **Product moderation (CR-1.6, partial)**
 
 - Statuses: `submitted`, `under_review`, `published`, `rejected` (+ legacy `active`, `draft`, `archived`).
-- Seller `POST /seller/products/{id}/submit`; admin moderation queue + approve/reject.
+- Seller `POST /seller/products/{id}/submit` now stamps `submitted_at` and clears prior moderation metadata.
+- Admin moderation approve/reject now stores `moderation_note`, `moderated_at`, and `moderated_by`.
 - Public catalog accepts `active` and `published`.
 
 **Seller reputation (CR-1.5, partial)**
 
-- `ReputationService` computes score from ratings, fulfillment, cancellations.
+- `ReputationService` computes score from ratings, fulfillment, cancellations, and review response rate.
 - Badges: `verified_seller`, `trusted_seller` on product detail.
 
 **Payment reconciliation (CR-1.4, partial)**
 
 - `paystack_webhook_events` log (processed, failed, duplicate, invalid_signature).
-- Admin `GET /admin/webhooks/paystack` + UI.
+- Admin `GET /admin/webhooks/paystack` now includes payment matching counters (`matchedPayments`, `paidPayments`) for each webhook reference.
+- Admin `GET /admin/webhooks/paystack/reconciliation` + UI card for 24h orphan references and failure signals.
 
 **Chargebacks & partial refunds (CR-1.8)**
 
@@ -942,6 +948,7 @@ Seller:
 
 - `delivery_zones` table with seeded Lagos, Abuja FCT, Kano, and national fallback.
 - `DeliveryZoneService` resolves zone from buyer address; per-store shipping at checkout.
+- Delivery ETA windows per zone (`eta_min_days`, `eta_max_days`) now flow into checkout quote + order resources.
 - Admin `GET/POST/PATCH /admin/delivery-zones` + `/admin/delivery-zones` UI (city overrides state).
 
 **Inventory engine (CR-2.1, partial)**
@@ -949,12 +956,13 @@ Seller:
 - Append-only `inventory_movements` audit trail on checkout sale, return restore, manual stock edits.
 - Low-stock seller notifications (threshold ≤ 5 units).
 - Seller `GET /seller/inventory/movements` + `/inventory` UI (restock / damaged / write-off).
+- Seller `GET /seller/inventory/summary` + dashboard inventory health cards (low-stock/out-of-stock + 7d movement volume).
 - `PATCH /seller/products/{id}/stock` accepts `quantity_delta` + `type`.
 
 **Multi-store checkout UX (CR-2.3)**
 
-- `POST /checkout/quote` returns grouped preview (N store orders, totals, delivery zone).
-- Checkout UI groups cart by seller, shows “N separate orders” banner, server-priced totals after address.
+- `POST /checkout/quote` returns grouped preview (N store orders, totals, delivery zone, ETA window).
+- Checkout + cart UI now group by seller, show split-order banner, and show per-store totals / ETA context.
 
 **KYC document storage (CR-2.4, partial)**
 
@@ -994,7 +1002,14 @@ Seller:
 
 **Search suggest (CR-3.5, partial)**
 
-- Public `GET /search/suggest?q=` returns products, brands, stores (prefix preferred). Header autocomplete. Full Meilisearch still optional.
+- Public `GET /search/suggest?q=` returns products, brands, stores (prefix preferred) and `didYouMean` fallback hint.
+- Public `GET /search` now applies typo-tolerant fallback (`typoToleranceApplied`) when strict `LIKE` search returns zero rows.
+- Full Meilisearch/index-backed ranking still optional.
+
+**Activity signals (CR-3.x, expanded baseline)**
+
+- Existing `page_views` stream now records typed events (`page_view`, `checkout_started`, `review_submitted`, `trust_report_submitted`) with metadata.
+- Seller dashboard now exposes `activitySummary` and `recentActivity` feed for lightweight operational insight.
 
 **Personalization (CR-3.6)**
 
@@ -1020,8 +1035,9 @@ Ship this list. Do not expand it without an explicit product decision.
 
 | Item | What to build | Notes |
 |------|----------------|-------|
-| **Auth + RBAC** | Real login/register, Sanctum tokens, role routing (`buyer` / `seller` / `admin`) | Dashboard must not be public. |
-| **Seller onboarding** | `/vendor/register` (or register as seller), store profile, `pending` → admin approve | Light KYC: business name, phone, bank account. Skip ID-document OCR for v1. Homepage CTA currently 404s. |
+| **Auth + RBAC** | Real login/register, Sanctum tokens, role routing (`buyer` / `seller` / `admin` / `rider`) | Seller/admin/rider control surfaces are guarded. |
+| **Seller onboarding** | `/vendor/register` (or register as seller), store profile, staged KYC, admin approve/reject | Limited seller dashboard pre-KYC, `KYC_REQUIRED` gates for publish/payout. |
+| **Rider onboarding + verification** | `/rider/register` + `/rider/pending`, admin approve/reject, order assignment | Rider ID-card upload required; backend blocks approve without `id_card` doc. |
 | **Catalog APIs** | Malls, stores, categories, brands, products wired to Laravel | UI exists. |
 | **Seller product CRUD** | Create / edit / publish / stock against **their** store | UI exists (`/all-products`, add-new-product). |
 | **Checkout that creates real orders** | Server re-prices, stock decrements, one order per store | Never trust client prices. |
@@ -1055,26 +1071,27 @@ Ship this list. Do not expand it without an explicit product decision.
 
 ### 6.3 Do not put on MVP
 
-Social login, wallets, bulk CSV, Buy X Get Y, loyalty, gift cards, affiliates, auctions, subscriptions, B2B/RFQ, AI, autocomplete/typo search, recently viewed, product comparison, rider app, multi-carrier delivery, fraud ML, commission per-category engine.
+Social login, wallets, bulk CSV, Buy X Get Y, loyalty, gift cards, affiliates, auctions, subscriptions, B2B/RFQ, AI, autocomplete/typo search, recently viewed, product comparison, **native rider mobile app**, multi-carrier delivery, fraud ML, commission per-category engine.
 
-Also post-MVP unless product reopens them: seller messages, support tickets, marketing campaigns, rich analytics (AOV, abandoned carts), wishlist server sync.
+Also post-MVP unless product reopens them: marketing campaigns, rich analytics extras (AOV/abandoned-carts style), deeper wishlist server sync enhancements.
 
 ### 6.4 What that means vs current UI
 
-**Build new screens**
+**Primary shipped surfaces**
 
 - Seller registration / onboarding (`/vendor/register`)
+- Rider onboarding + status (`/rider/register`, `/rider/pending`)
 - Buyer account: profile, addresses, **My Orders**
 - Admin (`/admin`) — entire area
 - Return request (buyer) + refund action (seller/admin)
-- Optional: in-app notification bell
+- In-app notification bell (buyer/seller/admin surfaces)
 
 **Keep existing screens, wire APIs**
 
 - Homepage, malls, stores, brands, categories, products, search, cart, checkout, deals
 - Seller dashboard, products, orders, customers, payouts, reviews, settings
 
-The homepage **Become a Vendor** CTA already points at `/vendor/register`. That route 404s today and **belongs in MVP**.
+Homepage “Become a Vendor / Rider” CTAs are live and route to `/vendor/register` and `/rider/register`.
 
 ### 6.5 MVP sequence (maps to phases)
 
@@ -1133,7 +1150,7 @@ All new server data goes through **React Query hooks** + `QUERY_KEYS`. Session/c
 | Phase | Primary frontend files |
 |-------|------------------------|
 | 0 | `.env.local`, `.env.example`, `src/lib/api.ts` (base URL only) |
-| 1 | `src/lib/api.ts` (`authApi`), `src/store/auth-store.ts`, `(auth)/*`, new `middleware.ts`, `(dashboard)/layout.tsx`, `header.tsx`, new `/vendor/register` onboarding |
+| 1 | `src/lib/api.ts` (`authApi`), `src/store/auth-store.ts`, `(auth)/*`, route guard (`src/proxy.ts`), `(dashboard)/layout.tsx`, `header.tsx`, `/vendor/register` onboarding, rider signup intent |
 | 2 | `features/home/*`, `(shop)/malls/*`, `stores/[slug]`, `brands/*`, `categories`, `lib/marketplace.ts`, `lib/brands.ts` |
 | 3 | `hooks/use-products.ts`, `(shop)/products/*`, `(dashboard)/all-products/*`, `add-new-product` |
 | 4 | `(shop)/checkout`, `cart-store.ts`, `(shop)/order-tracking/*`, **new buyer My Orders + addresses**, `(dashboard)/orders/*`, `hooks/use-dashboard.ts`, thin return-request UI |
@@ -1142,7 +1159,7 @@ All new server data goes through **React Query hooks** + `QUERY_KEYS`. Session/c
 | 7 | checkout payment step, `(dashboard)/payments`, `payouts` |
 | 8 | new `src/app/(admin)/*` (overview, users, sellers, products, catalog CMS, orders, payments, commissions, audit log) |
 | 9 | `(dashboard)/messages/*`, `support` — **post-MVP** |
-| 10 | `analytics` extras, `marketing`, `wishlist-store.ts`, riders — **post-MVP** |
+| 10 | `analytics` extras, `marketing`, `wishlist-store.ts` (rider onboarding/approval is already shipped earlier than this phase) |
 
 ---
 
@@ -1272,7 +1289,7 @@ Never commit real secrets. Paystack keys belong in `.env` from Phase 7.
 - Multi-currency
 - Subscriptions
 - Native mobile apps (API should still be mobile-ready: Bearer tokens, JSON)
-- Messages, support tickets, marketing, rider app, advanced search
+- Marketing expansion, native rider mobile app, and advanced search enhancements
 - Social login, wallets, bulk CSV, loyalty, gift cards, AI
 
 ---
@@ -1312,7 +1329,7 @@ Use this to confirm nothing in the current UI is orphaned.
 | **Saved addresses (new)** | 4 — **MVP** |
 | Wishlist | 10 (sync); local OK until then — **post-MVP** |
 | Order tracking | 4 (link from My Orders) |
-| Become vendor / rider CTAs | **1 `/vendor/register` MVP** / 10 rider **post-MVP** |
+| Become vendor / rider CTAs | `/vendor/register`, `/rider/register`, `/rider/pending` |
 | **Return request (new)** | 4 / 8 — **MVP (thin)** |
 | **In-app notification bell (optional)** | 6 — **MVP should-have** |
 

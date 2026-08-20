@@ -72,6 +72,7 @@ A **section** passes when every case in it is Pass or N/A (with reason). The pac
 |----|--------|----------|
 | A-01 | `cd backend && php artisan test` | **92** tests, **390** assertions, exit 0 |
 | A-02 | `GET /api/health` | `{ success: true }` / healthy status |
+| A-02b | `GET /api/health` payload | Includes `database`, `queue`, `webhookFailures24h` |
 | A-03 | Buyer token on `GET /api/seller/dashboard` | **403** |
 | A-04 | Seller token on `GET /api/admin/dashboard` | **403** |
 | A-05 | No token on `GET /api/auth/me` | **401** |
@@ -94,6 +95,8 @@ A **section** passes when every case in it is Pass or N/A (with reason). The pac
 | AU-04 | Sign in with wrong password | Error, stay on login |
 | AU-05 | Register new buyer at `/register` | Account created; lands in shop |
 | AU-06 | Register with role seller | Lands in seller onboarding / dashboard flow, not admin |
+| AU-06b | Register with rider checkbox selected | Account created and redirected to `/rider/register` |
+| AU-06c | Open `/register?role=rider&next=/rider/register` | Rider option preselected; signup continues into rider onboarding |
 | AU-07 | Register as `admin` via API `role: admin` | **422** |
 | AU-08 | Duplicate email register | **422** |
 | AU-09 | Logged-out visit `/checkout`, `/account/orders`, `/dashboard` | Redirect to login |
@@ -109,6 +112,8 @@ A **section** passes when every case in it is Pass or N/A (with reason). The pac
 - [ ] AU-04
 - [ ] AU-05
 - [ ] AU-06
+- [ ] AU-06b
+- [ ] AU-06c
 - [ ] AU-07
 - [ ] AU-08
 - [ ] AU-09
@@ -131,6 +136,7 @@ A **section** passes when every case in it is Pass or N/A (with reason). The pac
 | C-05 | Product detail PDP | Price, images, store, rating, add to cart |
 | C-06 | `/search?q=` a known product name | Product appears |
 | C-07 | Header type-ahead (`GET /search/suggest`) | Products, brands, stores with matching **prefix** |
+| C-08 | Typo query e.g. `plystation` on `/search?q=` | Returns closest products with `typoToleranceApplied=true` |
 | C-08 | `/brands`, `/categories`, `/deals` | Pages render API data |
 | C-09 | `/emerging-vendors`, `/nationwide-stores`, `/local-stores` | Lists render |
 | C-10 | Draft / archived product URL | Not in public list; direct URL 404 or hidden |
@@ -193,6 +199,7 @@ Use two in-stock products if possible, from **two different stores**, so multi-s
 | CK-03 | Invalid / expired code | Clear error; total unchanged |
 | CK-04 | `/checkout` with saved address | Quote groups by store; “N separate orders” if N>1 |
 | CK-05 | Change address to Lagos vs Kano vs unknown state | Shipping fee changes with **delivery zones** |
+| CK-05b | Delivery zone with custom ETA min/max | Quote returns `deliveryEstimate` and checkout shows ETA label |
 | CK-06 | Place order | Server **re-prices** (ignore any client-only price tampering) |
 | CK-07 | Stock after place | Product stock decreased; `inventory_movements` sale row exists (seller `/inventory`) |
 | CK-08 | Place with quantity > stock | **422** / cannot place |
@@ -235,12 +242,13 @@ Sign in as **`seller@fastlink.test`**.
 | ID | Page / action | Expected |
 |----|----------------|----------|
 | S-01 | `/dashboard` | Stats: orders, revenue (paid), customers, products |
+| S-01b | `/dashboard` activity fields | `activitySummary` and `recentActivity` present |
 | S-02 | Pending banner | **Hidden** (store is approved) |
 | S-03 | `/all-products` create product | Listed; public only after status active/published (and moderation if required) |
 | S-04 | Edit, stock patch, images | Persist |
 | S-05 | Submit for review | Status `submitted`; appears in admin `/admin/moderation` |
 | S-06 | `/inventory` | Movements for sales / manual adjust; restock / damaged / write-off |
-| S-07 | Low stock (≤ 5) | Notification and/or `/growth` restock insight |
+| S-07 | Low stock (≤ 5) | Notification and `/inventory` summary low-stock cards update |
 | S-08 | `/orders` | Store orders only; cannot see other sellers |
 | S-09 | Status: pending → confirmed → shipped → delivered | Invalid skip (e.g. pending → delivered) rejected |
 | S-10 | Cancel confirmed order | Stock restored; movement recorded |
@@ -304,6 +312,13 @@ Use a **new** email. `APP_ENV=local` may auto-approve; if the store is approved 
 | ON-08 | Reject with reason | Seller notified; stays unpublished |
 | ON-09 | `/rider/register` | Rider pending; admin queue |
 | ON-10 | Admin reject/suspend rider | Cannot take deliveries |
+| ON-11 | Rider onboarding ID upload required | Rider form blocks submit until ID card file selected |
+| ON-12 | Rider submit (non-testing env) | Redirect/status path to `/rider/pending`; rider can access portal but has no assignments |
+| ON-13 | Admin approve rider with no ID card document | **422** and approval blocked by backend |
+| ON-14 | Admin verification rider card | Rider documents listed; approve button disabled when required ID is missing |
+| ON-15 | `/rider/pending` | Pending/rejected state copy and CTA links render correctly |
+| ON-16 | Non-rider opens `/rider` or `/rider/pending` | Redirect to role home (proxy role guard) |
+| ON-17 | Buyer and rider logout visibility | `Sign Out` visible from top header and mobile menu when authenticated |
 
 - [ ] ON-01
 - [ ] ON-02
@@ -315,6 +330,13 @@ Use a **new** email. `APP_ENV=local` may auto-approve; if the store is approved 
 - [ ] ON-08
 - [ ] ON-09
 - [ ] ON-10
+- [ ] ON-11
+- [ ] ON-12
+- [ ] ON-13
+- [ ] ON-14
+- [ ] ON-15
+- [ ] ON-16
+- [ ] ON-17
 
 ---
 
@@ -428,6 +450,7 @@ Sign in as **admin**. Walk the nav top to bottom.
 | AD-13 | `/admin/payments` | Fees/net |
 | AD-14 | `/admin/ledger` | Immutable list; payment/refund/payout/chargeback types |
 | AD-15 | `/admin/webhooks` | Paystack events: processed / failed / duplicate / invalid_signature |
+| AD-15b | `/admin/webhooks` reconciliation widget | Orphan events count reflects unmatched webhook references |
 | AD-16 | `/admin/payouts` | Approve → transferred path; reject; ledger on approve |
 | AD-17 | `/admin/delivery-zones` | Lagos / Abuja FCT / Kano + national fallback; city override beats state |
 | AD-18 | `/admin/promos` | Platform codes; `FASTLINK10` present; create/disable |
@@ -523,7 +546,7 @@ Run this first if time is short; then fill remaining IDs.
 | Buyer | `/account/*`, `/cart`, `/checkout`, `/wishlist`, `/account/referrals`, `/account/rewards` |
 | Seller owner | `/dashboard`, `/orders`, `/all-products`, `/inventory`, `/payments`, `/payouts`, `/promos`, `/growth`, `/team`, `/settings`, `/disputes`, `/returns` |
 | Seller staff | Subset of the above by role (see §8) |
-| Rider | `/rider`, `/rider/register` |
+| Rider | `/rider`, `/rider/register`, `/rider/pending` |
 | Admin | `/admin` and children listed in §10 |
 
 ---

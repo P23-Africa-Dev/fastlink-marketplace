@@ -17,14 +17,16 @@ export default function RegisterPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { setUser } = useAuthStore();
-  const requestedSeller = searchParams.get("role") === "seller";
+  const requestedRole = searchParams.get("role");
+  const requestedOnboardingRole =
+    requestedRole === "seller" || requestedRole === "rider" ? requestedRole : null;
 
   const [form, setForm] = useState({
     name: "",
     email: "",
     password: "",
     confirmPassword: "",
-    sellOnFastlink: requestedSeller,
+    onboardingRole: requestedOnboardingRole as "seller" | "rider" | null,
     referralCode: searchParams.get("ref") ?? "",
   });
   const [isLoading, setIsLoading] = useState(false);
@@ -41,7 +43,7 @@ export default function RegisterPage() {
 
     setIsLoading(true);
     try {
-      const role = form.sellOnFastlink ? "seller" : "buyer";
+      const role = form.onboardingRole === "seller" ? "seller" : "buyer";
       const { data } = await authApi.register(form.name, form.email, form.password, {
         passwordConfirmation: form.confirmPassword,
         role,
@@ -52,6 +54,10 @@ export default function RegisterPage() {
       const next = searchParams.get("next");
       if (role === "seller") {
         router.push(next?.startsWith("/vendor") ? next : "/vendor/register");
+        return;
+      }
+      if (form.onboardingRole === "rider") {
+        router.push(next?.startsWith("/rider") ? next : "/rider/register");
         return;
       }
       router.push(safePostLoginPath(next, data.user.role));
@@ -107,7 +113,7 @@ export default function RegisterPage() {
 
               <div className="text-center mb-8">
                 <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Create Account</h2>
-                <p className="text-slate-500 text-sm mt-1.5">Join Fastlink to buy and sell with ease</p>
+                <p className="text-slate-500 text-sm mt-1.5">Join Fastlink to buy, sell, or deliver with ease</p>
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-4">
@@ -188,16 +194,44 @@ export default function RegisterPage() {
                   />
                 </div>
 
-                <div className="flex justify-start pb-2">
-                  <label className="flex items-center gap-2 cursor-pointer group">
-                    <input
-                      type="checkbox"
-                      checked={form.sellOnFastlink}
-                      onChange={(e) => setForm(p => ({ ...p, sellOnFastlink: e.target.checked }))}
-                      className="rounded border-[#ebd7fa] h-4 w-4 text-[#7a3dbf] focus:ring-[#7a3dbf] cursor-pointer bg-white"
-                    />
-                    <span className="text-sm font-medium text-slate-600 group-hover:text-slate-800 transition-colors">I want to sell on Fastlink (Merchant)</span>
+                <div className="space-y-2 pb-2">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block ml-1">
+                    Join as
                   </label>
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-2 cursor-pointer group">
+                      <input
+                        type="checkbox"
+                        checked={form.onboardingRole === "seller"}
+                        onChange={(e) =>
+                          setForm((p) => ({
+                            ...p,
+                            onboardingRole: e.target.checked ? "seller" : null,
+                          }))
+                        }
+                        className="rounded border-[#ebd7fa] h-4 w-4 text-[#7a3dbf] focus:ring-[#7a3dbf] cursor-pointer bg-white"
+                      />
+                      <span className="text-sm font-medium text-slate-600 group-hover:text-slate-800 transition-colors">
+                        I want to sell on Fastlink (Merchant)
+                      </span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer group">
+                      <input
+                        type="checkbox"
+                        checked={form.onboardingRole === "rider"}
+                        onChange={(e) =>
+                          setForm((p) => ({
+                            ...p,
+                            onboardingRole: e.target.checked ? "rider" : null,
+                          }))
+                        }
+                        className="rounded border-[#ebd7fa] h-4 w-4 text-[#7a3dbf] focus:ring-[#7a3dbf] cursor-pointer bg-white"
+                      />
+                      <span className="text-sm font-medium text-slate-600 group-hover:text-slate-800 transition-colors">
+                        I want to ride with Fastlink (Courier)
+                      </span>
+                    </label>
+                  </div>
                 </div>
 
                 <button

@@ -316,11 +316,43 @@ export default function AdminVerificationPage() {
                   </div>
                 </div>
 
+                {rider.documents && rider.documents.length > 0 ? (
+                  <div className="space-y-1.5">
+                    <p className="text-[10px] uppercase font-bold text-slate-400">Attached Rider Documents</p>
+                    <div className="flex flex-wrap gap-2">
+                      {rider.documents.map((doc: any) => (
+                        <a
+                          key={doc.id}
+                          href={doc.fileUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1 px-3 py-1 bg-[#f3eafb] text-[#7a3dbf] hover:bg-[#ebd7fa] rounded-lg text-xs font-bold transition"
+                        >
+                          <FileText size={12} />
+                          <span>{doc.type.replace("_", " ").toUpperCase()}</span>
+                          <ExternalLink size={11} />
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-[11px] font-semibold text-rose-700">
+                    No rider documents uploaded yet.
+                  </div>
+                )}
+
+                {!rider.hasRequiredIdCard && (
+                  <div className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-[11px] font-semibold text-rose-700">
+                    Rider must upload an ID card before approval.
+                  </div>
+                )}
+
                 <div className="flex items-center gap-2 pt-2 border-t border-slate-100">
                   <button
                     type="button"
+                    disabled={!rider.hasRequiredIdCard}
                     onClick={() => setModalState({ type: "approve_rider", rider })}
-                    className="flex-1 inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs transition shadow-sm active:scale-95"
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs transition shadow-sm active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-emerald-600"
                   >
                     <CheckCircle2 size={14} />
                     <span>Approve Courier</span>

@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Check, Loader2, AlertCircle } from "lucide-react";
 
 import { checkoutApi, apiErrorMessage } from "@/lib/api";
@@ -11,6 +11,7 @@ import { QUERY_KEYS, queryClient } from "@/lib/query-client";
 import type { ApiOrder } from "@/types/order";
 
 function CheckoutCallbackContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const reference = searchParams.get("reference") ?? searchParams.get("trxref");
   const clearCart = useCartStore((s) => s.clearCart);
@@ -23,6 +24,13 @@ function CheckoutCallbackContent() {
     if (!reference) {
       setStatus("error");
       setError("Missing payment reference.");
+      return;
+    }
+
+    const token = typeof window !== "undefined" ? localStorage.getItem("auth_token") : null;
+    if (!token) {
+      const next = `/checkout/callback?${searchParams.toString()}`;
+      router.replace(`/login?next=${encodeURIComponent(next)}`);
       return;
     }
 
@@ -48,7 +56,7 @@ function CheckoutCallbackContent() {
     return () => {
       cancelled = true;
     };
-  }, [reference, clearCart]);
+  }, [reference, clearCart, router, searchParams]);
 
   const trackingHref = order?.trackingNumber
     ? `/order-tracking/${encodeURIComponent(order.trackingNumber)}?email=${encodeURIComponent(order.buyer.email)}`

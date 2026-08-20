@@ -12,9 +12,10 @@ class PaystackService
     }
 
     /**
+     * @param  array<string, scalar|null>  $metadata
      * @return array{authorization_url: string, access_code: string|null, reference: string}
      */
-    public function initialize(string $email, int $amountKobo, string $reference, string $callbackUrl): array
+    public function initialize(string $email, int $amountKobo, string $reference, string $callbackUrl, array $metadata = []): array
     {
         if (! $this->isConfigured()) {
             $frontend = rtrim((string) config('app.frontend_url'), '/');
@@ -26,15 +27,21 @@ class PaystackService
             ];
         }
 
+        $payload = [
+            'email' => $email,
+            'amount' => $amountKobo,
+            'reference' => $reference,
+            'callback_url' => $callbackUrl,
+            'currency' => 'NGN',
+        ];
+
+        if ($metadata !== []) {
+            $payload['metadata'] = $metadata;
+        }
+
         $response = Http::withToken((string) config('services.paystack.secret'))
             ->acceptJson()
-            ->post('https://api.paystack.co/transaction/initialize', [
-                'email' => $email,
-                'amount' => $amountKobo,
-                'reference' => $reference,
-                'callback_url' => $callbackUrl,
-                'currency' => 'NGN',
-            ]);
+            ->post('https://api.paystack.co/transaction/initialize', $payload);
 
         if (! $response->successful() || ! $response->json('status')) {
             abort(502, $response->json('message') ?: 'Unable to start payment.');

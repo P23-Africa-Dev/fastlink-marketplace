@@ -7,6 +7,7 @@ use App\Http\Resources\ReviewResource;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\Review;
+use App\Support\PageViewRecorder;
 use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -62,6 +63,15 @@ class ReviewController extends Controller
             'body' => $validated['body'] ?? null,
             'status' => 'approved',
         ]);
+
+        PageViewRecorder::record(
+            $buyer,
+            $product->store,
+            $product,
+            '/products/'.$product->slug,
+            'review_submitted',
+            ['reviewId' => (string) $review->id, 'rating' => (int) $review->rating],
+        );
 
         $product->refreshRating();
 

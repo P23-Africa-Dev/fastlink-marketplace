@@ -45,7 +45,8 @@ class SellerDashboardTest extends TestCase
             ->assertJsonPath('data.totalOrders', 1)
             ->assertJsonPath('data.totalRevenue', 250)
             ->assertJsonPath('data.totalCustomers', 1)
-            ->assertJsonPath('data.totalProducts', 1);
+            ->assertJsonPath('data.totalProducts', 1)
+            ->assertJsonStructure(['data' => ['activitySummary', 'recentActivity']]);
     }
 
     public function test_customers_are_derived_from_orders(): void

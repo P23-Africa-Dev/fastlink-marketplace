@@ -41,7 +41,7 @@ Legend: **MVP** = required for first ship · **Post-MVP** = do not build until M
 | Prefix | All paths below are under `/api` |
 | IDs | UUID strings |
 | Slugs | Used on public mall / store / brand / product URLs |
-| Roles | `buyer`, `seller`, `admin` (`rider` post-MVP) |
+| Roles | `buyer`, `seller`, `admin`, `rider` |
 | Seller routes | `auth:sanctum` + `role:seller,admin` |
 | Admin routes | `auth:sanctum` + `role:admin` |
 | Errors | `{ success: false, message, errors? }` — 401 / 403 / 422 / 404 |
@@ -52,7 +52,7 @@ Legend: **MVP** = required for first ship · **Post-MVP** = do not build until M
 
 | Method | Path | Auth | Scope | Purpose |
 |--------|------|------|-------|---------|
-| `GET` | `/health` | public | MVP | Liveness; already implemented |
+| `GET` | `/health` | public | MVP | Liveness + ops snapshot: `database`, `queue`, `webhookFailures24h`; returns `degraded` when checks fail |
 
 ---
 
@@ -60,7 +60,7 @@ Legend: **MVP** = required for first ship · **Post-MVP** = do not build until M
 
 | Method | Path | Auth | Scope | Purpose |
 |--------|------|------|-------|---------|
-| `POST` | `/auth/register` | public | MVP | Create user. Body: `name`, `email`, `password`, `password_confirmation`, optional `role` (`buyer` \| `seller`). Never accept `admin`. Returns `{ token, user }`. |
+| `POST` | `/auth/register` | public | MVP | Create user. Body: `name`, `email`, `password`, `password_confirmation`, optional `role` (`buyer` \| `seller`). Never accept `admin` or `rider` on public register. Returns `{ token, user }`. Rider onboarding begins after account creation. |
 | `POST` | `/auth/login` | public | MVP | Body: `email`, `password`. Returns `{ token, user }`. Reject `status=suspended`. |
 | `POST` | `/auth/logout` | auth | MVP | Revoke current Sanctum token. |
 | `GET` | `/auth/me` | auth | MVP | Current user (hydrate session). |
@@ -74,7 +74,8 @@ Legend: **MVP** = required for first ship · **Post-MVP** = do not build until M
 
 | Method | Path | Auth | Scope | Purpose |
 |--------|------|------|-------|---------|
-| `POST` | `/seller/onboard` | auth (`buyer` or new seller) | MVP | Light KYC: business name, phone, bank account. Creates `stores` row with `status=pending`. Used by `/vendor/register`. |
+| `POST` | `/seller/onboard` | auth (`buyer` or new seller) | MVP | Seller onboarding with staged KYC: creates store and supports `submit_kyc` toggle. Limited dashboard is allowed pre-KYC; `canSell` remains false until admin verification. |
+| `POST` | `/seller/kyc/submit` | auth (`seller`) | MVP | Submit KYC later for an existing store when onboarding was skipped or incomplete. |
 
 ---
 
@@ -105,7 +106,8 @@ Homepage, malls, stores, brands, categories, deals.
 |--------|------|------|-------|----------------|
 | `GET` | `/products` | public | MVP | `category`, `store`, `brand`, `featured`, `q`, `minPrice`, `maxPrice`, `inStock`, `sortBy`, `page`, `limit` |
 | `GET` | `/products/{idOrSlug}` | public | MVP | Detail + images + variants + store embed |
-| `GET` | `/search` | public | MVP | `q`, `page`, `limit` — alias of product search |
+| `GET` | `/search` | public | MVP | `q`, `page`, `limit` — product search with typo-tolerant fallback (`typoToleranceApplied`, optional `didYouMean`) |
+| `GET` | `/search/suggest` | public | MVP | Autocomplete suggestions; Levenshtein fallback for near-matches |
 
 `sortBy`: `price_asc` \| `price_desc` \| `rating` \| `newest` \| `bestseller`
 
@@ -125,6 +127,11 @@ All require seller (or admin). Scoped to the seller’s store.
 | `DELETE` | `/seller/products/{id}` | seller | MVP | Archive / delete |
 | `POST` | `/seller/products/{id}/images` | seller | MVP | Upload image(s) |
 | `PATCH` | `/seller/products/{id}/stock` | seller | MVP | Inventory adjust |
+| `POST` | `/seller/products/{id}/submit` | seller | MVP | Submit draft for moderation review |
+| `GET` | `/seller/inventory/summary` | seller | MVP | Low/out-of-stock counts + top low-stock products |
+| `GET` | `/seller/inventory/movements` | seller | MVP | Stock movement audit trail |
+| `GET` | `/seller/documents` | seller | MVP | List store KYC uploads (`cac`, `id_card`, `bank_statement`, `other`) |
+| `POST` | `/seller/documents` | seller | MVP | Upload KYC doc (PDF/JPG/PNG, 8MB max); replaces pending doc of same type |
 
 ---
 
@@ -148,7 +155,8 @@ Cart stays in **Zustand**. Checkout POST sends a line-item snapshot; server re-p
 
 | Method | Path | Auth | Scope | Purpose |
 |--------|------|------|-------|---------|
-| `POST` | `/checkout` | auth buyer | MVP | Create order(s). Body: `items[]`, `address_id`, `delivery_method`. Ignore client prices. |
+| `POST` | `/checkout` | auth buyer | MVP | Create order(s). Body: `items[]`, `address_id`, `delivery_method`. Ignores client prices. Enforces platform `minOrderAmount`. |
+| `POST` | `/checkout/quote` | auth buyer | MVP | Server-side cart quote (multi-store split, shipping, ETA, promos). Enforces `minOrderAmount`. |
 | `POST` | `/checkout/confirm` | auth buyer | Optional (pre-Paystack) | Stub mark-paid before Phase 7. Drop once Paystack is live. |
 | `POST` | `/checkout/initialize` | auth buyer | MVP | Paystack initialize; returns `authorization_url` |
 | `GET` | `/orders` | auth buyer | MVP | **My Orders** list (`status`, `page`) |
@@ -181,7 +189,7 @@ Thin MVP: buyer requests; seller or admin approves; full refund or none.
 
 | Method | Path | Auth | Scope | Purpose |
 |--------|------|------|-------|---------|
-| `GET` | `/seller/dashboard` | seller | MVP | Revenue, orders, products, customers, recent orders, top products |
+| `GET` | `/seller/dashboard` | seller | MVP | Revenue, orders, products, customers, recent orders, top products, `activitySummary`, `recentActivity` |
 | `GET` | `/seller/customers` | seller | MVP | Buyers who ordered from this store |
 | `GET` | `/seller/customers/{id}` | seller | MVP | Customer + order history with this store |
 | `GET` | `/seller/store` | seller | MVP | Store profile |
@@ -197,6 +205,7 @@ Thin MVP: buyer requests; seller or admin approves; full refund or none.
 |--------|------|------|-------|---------|
 | `GET` | `/products/{id}/reviews` | public | MVP | Approved reviews |
 | `POST` | `/reviews` | auth buyer | MVP | Create; must have purchased (`order_item_id`, `rating`, `body`) |
+| `POST` | `/trust-reports` | auth | MVP | Report seller/product/order abuse; blocks duplicate open/investigating reports per user+subject |
 | `GET` | `/seller/reviews` | seller | MVP | Dashboard list (`status`: approved / pending / flagged) |
 | `POST` | `/seller/reviews/{id}/reply` | seller | MVP | Seller reply |
 | `PATCH` | `/seller/reviews/{id}` | seller | MVP | Hide / flag |
@@ -277,7 +286,10 @@ All `role:admin`. New `/admin` UI.
 | Method | Path | Scope | Purpose |
 |--------|------|-------|---------|
 | `GET` | `/admin/products` | MVP | All listings (`status`, `q`) |
+| `GET` | `/admin/products/moderation` | MVP | Pending moderation queue |
 | `GET` | `/admin/products/{id}` | MVP | Detail |
+| `POST` | `/admin/products/{id}/approve` | MVP | Approve moderated listing (stores `moderationNote`, `moderatedAt`, `moderatedBy`) |
+| `POST` | `/admin/products/{id}/reject` | MVP | Reject with moderation note |
 | `PATCH` | `/admin/products/{id}/unpublish` | MVP | Take down listing |
 | `GET` | `/admin/orders` | MVP | All orders |
 | `GET` | `/admin/orders/{id}` | MVP | Any order detail |
@@ -288,6 +300,20 @@ All `role:admin`. New `/admin` UI.
 | `POST` | `/admin/payouts/{id}/reject` | MVP | Reject payout |
 | `GET` | `/admin/settings/commission` | MVP | Current platform % |
 | `PATCH` | `/admin/settings/commission` | MVP | Update single commission rate |
+| `GET` | `/admin/settings` | MVP | Marketplace config: `commissionRate`, `returnWindowDays`, `minOrderAmount`, `defaultShippingFee`, `maintenanceMode` |
+| `PATCH` | `/admin/settings` | MVP | Update marketplace config (audited) |
+| `GET` | `/admin/ledger` | MVP | Financial ledger entries |
+| `GET` | `/admin/trust-reports` | MVP | Trust & safety queue (`subject_type`, `reason`, `status`) |
+| `PATCH` | `/admin/trust-reports/{id}` | MVP | Resolve / dismiss report |
+| `GET` | `/admin/chargebacks` | MVP | Chargeback cases |
+| `POST` | `/admin/chargebacks` | MVP | Open chargeback |
+| `PATCH` | `/admin/chargebacks/{id}` | MVP | Update chargeback status |
+| `GET` | `/admin/webhooks/paystack` | MVP | Webhook event log |
+| `GET` | `/admin/webhooks/paystack/reconciliation` | MVP | Payment ↔ webhook reconciliation summary |
+| `GET` | `/admin/delivery-zones` | MVP | Delivery zone list (`fee`, `etaMinDays`, `etaMaxDays`) |
+| `POST` | `/admin/delivery-zones` | MVP | Create zone with ETA window |
+| `PATCH` | `/admin/delivery-zones/{id}` | MVP | Update zone |
+| `GET` | `/admin/verification` | MVP | Pending seller/rider KYC queue |
 | `GET` | `/admin/audit-logs` | MVP | Who approved a seller / unpublished a product (`actor`, `action`, `page`) |
 
 ---
@@ -347,9 +373,17 @@ Do not implement until MVP is shipped ([plan §6.3](./API-INTEGRATION-PLAN.md#63
 
 | Method | Path | Purpose |
 |--------|------|---------|
-| `POST` | `/rider/register` | Rider onboarding |
-| `GET` | `/admin/riders` | List / approve |
+| `POST` | `/rider/register` | Rider onboarding (pending by default outside testing env) |
+| `GET` | `/rider/me` | Rider profile/status |
+| `GET` | `/rider/orders` | Assigned rider orders |
+| `GET` | `/rider/documents` | List rider KYC documents |
+| `POST` | `/rider/documents` | Upload rider KYC doc (`id_card`, `license`, `vehicle_registration`, `other`); replaces pending doc of same type |
+| `GET` | `/admin/riders` | List / manage riders |
+| `POST` | `/admin/riders/{id}/approve` | Approve rider (**requires uploaded `id_card`**) |
+| `POST` | `/admin/riders/{id}/reject` | Reject rider (optional reason) |
 | `PATCH` | `/admin/orders/{id}/assign-rider` | Assign delivery |
+
+**Storage:** KYC files live under `storage/app/public/kyc/stores/{storeId}` and `kyc/riders/{riderId}` (PDF/JPG/PNG, 8MB, max 20 docs per entity).
 
 ---
 
@@ -370,7 +404,8 @@ Do not implement until MVP is shipped ([plan §6.3](./API-INTEGRATION-PLAN.md#63
 
 `POST /auth/logout` `GET /auth/me` `PATCH /auth/profile`  
 `GET|POST|PATCH|DELETE /addresses…`  
-`GET /notifications…` `GET|PATCH /notification-preferences`
+`GET /notifications…` `GET|PATCH /notification-preferences`  
+`POST /rider/register`
 
 ### Buyer
 
@@ -382,6 +417,11 @@ Do not implement until MVP is shipped ([plan §6.3](./API-INTEGRATION-PLAN.md#63
 ### Seller
 
 All `/seller/*` product, order, dashboard, customer, store, settings, review, payment, payout, return endpoints.
+
+### Rider
+
+`GET /rider/me` `GET /rider/orders`  
+`GET /rider/documents` `POST /rider/documents`
 
 ### Admin
 
@@ -417,9 +457,9 @@ All `/admin/*` endpoints.
 
 | Scope | Endpoints |
 |-------|-----------|
-| **MVP** | ~95 |
-| Post-MVP | ~30 |
-| **Already implemented** | 1 (`GET /health`) |
+| **MVP** | ~130 |
+| Post-MVP | ~15 |
+| **Live (implemented)** | Most MVP routes above — see [`API-REFERENCE.md`](./API-REFERENCE.md) |
 
 Build order follows [`API-INTEGRATION-PLAN.md`](./API-INTEGRATION-PLAN.md) phases 0–8. Do not implement §16 of this catalog until MVP is done.
 )

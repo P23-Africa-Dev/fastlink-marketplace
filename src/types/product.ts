@@ -56,6 +56,10 @@ export interface Product {
   isNew: boolean;
   isBestseller: boolean;
   status?: string;
+  submittedAt?: string | null;
+  moderatedAt?: string | null;
+  moderatedBy?: string | null;
+  moderationNote?: string | null;
   storeReputation?: StoreReputation;
   costPrice?: number;
   createdAt: string;

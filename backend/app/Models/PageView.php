@@ -11,8 +11,17 @@ class PageView extends Model
         'store_id',
         'product_id',
         'viewer_id',
+        'event_type',
         'path',
+        'meta',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'meta' => 'array',
+        ];
+    }
 
     public function store(): BelongsTo
     {

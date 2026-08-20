@@ -14,7 +14,7 @@ export default function AdminDeliveryZonesPage() {
   const { data, isLoading, isError, refetch } = useAdminDeliveryZones();
   const actions = useAdminDeliveryZoneActions();
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ name: "", state: "", city: "", fee: "", free_above: "" });
+  const [form, setForm] = useState({ name: "", state: "", city: "", fee: "", free_above: "", eta_min_days: "2", eta_max_days: "5" });
   const [error, setError] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -32,9 +32,11 @@ export default function AdminDeliveryZonesPage() {
         city: form.city.trim() || undefined,
         fee: Number(form.fee),
         free_above: form.free_above ? Number(form.free_above) : null,
+        eta_min_days: Number(form.eta_min_days || 0),
+        eta_max_days: Number(form.eta_max_days || 0),
       });
       setShowForm(false);
-      setForm({ name: "", state: "", city: "", fee: "", free_above: "" });
+      setForm({ name: "", state: "", city: "", fee: "", free_above: "", eta_min_days: "2", eta_max_days: "5" });
       refetch();
     } catch (err) {
       setError(apiErrorMessage(err, "Could not create zone."));
@@ -79,7 +81,7 @@ export default function AdminDeliveryZonesPage() {
           </span>
           <h2 className="text-2xl font-bold text-slate-800 mt-2">Delivery Zones & Shipping Rates</h2>
           <p className="text-slate-500 text-xs sm:text-sm font-medium mt-1">
-            Configure state and city base shipping fees applied at buyer checkout.
+            Configure state and city base shipping fees and delivery ETA windows for checkout.
           </p>
         </div>
 
@@ -185,6 +187,31 @@ export default function AdminDeliveryZonesPage() {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
+              <label className="block text-[11px] font-bold text-slate-600 mb-1">Min ETA (days)</label>
+              <input
+                type="number"
+                min="0"
+                step="1"
+                value={form.eta_min_days}
+                onChange={(e) => setForm((p) => ({ ...p, eta_min_days: e.target.value }))}
+                className="w-full bg-[#faf6ff] rounded-xl border border-[#ebd7fa] px-3.5 py-2 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#7a3dbf]/20 focus:border-[#7a3dbf]"
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] font-bold text-slate-600 mb-1">Max ETA (days)</label>
+              <input
+                type="number"
+                min="0"
+                step="1"
+                value={form.eta_max_days}
+                onChange={(e) => setForm((p) => ({ ...p, eta_max_days: e.target.value }))}
+                className="w-full bg-[#faf6ff] rounded-xl border border-[#ebd7fa] px-3.5 py-2 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#7a3dbf]/20 focus:border-[#7a3dbf]"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
               <label className="block text-[11px] font-bold text-slate-600 mb-1">Delivery Fee (NGN) *</label>
               <input
                 required
@@ -271,6 +298,7 @@ export default function AdminDeliveryZonesPage() {
                     <th className="px-4 py-3.5 rounded-l-xl">Zone Name & Geo Scope</th>
                     <th className="px-4 py-3.5">Delivery Fee</th>
                     <th className="px-4 py-3.5">Free Threshold</th>
+                    <th className="px-4 py-3.5">ETA Window</th>
                     <th className="px-4 py-3.5">Status</th>
                     <th className="px-4 py-3.5 rounded-r-xl text-right">Toggle Status</th>
                   </tr>
@@ -302,6 +330,11 @@ export default function AdminDeliveryZonesPage() {
                         ) : (
                           <span className="text-slate-400">No threshold</span>
                         )}
+                      </td>
+                      <td className="px-4 py-3.5 text-slate-600 font-semibold">
+                        {zone.etaMinDays === zone.etaMaxDays
+                          ? `${zone.etaMinDays} day${zone.etaMinDays === 1 ? "" : "s"}`
+                          : `${zone.etaMinDays}-${zone.etaMaxDays} days`}
                       </td>
                       <td className="px-4 py-3.5">
                         <span

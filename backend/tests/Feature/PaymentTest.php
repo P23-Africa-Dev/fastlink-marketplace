@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Address;
 use App\Models\Payment;
+use App\Models\PaystackWebhookEvent;
 use App\Models\Payout;
 use App\Models\Product;
 use App\Models\Store;
@@ -78,6 +79,47 @@ class PaymentTest extends TestCase
         ]);
     }
 
+    public function test_paystack_initialize_uses_frontend_callback_url(): void
+    {
+        config([
+            'services.paystack.secret' => 'sk_test_secret',
+            'app.frontend_url' => 'http://localhost:3000',
+        ]);
+
+        \Illuminate\Support\Facades\Http::fake([
+            'api.paystack.co/*' => \Illuminate\Support\Facades\Http::response([
+                'status' => true,
+                'data' => [
+                    'authorization_url' => 'https://checkout.paystack.com/test-session',
+                    'access_code' => 'access-code',
+                    'reference' => 'PSK-LIVE-REF',
+                ],
+            ], 200),
+        ]);
+
+        [$buyer, $address, $product] = $this->checkoutSetup();
+        Sanctum::actingAs($buyer);
+
+        $placed = $this->postJson('/api/checkout', [
+            'address_id' => $address->id,
+            'items' => [['product_id' => $product->id, 'quantity' => 1]],
+        ])->assertCreated();
+
+        $init = $this->postJson('/api/checkout/initialize', [
+            'group_id' => $placed->json('data.groupId'),
+        ])->assertOk()
+            ->assertJsonPath('data.mode', 'paystack')
+            ->assertJsonPath('data.authorizationUrl', 'https://checkout.paystack.com/test-session');
+
+        \Illuminate\Support\Facades\Http::assertSent(function ($request) {
+            $body = $request->data();
+
+            return $request->url() === 'https://api.paystack.co/transaction/initialize'
+                && ($body['callback_url'] ?? '') === 'http://localhost:3000/checkout/callback'
+                && isset($body['metadata']['group_id']);
+        });
+    }
+
     public function test_paystack_webhook_with_valid_signature_marks_paid(): void
     {
         config(['services.paystack.secret' => 'sk_test_secret']);
@@ -142,6 +184,42 @@ class PaymentTest extends TestCase
             ],
             $payload,
         )->assertStatus(401);
+    }
+
+    public function test_admin_can_view_webhook_reconciliation_summary(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        PaystackWebhookEvent::query()->create([
+            'event' => 'charge.success',
+            'reference' => 'PSK-ORPHAN-1',
+            'status' => 'processed',
+            'error' => null,
+            'payload' => ['event' => 'charge.success'],
+            'created_at' => now(),
+        ]);
+        PaystackWebhookEvent::query()->create([
+            'event' => 'charge.success',
+            'reference' => 'PSK-FAILED-1',
+            'status' => 'failed',
+            'error' => 'Gateway timeout',
+            'payload' => ['event' => 'charge.success'],
+            'created_at' => now(),
+        ]);
+
+        Sanctum::actingAs($admin);
+        $this->getJson('/api/admin/webhooks/paystack/reconciliation')
+            ->assertOk()
+            ->assertJsonStructure([
+                'data' => [
+                    'events24h',
+                    'processed24h',
+                    'failed24h',
+                    'orphanEvents24h',
+                    'pendingPayments24h',
+                    'paidPayments24h',
+                ],
+            ])
+            ->assertJsonPath('data.orphanEvents24h', 2);
     }
 
     public function test_seller_payout_stays_pending_until_admin_approves(): void

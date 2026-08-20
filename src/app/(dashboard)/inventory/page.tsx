@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Boxes, Loader2 } from "lucide-react";
 
-import { useAdjustSellerStock, useSellerInventory, useSellerProducts } from "@/hooks/use-seller-products";
+import { useAdjustSellerStock, useSellerInventory, useSellerInventorySummary, useSellerProducts } from "@/hooks/use-seller-products";
 import { apiErrorMessage } from "@/lib/api";
 import { formatOrderDate } from "@/lib/order-map";
 import type { InventoryMovementRow } from "@/types/admin";
@@ -16,6 +16,7 @@ const TYPES = [
 
 export default function SellerInventoryPage() {
   const { data: productsPage } = useSellerProducts();
+  const { data: summary } = useSellerInventorySummary();
   const { data, isLoading, refetch } = useSellerInventory();
   const adjust = useAdjustSellerStock();
   const products = productsPage?.data ?? [];
@@ -60,6 +61,38 @@ export default function SellerInventoryPage() {
         </h1>
         <p className="text-sm text-[#8A79A5] mt-1">Restock, damaged, and write-off movements with an audit trail.</p>
       </div>
+
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="rounded-2xl border border-[#EBD7FA] bg-white p-4">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-[#8A79A5]">Products tracked</p>
+          <p className="mt-1 text-2xl font-extrabold text-[#3B1C5A]">{summary?.totalProducts ?? 0}</p>
+        </div>
+        <div className="rounded-2xl border border-[#EBD7FA] bg-white p-4">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-[#8A79A5]">Low stock</p>
+          <p className="mt-1 text-2xl font-extrabold text-amber-700">{summary?.lowStockCount ?? 0}</p>
+        </div>
+        <div className="rounded-2xl border border-[#EBD7FA] bg-white p-4">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-[#8A79A5]">Out of stock</p>
+          <p className="mt-1 text-2xl font-extrabold text-rose-700">{summary?.outOfStockCount ?? 0}</p>
+        </div>
+        <div className="rounded-2xl border border-[#EBD7FA] bg-white p-4">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-[#8A79A5]">Movements (7d)</p>
+          <p className="mt-1 text-2xl font-extrabold text-[#3B1C5A]">{summary?.movementCount7d ?? 0}</p>
+        </div>
+      </div>
+
+      {!!summary?.lowStockProducts?.length && (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-4">
+          <p className="text-xs font-black uppercase tracking-wider text-amber-800">Low stock alerts</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {summary.lowStockProducts.map((product) => (
+              <span key={product.id} className="rounded-lg bg-white px-3 py-1 text-xs font-semibold text-amber-800 border border-amber-200">
+                {product.name} ({product.stock})
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
 
       <form onSubmit={submit} className="rounded-2xl border border-[#EBD7FA] bg-white p-5 grid sm:grid-cols-2 lg:grid-cols-5 gap-3">
         <select required value={productId} onChange={(e) => setProductId(e.target.value)} className="rounded-xl border border-[#EBD7FA] px-3 py-2 text-sm">

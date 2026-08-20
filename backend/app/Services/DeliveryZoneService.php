@@ -69,6 +69,7 @@ class DeliveryZoneService
         $shipping = $this->shippingFee($address, $subtotal);
         $tax = round($subtotal * self::TAX_RATE, 2);
         $zone = null;
+        $eta = null;
 
         try {
             $resolved = $this->resolveZone($address);
@@ -77,8 +78,16 @@ class DeliveryZoneService
                 'name' => $resolved->name,
                 'fee' => (float) $resolved->fee,
             ];
+            $etaMin = max(0, (int) ($resolved->eta_min_days ?? 2));
+            $etaMax = max($etaMin, (int) ($resolved->eta_max_days ?? 5));
+            $eta = [
+                'minDays' => $etaMin,
+                'maxDays' => $etaMax,
+                'label' => $etaMin === $etaMax ? $etaMin.' day'.($etaMin === 1 ? '' : 's') : "{$etaMin}-{$etaMax} days",
+            ];
         } catch (\Throwable) {
             $zone = null;
+            $eta = null;
         }
 
         return [
@@ -87,6 +96,7 @@ class DeliveryZoneService
             'tax' => $tax,
             'total' => round($subtotal + $shipping + $tax, 2),
             'zone' => $zone,
+            'eta' => $eta,
         ];
     }
 

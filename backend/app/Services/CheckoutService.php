@@ -4,8 +4,10 @@ namespace App\Services;
 
 use App\Models\Address;
 use App\Models\Order;
+use App\Models\PlatformSetting;
 use App\Models\Product;
 use App\Models\User;
+use App\Support\PageViewRecorder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -35,7 +37,8 @@ class CheckoutService
      *     loyaltyPoints: int,
      *     loyaltyDiscount: float,
      *     availablePoints: int,
-     *     deliveryZone: array<string, mixed>|null
+     *     deliveryZone: array<string, mixed>|null,
+     *     deliveryEstimate: array<string, mixed>|null
      * }
      */
     public function quote(User $buyer, Address $address, array $items, ?string $couponCode = null, int $redeemPoints = 0): array
@@ -46,6 +49,7 @@ class CheckoutService
 
         $grouped = $this->groupItems($items);
         $priced = $this->priceGrouped($buyer, $address, $grouped, $couponCode, $redeemPoints);
+        $this->assertMinOrderAmount($priced['subtotal']);
 
         return [
             'groupPreview' => count($priced['stores']) > 1,
@@ -61,6 +65,7 @@ class CheckoutService
             'availablePoints' => $priced['availablePoints'],
             'total' => $priced['total'],
             'deliveryZone' => $priced['deliveryZone'],
+            'deliveryEstimate' => $priced['deliveryEstimate'],
         ];
     }
 
@@ -78,6 +83,7 @@ class CheckoutService
             $groupId = (string) Str::uuid();
             $grouped = $this->groupItems($items, lock: true);
             $priced = $this->priceGrouped($buyer, $address, $grouped, $couponCode, $redeemPoints);
+            $this->assertMinOrderAmount($priced['subtotal']);
             $orders = collect();
             $promo = $priced['promo'];
 
@@ -148,6 +154,14 @@ class CheckoutService
                 }
 
                 $order->addEvent('pending', 'Your order has been placed and is awaiting payment.');
+                PageViewRecorder::record(
+                    $buyer,
+                    $storeItems[0]['product']->store,
+                    null,
+                    '/checkout',
+                    'checkout_started',
+                    ['orderId' => (string) $order->id, 'groupId' => $groupId],
+                );
                 app(NotificationService::class)->notifyOrderEvent(
                     $order,
                     'order.placed',
@@ -269,7 +283,8 @@ class CheckoutService
      *     loyaltyPoints: int,
      *     loyaltyDiscount: float,
      *     availablePoints: int,
-     *     deliveryZone: array<string, mixed>|null
+     *     deliveryZone: array<string, mixed>|null,
+     *     deliveryEstimate: array<string, mixed>|null
      * }
      */
     private function priceGrouped(User $buyer, Address $address, array $grouped, ?string $couponCode, int $redeemPoints = 0): array
@@ -328,6 +343,7 @@ class CheckoutService
         $discount = 0.0;
         $loyaltyDiscount = 0.0;
         $zone = null;
+        $eta = null;
 
         foreach ($storeLines as $storeId => $meta) {
             $raw = $meta['subtotal'];
@@ -336,6 +352,7 @@ class CheckoutService
             $discounted = max(0, round($raw - $storeDiscount - $storeLoyalty, 2));
             $totals = $this->delivery->totals($discounted, $address);
             $zone ??= $totals['zone'];
+            $eta ??= $totals['eta'];
 
             $stores[] = [
                 'storeId' => (string) $storeId,
@@ -348,6 +365,7 @@ class CheckoutService
                 'shipping' => $totals['shipping'],
                 'tax' => $totals['tax'],
                 'total' => $totals['total'],
+                'deliveryEstimate' => $totals['eta'],
             ];
 
             $subtotal += $raw;
@@ -373,6 +391,17 @@ class CheckoutService
             'loyaltyDiscount' => $loyaltyDiscount,
             'availablePoints' => $loyaltyQuote['available'],
             'deliveryZone' => $zone,
+            'deliveryEstimate' => $eta,
         ];
+    }
+
+    private function assertMinOrderAmount(float $subtotal): void
+    {
+        $minimum = PlatformSetting::minOrderAmount();
+        if ($minimum > 0 && $subtotal < $minimum) {
+            throw ValidationException::withMessages([
+                'items' => 'Minimum order amount is ₦'.number_format($minimum, 2).'. Your cart subtotal is ₦'.number_format($subtotal, 2).'.',
+            ]);
+        }
     }
 }

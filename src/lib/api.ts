@@ -26,6 +26,7 @@ import type {
   AdminUserRow,
   AdminVerificationQueue,
   AdminWebhooksResponse,
+  WebhookReconciliationSummary,
   AdminChargebacksResponse,
   ChargebackRow,
   AdminDisputesResponse,
@@ -36,6 +37,7 @@ import type {
   DeliveryZoneRow,
   KycDocumentRow,
   InventoryMovementRow,
+  SellerInventorySummary,
 } from "@/types/admin";
 import type {
   ApiCampaign,
@@ -445,6 +447,11 @@ export const sellerDocumentsApi = {
 };
 
 export const sellerInventoryApi = {
+  summary: async () => {
+    const { data } = await apiClient.get<ApiResponse<SellerInventorySummary>>("/seller/inventory/summary");
+    return data.data;
+  },
+
   movements: async (params: { product_id?: string; page?: number; limit?: number } = {}) => {
     const { data } = await apiClient.get<ApiResponse<PaginatedResponse<InventoryMovementRow>>>(
       "/seller/inventory/movements",
@@ -856,7 +863,9 @@ export const adminApi = {
     return data.data;
   },
 
-  trustReports: async (params: { status?: string; page?: number; limit?: number } = {}) => {
+  trustReports: async (
+    params: { status?: string; subject_type?: "product" | "store"; reason?: string; page?: number; limit?: number } = {},
+  ) => {
     const { data } = await apiClient.get<ApiResponse<AdminTrustReportsResponse>>("/admin/trust-reports", {
       params: compactParams(params),
     });
@@ -890,8 +899,8 @@ export const adminApi = {
     return data.data;
   },
 
-  approveProduct: async (id: string) => {
-    const { data } = await apiClient.post<ApiResponse<Product>>(`/admin/products/${id}/approve`);
+  approveProduct: async (id: string, note?: string) => {
+    const { data } = await apiClient.post<ApiResponse<Product>>(`/admin/products/${id}/approve`, { note });
     return data.data;
   },
 
@@ -904,6 +913,13 @@ export const adminApi = {
     const { data } = await apiClient.get<ApiResponse<AdminWebhooksResponse>>("/admin/webhooks/paystack", {
       params: compactParams(params),
     });
+    return data.data;
+  },
+
+  webhookReconciliation: async () => {
+    const { data } = await apiClient.get<ApiResponse<WebhookReconciliationSummary>>(
+      "/admin/webhooks/paystack/reconciliation",
+    );
     return data.data;
   },
 
@@ -940,6 +956,8 @@ export const adminApi = {
     city?: string;
     fee: number;
     free_above?: number | null;
+    eta_min_days?: number;
+    eta_max_days?: number;
     is_active?: boolean;
     sort_order?: number;
   }) => {
@@ -980,6 +998,8 @@ export const adminApi = {
       city: string | null;
       fee: number;
       free_above: number | null;
+      eta_min_days: number;
+      eta_max_days: number;
       is_active: boolean;
       sort_order: number;
     }>,
@@ -1303,6 +1323,21 @@ export const riderApi = {
 
   orders: async () => {
     const { data } = await apiClient.get<ApiResponse<ApiOrder[]>>("/rider/orders");
+    return data.data;
+  },
+};
+
+export const riderDocumentsApi = {
+  list: async () => {
+    const { data } = await apiClient.get<ApiResponse<KycDocumentRow[]>>("/rider/documents");
+    return data.data;
+  },
+
+  upload: async (type: string, file: File) => {
+    const form = new FormData();
+    form.append("type", type);
+    form.append("document", file);
+    const { data } = await apiClient.post<ApiResponse<KycDocumentRow>>("/rider/documents", form);
     return data.data;
   },
 };

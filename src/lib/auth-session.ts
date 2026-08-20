@@ -50,8 +50,9 @@ export function isRiderPath(pathname: string): boolean {
 
 export function isLoginRequiredPath(pathname: string): boolean {
   // Public shop (homepage, catalog, account, checkout, etc.) stays open without a token.
-  // Only seller dashboard + admin control tower require authentication.
+  // Seller dashboard, rider portal, and admin control tower require authentication.
   if (isAdminPath(pathname)) return true;
+  if (isRiderPath(pathname)) return true;
   return isSellerDashboardPath(pathname);
 }
 

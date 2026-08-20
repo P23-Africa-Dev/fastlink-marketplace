@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\RiderResource;
 use App\Http\Resources\StoreResource;
 use App\Models\Rider;
+use App\Models\RiderDocument;
 use App\Models\Store;
 use App\Models\StoreDocument;
 use App\Support\ApiResponse;
@@ -52,11 +53,33 @@ class AdminVerificationController extends Controller
             ->where('status', 'pending')
             ->orderByDesc('id')
             ->limit(50)
-            ->get();
+            ->get()
+            ->map(function (Rider $rider): array {
+                $documents = RiderDocument::query()
+                    ->where('rider_id', $rider->id)
+                    ->orderByDesc('id')
+                    ->get()
+                    ->map(fn (RiderDocument $doc) => [
+                        'id' => (string) $doc->id,
+                        'type' => $doc->type,
+                        'fileUrl' => $doc->file_url,
+                        'status' => $doc->status,
+                    ])
+                    ->values()
+                    ->all();
+
+                $payload = (new RiderResource($rider))->resolve();
+                $payload['documents'] = $documents;
+                $payload['hasRequiredIdCard'] = collect($documents)->contains(
+                    fn (array $doc) => $doc['type'] === 'id_card'
+                );
+
+                return $payload;
+            });
 
         return ApiResponse::success([
             'pendingStores' => $pendingStores->values()->all(),
-            'pendingRiders' => RiderResource::collection($pendingRiders)->resolve(),
+            'pendingRiders' => $pendingRiders->values()->all(),
             'counts' => [
                 'stores' => Store::query()->where('status', 'pending')->count(),
                 'riders' => Rider::query()->where('status', 'pending')->count(),

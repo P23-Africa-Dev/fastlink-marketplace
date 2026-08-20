@@ -8,6 +8,7 @@ use App\Http\Resources\RiderResource;
 use App\Models\AuditLog;
 use App\Models\Order;
 use App\Models\Rider;
+use App\Models\RiderDocument;
 use App\Services\NotificationService;
 use App\Support\ApiResponse;
 use App\Support\ProductQuery;
@@ -110,6 +111,15 @@ class RiderController extends Controller
 
     public function approve(Request $request, Rider $rider, NotificationService $notifications): JsonResponse
     {
+        $hasIdCard = RiderDocument::query()
+            ->where('rider_id', $rider->id)
+            ->where('type', 'id_card')
+            ->exists();
+
+        if (! $hasIdCard) {
+            return ApiResponse::error('Rider must upload an ID card before approval.', 422);
+        }
+
         $rider->update(['status' => 'approved']);
         $rider->user?->forceFill(['role' => 'rider', 'status' => 'active'])->save();
         AuditLog::record($request->user(), 'rider.approved', $rider);

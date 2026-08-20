@@ -84,6 +84,22 @@ class TierThreeGrowthTest extends TestCase
             ->assertJsonFragment(['name' => 'Samsung']);
     }
 
+    public function test_search_query_uses_typo_tolerance_when_needed(): void
+    {
+        $store = Store::factory()->create(['status' => 'approved']);
+        Product::factory()->create([
+            'store_id' => $store->id,
+            'status' => 'active',
+            'stock' => 5,
+            'name' => 'PlayStation Console',
+        ]);
+
+        $this->getJson('/api/search?q=plystation')
+            ->assertOk()
+            ->assertJsonPath('data.typoToleranceApplied', true)
+            ->assertJsonFragment(['name' => 'PlayStation Console']);
+    }
+
     public function test_recommendations_use_views_and_wishlist(): void
     {
         $buyer = User::factory()->create(['role' => 'buyer']);

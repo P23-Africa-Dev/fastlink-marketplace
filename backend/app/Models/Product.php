@@ -28,6 +28,10 @@ class Product extends Model
         'cost_price',
         'stock',
         'status',
+        'submitted_at',
+        'moderated_at',
+        'moderated_by',
+        'moderation_note',
         'is_featured',
         'is_new',
         'is_bestseller',
@@ -50,6 +54,8 @@ class Product extends Model
             'is_bestseller' => 'boolean',
             'rating' => 'float',
             'tags' => 'array',
+            'submitted_at' => 'datetime',
+            'moderated_at' => 'datetime',
         ];
     }
 

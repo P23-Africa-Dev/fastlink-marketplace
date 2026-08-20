@@ -247,7 +247,7 @@ Seeded platform code: **`FASTLINK10`** (10% off, max ₦5,000, 5 uses per user).
 |--|--|
 | **Auth** | Public |
 | **Purpose** | API liveness |
-| **Response `data`** | `status`, `service`, `environment`, `timestamp` |
+| **Response `data`** | `status`, `service`, `environment`, `database`, `queue`, `webhookFailures24h`, `timestamp` |
 
 ---
 
@@ -280,7 +280,7 @@ CSRF is exempt for this route.
 | `email` | required, email, unique |
 | `password` | required, confirmed, min 8 |
 | `password_confirmation` | required with password |
-| `role` | optional: `buyer` \| `seller` (never `admin`) |
+| `role` | optional: `buyer` \| `seller` (never `admin` or `rider`) |
 | `referral_code` | optional, max 32 |
 
 | **Success** | `201` — `{ token, user }` |
@@ -423,7 +423,7 @@ Paginated `ProductResource[]` (public statuses only).
 
 ### `GET /products/{idOrSlug}`
 
-Product detail. May include `storeReputation`. **404** if draft/archived/private.
+Product detail. May include `storeReputation` (metrics now include `responseRate`). Product objects also expose moderation fields (`submittedAt`, `moderatedAt`, `moderatedBy`, `moderationNote`) for dashboard/admin workflows. **404** if draft/archived/private.
 
 ### `GET /products/{idOrSlug}/reviews`
 
@@ -431,7 +431,7 @@ Approved reviews for the product.
 
 ### `GET /search`
 
-Same as product list with required `q` or `query` (also matches store/brand names).
+Same as product list with required `q` or `query` (also matches store/brand names). If strict `LIKE` search returns no products, backend applies typo-tolerant fallback and sets `typoToleranceApplied: true`.
 
 ### `GET /search/suggest`
 
@@ -445,7 +445,8 @@ Same as product list with required `q` or `query` (also matches store/brand name
 {
   "products": [{ "id", "name", "slug", "image" }],
   "brands": [{ "name", "slug" }],
-  "stores": [{ "name", "slug" }]
+  "stores": [{ "name", "slug" }],
+  "didYouMean": "..."
 }
 ```
 
@@ -527,6 +528,7 @@ Preview pricing **without** placing an order.
 | `promoCode`, `loyaltyPoints`, `loyaltyDiscount` | discounts |
 | `availablePoints`, `total` | |
 | `deliveryZone` | resolved zone |
+| `deliveryEstimate` | ETA window `{ minDays, maxDays, label }` |
 
 Address must belong to the user. Shipping comes from **delivery zones** (city overrides state). Promo applies before tax/free-shipping thresholds. Loyalty: 1 pt = ₦1, max 50% of cart after promo.
 
@@ -669,7 +671,7 @@ Must have purchased; one review per product. Recalculates product rating.
 | `reason` | max 120 |
 | `details` | optional |
 
-`201` for admin `/admin/trust-reports` queue.
+`201` for admin `/admin/trust-reports` queue. Duplicate open/investigating reports by the same user for the same subject are rejected with `422`.
 
 ### Conversations
 
@@ -741,6 +743,8 @@ Earn: **1 point per ₦100 paid**. Redeem: **1 point = ₦1**.
 
 `201` — `{ rider, user: { id, role } }`. Sets role to `rider`. Status usually `pending` outside testing.
 
+Note: public register does not accept `role=rider`; rider onboarding is a second step after account creation.
+
 ### Rider-only (`role:rider`)
 
 | Method | Path | Notes |
@@ -788,6 +792,11 @@ Marks KYC submitted (`under_review`, or auto-approved in `testing`). Used when t
 **Query:** `range` = `7d` \| `30d` \| `1y`
 
 Revenue, orders, customers, products, chart, recent orders, top products (paid orders).
+
+Also includes:
+
+- `activitySummary` (`pageViews7d`, `checkoutStarts7d`, `reviews7d`)
+- `recentActivity` feed (typed events from activity pipeline)
 
 ### `GET /seller/store`
 
@@ -839,6 +848,17 @@ One of `stock` or `quantity_delta` required. Writes inventory movement; may noti
 ### `GET /seller/inventory/movements`
 
 Query: `product_id`, `page`, `limit`. Audit trail of stock changes.
+
+### `GET /seller/inventory/summary`
+
+Returns inventory health:
+
+- `totalProducts`
+- `outOfStockCount`
+- `lowStockCount` (stock 1..5)
+- `movementCount7d`
+- `lastMovementAt`
+- `lowStockProducts[]` (`id`, `name`, `sku`, `stock`)
 
 ---
 
@@ -937,7 +957,7 @@ Deletes membership; demotes to `buyer` if they own no store and have no other st
 | Method | Path | Response highlights |
 |--------|------|---------------------|
 | `GET` | `/admin/dashboard` | gmv, take, users, pendingStores/Riders, pendingPayouts, products |
-| `GET` | `/admin/verification` | pending stores (+ docs/bank) and riders |
+| `GET` | `/admin/verification` | pending stores (+ docs/bank) and pending riders (+ uploaded rider docs + `hasRequiredIdCard`) |
 
 ### 20.2 Users
 
@@ -967,7 +987,7 @@ Approving notifies the seller; enables product publish.
 | `GET` | `/admin/products/moderation` | submitted / under_review + `pendingCount` |
 | `GET` | `/admin/products/{product}` | |
 | `PATCH` | `/admin/products/{product}/unpublish` | archives |
-| `POST` | `/admin/products/{product}/approve` | → published/active |
+| `POST` | `/admin/products/{product}/approve` | → published/active; optional `note` persisted as `moderationNote` |
 | `POST` | `/admin/products/{product}/reject` | optional `note` |
 
 ### 20.5 Orders & riders
@@ -979,7 +999,7 @@ Approving notifies the seller; enables product publish.
 | `PATCH` | `/admin/orders/{order}/status` | `status` enum |
 | `PATCH` | `/admin/orders/{order}/assign-rider` | `rider_id` (must be approved) |
 | `GET` | `/admin/riders` | `status` |
-| `POST` | `/admin/riders/{rider}/approve` | |
+| `POST` | `/admin/riders/{rider}/approve` | requires at least one uploaded rider document with `type=id_card` |
 | `POST` | `/admin/riders/{rider}/reject` | optional `reason` |
 
 ### 20.6 Finance, ledger, settings
@@ -998,21 +1018,22 @@ Approving notifies the seller; enables product publish.
 
 | Method | Path | Body |
 |--------|------|------|
-| `GET` | `/admin/trust-reports` | `status` |
+| `GET` | `/admin/trust-reports` | `status`, `subject_type` (`product|store`), `reason` (contains) |
 | `PATCH` | `/admin/trust-reports/{id}` | `status` open\|investigating\|resolved\|dismissed; `admin_note` |
 | `GET` | `/admin/disputes` | `status` |
 | `PATCH` | `/admin/disputes/{id}` | `action` review\|resolve; if resolve: `resolution` refund\|replacement\|rejected; `refund_amount`; `admin_note` |
 | `GET` | `/admin/chargebacks` | |
 | `POST` | `/admin/chargebacks` | `payment_id`, `amount`, `reason`, `provider_reference` |
 | `PATCH` | `/admin/chargebacks/{id}` | `status` won\|lost; `admin_note` |
-| `GET` | `/admin/webhooks/paystack` | logged webhook events |
+| `GET` | `/admin/webhooks/paystack` | logged webhook events (`matchedPayments`, `paidPayments`) |
+| `GET` | `/admin/webhooks/paystack/reconciliation` | 24h reconciliation summary (`events`, failures, orphan refs, pending/paid payments) |
 
 ### 20.8 Delivery zones & promos
 
 | Method | Path | Body |
 |--------|------|------|
-| `GET` | `/admin/delivery-zones` | seeded Lagos, Abuja FCT, Kano, national |
-| `POST` | `/admin/delivery-zones` | `name`, `fee` required; `state`, `city`, `free_above`, `is_active`, `sort_order` |
+| `GET` | `/admin/delivery-zones` | seeded Lagos, Abuja FCT, Kano, national + ETA windows |
+| `POST` | `/admin/delivery-zones` | `name`, `fee` required; `state`, `city`, `free_above`, `eta_min_days`, `eta_max_days`, `is_active`, `sort_order` |
 | `PATCH` | `/admin/delivery-zones/{zone}` | partial |
 | `GET` / `POST` / `PATCH` | `/admin/promo-codes` | platform (or store-scoped) codes |
 

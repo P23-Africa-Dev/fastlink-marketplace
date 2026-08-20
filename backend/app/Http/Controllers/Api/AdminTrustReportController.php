@@ -25,6 +25,12 @@ class AdminTrustReportController extends Controller
         if ($request->filled('status')) {
             $query->where('status', $request->query('status'));
         }
+        if ($request->filled('subject_type')) {
+            $query->where('subject_type', $request->query('subject_type'));
+        }
+        if ($request->filled('reason')) {
+            $query->where('reason', 'like', '%'.$request->query('reason').'%');
+        }
 
         ['page' => $page, 'limit' => $limit] = ProductQuery::page($request, 30);
         $total = (clone $query)->count();

@@ -32,13 +32,18 @@ class ReputationService
 
         $avgRating = (float) ((clone $reviews)->avg('rating') ?? 0);
         $reviewCount = (clone $reviews)->count();
+        $sellerReplyCount = (clone $reviews)->whereNotNull('seller_replied_at')->count();
+        $responseRate = $reviewCount > 0
+            ? round(($sellerReplyCount / $reviewCount) * 100, 1)
+            : 100.0;
 
         $ratingScore = min(100, ($avgRating / 5) * 100);
         $fulfillmentScore = min(100, $fulfillmentRate);
         $cancelPenalty = max(0, 100 - ($cancellationRate * 2));
+        $responseScore = min(100, $responseRate);
 
         $score = round(
-            ($ratingScore * 0.45) + ($fulfillmentScore * 0.35) + ($cancelPenalty * 0.20),
+            ($ratingScore * 0.35) + ($fulfillmentScore * 0.30) + ($cancelPenalty * 0.20) + ($responseScore * 0.15),
             1,
         );
 
@@ -61,6 +66,7 @@ class ReputationService
                 'reviewCount' => $reviewCount,
                 'fulfillmentRate' => $fulfillmentRate,
                 'cancellationRate' => $cancellationRate,
+                'responseRate' => $responseRate,
                 'totalOrders' => $totalOrders,
             ],
         ];

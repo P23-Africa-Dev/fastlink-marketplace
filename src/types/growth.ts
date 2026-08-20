@@ -50,6 +50,7 @@ export interface SearchSuggestResult {
   products: SearchSuggestion[];
   brands: SearchSuggestion[];
   stores: SearchSuggestion[];
+  didYouMean?: string | null;
 }
 
 export type StoreStaffRole = "inventory" | "orders" | "finance" | "support";

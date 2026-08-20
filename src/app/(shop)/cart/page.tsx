@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Trash2, Minus, Plus, ShoppingBag, ArrowRight, Tag, ArrowLeft } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import { useCartStore } from "@/store/cart-store";
 import { formatPrice } from "@/lib/utils";
@@ -23,6 +23,22 @@ export default function CartPage() {
   const preview = usePromoPreview();
   const token = useAuthStore((s) => s.token);
   useCartSync();
+  const storeGroups = useMemo(() => {
+    const map = new Map<string, { storeName: string; items: typeof items; subtotal: number }>();
+    for (const item of items) {
+      const storeId = item.product.store?.id ?? item.product.seller.id;
+      const storeName = item.product.store?.name ?? item.product.seller.name;
+      const existing = map.get(storeId);
+      const line = item.product.price * item.quantity;
+      if (existing) {
+        existing.items.push(item);
+        existing.subtotal += line;
+      } else {
+        map.set(storeId, { storeName, items: [item], subtotal: line });
+      }
+    }
+    return Array.from(map.entries()).map(([storeId, row]) => ({ storeId, ...row }));
+  }, [items]);
 
   if (items.length === 0) {
     return (
@@ -94,11 +110,17 @@ export default function CartPage() {
         <div className="grid gap-8 lg:grid-cols-3">
           {/* Cart Items List */}
           <div className="lg:col-span-2 space-y-4">
-            {items.map((item) => (
-              <div
-                key={item.productId}
-                className="flex flex-col sm:flex-row gap-4 p-4 rounded-2xl bg-[#F6EFFD] border border-white/60 shadow-sm transition-all hover:shadow-md"
-              >
+            {storeGroups.map((group) => (
+              <div key={group.storeId} className="space-y-3">
+                <div className="flex items-center justify-between rounded-xl bg-white/70 border border-[#E4D1F7] px-4 py-2">
+                  <p className="text-[11px] font-black uppercase tracking-wider text-[#8A79A5]">{group.storeName}</p>
+                  <p className="text-xs font-bold text-[#6D349F]">Subtotal: {formatPrice(group.subtotal)}</p>
+                </div>
+                {group.items.map((item) => (
+                  <div
+                    key={item.productId}
+                    className="flex flex-col sm:flex-row gap-4 p-4 rounded-2xl bg-[#F6EFFD] border border-white/60 shadow-sm transition-all hover:shadow-md"
+                  >
                 <Link
                   href={`/products/${item.product.slug}`}
                   className="relative aspect-square sm:w-28 sm:h-28 flex-shrink-0 overflow-hidden rounded-xl bg-purple-100"
@@ -165,6 +187,8 @@ export default function CartPage() {
                     </p>
                   </div>
                 </div>
+                  </div>
+                ))}
               </div>
             ))}
           </div>
@@ -268,6 +292,11 @@ export default function CartPage() {
               <span>Proceed to Checkout</span>
               <ArrowRight size={16} />
             </Link>
+            {storeGroups.length > 1 && (
+              <p className="text-[11px] text-[#8A79A5] font-semibold text-center">
+                Checkout will split this cart into {storeGroups.length} seller orders with separate shipping calculations.
+              </p>
+            )}
           </div>
         </div>
       </div>

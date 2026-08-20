@@ -358,6 +358,13 @@ export function useAdminWebhooks(filters: { status?: string } = {}) {
   });
 }
 
+export function useAdminWebhookReconciliation() {
+  return useQuery({
+    queryKey: QUERY_KEYS.admin.webhookReconciliation(),
+    queryFn: adminApi.webhookReconciliation,
+  });
+}
+
 export function useAdminChargebacks(filters: { status?: string } = {}) {
   return useQuery({
     queryKey: QUERY_KEYS.admin.chargebacks(filters),
@@ -412,6 +419,8 @@ export function useAdminDeliveryZoneActions() {
         city?: string | null;
         fee?: number;
         free_above?: number | null;
+        eta_min_days?: number;
+        eta_max_days?: number;
         is_active?: boolean;
       }) => adminApi.updateDeliveryZone(id, payload),
       onSuccess: invalidate,

@@ -463,7 +463,10 @@ export default function CheckoutPage() {
                     Amount due: <span className="font-extrabold text-[#6D349F]">{formatPrice(displayTotal)}</span>
                   </p>
                   {quote?.deliveryZone && (
-                    <p className="text-[10px] text-[#8A79A5]">Delivery zone: {quote.deliveryZone.name}</p>
+                    <p className="text-[10px] text-[#8A79A5]">
+                      Delivery zone: {quote.deliveryZone.name}
+                      {quote.deliveryEstimate?.label ? ` · ETA ${quote.deliveryEstimate.label}` : ""}
+                    </p>
                   )}
                 </div>
                 <button
@@ -561,9 +564,14 @@ export default function CheckoutPage() {
                     ))}
                   </ul>
                   {quoted && (
-                    <p className="text-[10px] font-bold text-[#8A79A5] text-right">
-                      Store total (incl. shipping): {formatPrice(quoted.total)}
-                    </p>
+                    <div className="text-right space-y-0.5">
+                      <p className="text-[10px] font-bold text-[#8A79A5]">
+                        Store total (incl. shipping): {formatPrice(quoted.total)}
+                      </p>
+                      {quoted.deliveryEstimate?.label && (
+                        <p className="text-[10px] font-semibold text-[#8A79A5]">ETA: {quoted.deliveryEstimate.label}</p>
+                      )}
+                    </div>
                   )}
                 </div>
               );

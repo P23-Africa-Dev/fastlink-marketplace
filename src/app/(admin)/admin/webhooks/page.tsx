@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import { Loader2, Webhook, Search, CheckCircle2, AlertTriangle, RefreshCcw, Activity } from "lucide-react";
 
-import { useAdminWebhooks } from "@/hooks/use-admin";
+import { useAdminWebhookReconciliation, useAdminWebhooks } from "@/hooks/use-admin";
 import { cn } from "@/lib/utils";
 import { Pagination } from "@/components/dashboard/pagination";
 import { StatCard } from "@/components/dashboard/stat-card";
@@ -11,6 +11,7 @@ import { StatCard } from "@/components/dashboard/stat-card";
 export default function AdminWebhooksPage() {
   const [status, setStatus] = useState("");
   const { data, isLoading, isError, refetch } = useAdminWebhooks({ status: status || undefined });
+  const { data: reconciliation } = useAdminWebhookReconciliation();
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -92,6 +93,16 @@ export default function AdminWebhooksPage() {
           badgeType="neutral"
           subtitle="Cumulative webhook payloads"
         />
+
+        <StatCard
+          title="Orphan Events (24h)"
+          value={reconciliation?.orphanEvents24h ?? 0}
+          icon={<AlertTriangle size={20} />}
+          variant={(reconciliation?.orphanEvents24h ?? 0) > 0 ? "amber" : "emerald"}
+          badgeText={(reconciliation?.orphanEvents24h ?? 0) > 0 ? "Needs Reconciliation" : "Healthy"}
+          badgeType={(reconciliation?.orphanEvents24h ?? 0) > 0 ? "warning" : "success"}
+          subtitle="Webhook references with no matching payment"
+        />
       </div>
 
       {/* ── Table & Search ───────────────────────────────────────── */}
@@ -162,6 +173,7 @@ export default function AdminWebhooksPage() {
                     <th className="px-4 py-3.5 rounded-l-xl">Timestamp</th>
                     <th className="px-4 py-3.5">Event Name</th>
                     <th className="px-4 py-3.5">Transaction Reference</th>
+                    <th className="px-4 py-3.5">Matched Payments</th>
                     <th className="px-4 py-3.5 rounded-r-xl">Processing Status</th>
                   </tr>
                 </thead>
@@ -178,6 +190,12 @@ export default function AdminWebhooksPage() {
                       </td>
                       <td className="px-4 py-3.5 text-slate-600 font-mono text-[11px]">
                         {row.reference ?? "—"}
+                      </td>
+                      <td className="px-4 py-3.5">
+                        <span className="text-[11px] font-bold text-slate-700">
+                          {row.matchedPayments ?? 0}
+                          {(row.paidPayments ?? 0) > 0 ? ` (${row.paidPayments} paid)` : ""}
+                        </span>
                       </td>
                       <td className="px-4 py-3.5">
                         <span

@@ -236,7 +236,13 @@ class SellerProductController extends Controller
             ]);
         }
 
-        $product->update(['status' => 'submitted']);
+        $product->update([
+            'status' => 'submitted',
+            'submitted_at' => now(),
+            'moderation_note' => null,
+            'moderated_at' => null,
+            'moderated_by' => null,
+        ]);
         $product->load(['images', 'variants', 'store', 'brand', 'category']);
 
         return ApiResponse::success(

@@ -25,6 +25,9 @@ class HealthCheckTest extends TestCase
                     'status',
                     'service',
                     'environment',
+                    'database',
+                    'queue',
+                    'webhookFailures24h',
                     'timestamp',
                 ],
             ]);

@@ -4,20 +4,22 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Bike, Loader2, ArrowLeft, CheckCircle2 } from "lucide-react";
+import { Bike, Loader2, ArrowLeft, CheckCircle2, LogOut } from "lucide-react";
 
 import logoSvg from "@/assets/logo.svg";
-import { apiErrorMessage, riderApi } from "@/lib/api";
+import { apiErrorMessage, riderApi, riderDocumentsApi } from "@/lib/api";
 import { useAuthStore } from "@/store/auth-store";
 import { QUERY_KEYS, queryClient } from "@/lib/query-client";
 
 export default function RiderRegisterPage() {
   const router = useRouter();
-  const { user, token, isAuthenticated, setUser } = useAuthStore();
+  const { user, token, isAuthenticated, setUser, logout } = useAuthStore();
   const [form, setForm] = useState({ phone: "", vehicle_type: "bike", city: "" });
+  const [idFile, setIdFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [done, setDone] = useState(false);
+  const [riderStatus, setRiderStatus] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -34,14 +36,20 @@ export default function RiderRegisterPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+    if (!idFile) {
+      setError("Please upload at least one valid ID card before continuing.");
+      return;
+    }
     setIsLoading(true);
     try {
       const { data } = await riderApi.register(form);
+      await riderDocumentsApi.upload("id_card", idFile);
       if (user && token) {
         const nextUser = { ...user, role: "rider" as const, phone: form.phone };
         setUser(nextUser, token);
         queryClient.setQueryData(QUERY_KEYS.auth.user(), nextUser);
       }
+      setRiderStatus(data.rider.status);
       setDone(true);
       if (data.rider.status === "approved") {
         setTimeout(() => router.push("/rider"), 800);
@@ -67,13 +75,26 @@ export default function RiderRegisterPage() {
         <Link href="/" className="inline-block">
           <Image src={logoSvg} alt="Fastlink Logo" width={130} height={36} className="h-8 w-auto object-contain" priority />
         </Link>
-        <Link
-          href="/"
-          className="inline-flex items-center gap-1 text-xs font-bold text-slate-500 hover:text-[#7a3dbf] transition"
-        >
-          <ArrowLeft size={14} />
-          <span>Marketplace</span>
-        </Link>
+        <div className="flex items-center gap-4">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-1 text-xs font-bold text-slate-500 hover:text-[#7a3dbf] transition"
+          >
+            <ArrowLeft size={14} />
+            <span>Marketplace</span>
+          </Link>
+          <button
+            type="button"
+            onClick={() => {
+              logout();
+              router.push("/login");
+            }}
+            className="inline-flex items-center gap-1 text-xs font-bold text-rose-600 hover:text-rose-700 transition"
+          >
+            <LogOut size={14} />
+            <span>Sign Out</span>
+          </button>
+        </div>
       </header>
 
       <div className="max-w-xl mx-auto w-full">
@@ -94,12 +115,16 @@ export default function RiderRegisterPage() {
                 <CheckCircle2 size={28} />
               </div>
               <h3 className="font-bold text-lg text-slate-900">Rider profile submitted!</h3>
-              <p className="text-xs text-slate-500">Your courier credentials have been saved. You can now access your rider portal.</p>
+              <p className="text-xs text-slate-500">
+                {riderStatus === "approved"
+                  ? "Your rider profile is approved. You can now access deliveries in your rider portal."
+                  : "Your rider KYC is under review. You can access your rider portal now, but delivery assignments remain locked until approval."}
+              </p>
               <Link
-                href="/rider"
+                href={riderStatus === "approved" ? "/rider" : "/rider/pending"}
                 className="inline-block px-5 py-2.5 bg-[#7a3dbf] hover:bg-[#682fad] text-white text-xs font-bold rounded-xl shadow-sm transition"
               >
-                Go to Rider Portal
+                {riderStatus === "approved" ? "Go to Rider Portal" : "View Rider Status"}
               </Link>
             </div>
           ) : (
@@ -140,6 +165,19 @@ export default function RiderRegisterPage() {
                   placeholder="e.g. Lagos, Abuja, Port Harcourt"
                   className="w-full rounded-xl border border-[#ebd7fa] bg-[#faf6ff] px-4 py-2.5 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#7a3dbf]/20"
                 />
+              </label>
+              <label className="block space-y-1.5">
+                <span className="text-xs font-bold text-slate-700">Government ID Card (Required)</span>
+                <input
+                  required
+                  type="file"
+                  accept=".pdf,image/*"
+                  onChange={(e) => setIdFile(e.target.files?.[0] ?? null)}
+                  className="w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-[#f3eafb] file:text-[#7a3dbf] hover:file:bg-[#ebd7fa]"
+                />
+                <p className="text-[11px] text-slate-400">
+                  Upload a clear photo or PDF of your ID card (max 8MB).
+                </p>
               </label>
               <button
                 type="submit"

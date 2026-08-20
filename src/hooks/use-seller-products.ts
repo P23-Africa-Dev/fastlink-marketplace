@@ -79,8 +79,16 @@ export function useAdjustSellerStock() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.seller.products() });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.seller.inventory() });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.seller.inventorySummary() });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.all });
     },
+  });
+}
+
+export function useSellerInventorySummary() {
+  return useQuery({
+    queryKey: QUERY_KEYS.seller.inventorySummary(),
+    queryFn: sellerInventoryApi.summary,
   });
 }
 

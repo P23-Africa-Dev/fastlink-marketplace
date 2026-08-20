@@ -8,6 +8,7 @@ import {
   User,
   Menu,
   X,
+  LogOut,
   Heart,
   ShoppingCart,
   ChevronDown,
@@ -23,12 +24,14 @@ import { useRouter } from "next/navigation";
 import { useCartStore } from "@/store/cart-store";
 import { useWishlist } from "@/hooks/use-wishlist";
 import { useAuthStore } from "@/store/auth-store";
+import { authApi } from "@/lib/api";
 import { accountHref } from "@/lib/auth-session";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { useUIStore } from "@/store/ui-store";
 import { cn } from "@/lib/utils";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useSearchSuggest } from "@/hooks/use-products";
+import { queryClient } from "@/lib/query-client";
 
 // ── Navigation data ────────────────────────────────────────────
 
@@ -54,7 +57,7 @@ export function Header() {
   const router = useRouter();
   const { itemCount, openCart } = useCartStore();
   const { itemCount: wishlistCount } = useWishlist();
-  const { isAuthenticated, user } = useAuthStore();
+  const { isAuthenticated, user, logout } = useAuthStore();
   const { openMobileMenu, closeMobileMenu, isMobileMenuOpen, setSearchQuery } = useUIStore();
 
   const [isScrolled, setIsScrolled] = useState(false);
@@ -83,6 +86,18 @@ export function Header() {
     }
   }
 
+  async function handleLogout() {
+    try {
+      await authApi.logout();
+    } catch {
+      // Clear local session even when token revocation fails.
+    }
+    logout();
+    queryClient.clear();
+    closeMobileMenu();
+    router.push("/login");
+  }
+
   return (
     <>
       {/* ── 1. Top strip ─────────────────────────────────────────── */}
@@ -105,6 +120,15 @@ export function Header() {
             >
               My Account
             </Link>
+            {isAuthenticated && (
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="text-xs font-bold text-rose-600 transition-colors hover:text-rose-700"
+              >
+                Sign Out
+              </button>
+            )}
           </nav>
 
           {/* Right – phone + language */}
@@ -259,6 +283,17 @@ export function Header() {
                   {isAuthenticated ? "Account" : "Sign in"}
                 </span>
               </Link>
+              {isAuthenticated && (
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="hidden md:inline-flex items-center gap-1.5 text-xs font-bold text-rose-100 hover:text-white"
+                  aria-label="Sign out"
+                >
+                  <LogOut size={16} />
+                  <span>Sign Out</span>
+                </button>
+              )}
 
               {/* Mobile hamburger */}
               <button
@@ -342,7 +377,7 @@ export function Header() {
             );
           })}
 
-          <div className="mt-auto pt-6 border-t border-brand-100">
+          <div className="mt-auto pt-6 border-t border-brand-100 space-y-2">
             <Link
               href={accountHref(isAuthenticated, user?.role)}
               onClick={closeMobileMenu}
@@ -351,6 +386,16 @@ export function Header() {
               <User size={16} />
               {isAuthenticated ? "My Account" : "Sign In"}
             </Link>
+            {isAuthenticated && (
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-xs font-bold text-rose-700 hover:bg-rose-100"
+              >
+                <LogOut size={15} />
+                Sign Out
+              </button>
+            )}
           </div>
         </nav>
       </div>

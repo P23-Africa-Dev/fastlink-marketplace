@@ -22,6 +22,7 @@ class ProductResource extends JsonResource
 
         $store = $this->whenLoaded('store', $this->store);
         $images = $this->whenLoaded('images', $this->images, collect());
+        $canSeeModerationMeta = in_array($request->user()?->role, ['seller', 'admin'], true);
 
         return [
             'id' => (string) $this->id,
@@ -69,6 +70,10 @@ class ProductResource extends JsonResource
             'rating' => (float) $this->rating,
             'reviewCount' => (int) $this->review_count,
             'status' => $this->status,
+            'submittedAt' => $this->when($canSeeModerationMeta, $this->submitted_at?->toIso8601String()),
+            'moderatedAt' => $this->when($canSeeModerationMeta, $this->moderated_at?->toIso8601String()),
+            'moderatedBy' => $this->when($canSeeModerationMeta, $this->moderated_by ? (string) $this->moderated_by : null),
+            'moderationNote' => $this->when($canSeeModerationMeta, $this->moderation_note),
             'costPrice' => $this->when($request->user()?->role === 'seller' || $request->user()?->role === 'admin', $this->cost_price !== null ? (float) $this->cost_price : null),
             'createdAt' => $this->created_at?->toIso8601String(),
             'updatedAt' => $this->updated_at?->toIso8601String(),

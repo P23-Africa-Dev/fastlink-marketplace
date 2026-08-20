@@ -43,16 +43,13 @@ class PaymentService
             ];
         }
 
-        $pending = Payment::query()
-            ->whereIn('order_id', $orders->pluck('id'))
-            ->where('status', 'pending')
-            ->first();
-
-        $reference = $pending?->reference ?? 'PSK-'.strtoupper(Str::replace('-', '', (string) Str::uuid()));
         $provider = $this->paystack->isConfigured() ? 'paystack' : 'demo';
 
+        // Fresh reference on each initialize — Paystack rejects duplicate references.
+        $reference = 'PSK-'.strtoupper(Str::replace('-', '', (string) Str::uuid()));
+
         foreach ($orders as $order) {
-            Payment::query()->firstOrCreate(
+            Payment::query()->updateOrCreate(
                 ['order_id' => $order->id],
                 [
                     'store_id' => $order->store_id,
@@ -68,7 +65,16 @@ class PaymentService
 
         $amountKobo = (int) round(((float) $orders->sum('total')) * 100);
         $callback = rtrim((string) config('app.frontend_url'), '/').'/checkout/callback';
-        $init = $this->paystack->initialize($buyer->email, $amountKobo, $reference, $callback);
+        $init = $this->paystack->initialize(
+            $buyer->email,
+            $amountKobo,
+            $reference,
+            $callback,
+            [
+                'group_id' => $groupId,
+                'buyer_id' => (string) $buyer->id,
+            ],
+        );
 
         return [
             'alreadyPaid' => false,

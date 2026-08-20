@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\PageView;
 use App\Models\Product;
 use App\Support\ApiResponse;
 use App\Support\SellerContext;
@@ -95,6 +96,48 @@ class SellerDashboardController extends Controller
                 'sales' => (int) $row->sales,
                 'revenue' => (float) $row->revenue,
             ])->values()->all(),
+            'activitySummary' => [
+                'pageViews7d' => PageView::query()
+                    ->whereIn('store_id', $storeIds)
+                    ->where('event_type', 'page_view')
+                    ->where('created_at', '>=', now()->subDays(7))
+                    ->count(),
+                'checkoutStarts7d' => PageView::query()
+                    ->whereIn('store_id', $storeIds)
+                    ->where('event_type', 'checkout_started')
+                    ->where('created_at', '>=', now()->subDays(7))
+                    ->count(),
+                'reviews7d' => PageView::query()
+                    ->whereIn('store_id', $storeIds)
+                    ->where('event_type', 'review_submitted')
+                    ->where('created_at', '>=', now()->subDays(7))
+                    ->count(),
+            ],
+            'recentActivity' => PageView::query()
+                ->with(['product:id,name,slug', 'store:id,name,slug'])
+                ->whereIn('store_id', $storeIds)
+                ->orderByDesc('id')
+                ->limit(12)
+                ->get()
+                ->map(fn (PageView $event) => [
+                    'id' => (string) $event->id,
+                    'type' => $event->event_type,
+                    'path' => $event->path,
+                    'product' => $event->product ? [
+                        'id' => (string) $event->product->id,
+                        'name' => $event->product->name,
+                        'slug' => $event->product->slug,
+                    ] : null,
+                    'store' => $event->store ? [
+                        'id' => (string) $event->store->id,
+                        'name' => $event->store->name,
+                        'slug' => $event->store->slug,
+                    ] : null,
+                    'meta' => $event->meta,
+                    'createdAt' => $event->created_at?->toIso8601String(),
+                ])
+                ->values()
+                ->all(),
         ]);
     }
 

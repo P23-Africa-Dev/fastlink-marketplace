@@ -2,6 +2,8 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Address;
+use App\Services\DeliveryZoneService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -14,6 +16,7 @@ class OrderResource extends JsonResource
     public function toArray(Request $request): array
     {
         $items = $this->whenLoaded('items', $this->items, collect());
+        $deliveryWindow = $this->deliveryWindow();
 
         return [
             'id' => (string) $this->id,
@@ -77,7 +80,8 @@ class OrderResource extends JsonResource
             'createdAt' => $this->created_at?->toIso8601String(),
             'updatedAt' => $this->updated_at?->toIso8601String(),
             'paidAt' => $this->paid_at?->toIso8601String(),
-            'estimatedDelivery' => $this->created_at?->copy()->addDays(5)->toIso8601String(),
+            'estimatedDelivery' => $deliveryWindow['estimatedDelivery'] ?? $this->created_at?->copy()->addDays(5)->toIso8601String(),
+            'deliveryEstimate' => $deliveryWindow['estimate'] ?? null,
         ];
     }
 
@@ -91,5 +95,30 @@ class OrderResource extends JsonResource
             'cancelled' => 'Refunded',
             default => ucfirst($this->status),
         };
+    }
+
+    /**
+     * @return array{estimatedDelivery?: string|null, estimate?: array<string, mixed>|null}
+     */
+    private function deliveryWindow(): array
+    {
+        try {
+            $address = new Address([
+                'state' => $this->shipping_state,
+                'city' => $this->shipping_city,
+            ]);
+            $totals = app(DeliveryZoneService::class)->totals((float) $this->subtotal, $address);
+            $estimate = $totals['eta'] ?? null;
+            if (! is_array($estimate) || ! isset($estimate['maxDays'])) {
+                return [];
+            }
+
+            return [
+                'estimatedDelivery' => $this->created_at?->copy()->addDays((int) $estimate['maxDays'])->toIso8601String(),
+                'estimate' => $estimate,
+            ];
+        } catch (\Throwable) {
+            return [];
+        }
     }
 }

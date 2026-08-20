@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\LedgerEntry;
 use App\Models\Payment;
+use App\Models\PlatformSetting;
 use App\Models\Product;
 use App\Models\Store;
 use App\Models\TrustReport;
@@ -80,6 +81,26 @@ class TrustMoneyTest extends TestCase
             ->assertJsonPath('data.status', 'resolved');
     }
 
+    public function test_duplicate_open_trust_report_is_blocked(): void
+    {
+        $buyer = User::factory()->create(['role' => 'buyer']);
+        $store = Store::factory()->create();
+        $product = Product::factory()->create(['store_id' => $store->id]);
+
+        Sanctum::actingAs($buyer);
+        $payload = [
+            'subject_type' => 'product',
+            'subject_id' => $product->id,
+            'reason' => 'Fraud concern',
+            'details' => 'Listing appears deceptive.',
+        ];
+
+        $this->postJson('/api/trust-reports', $payload)->assertCreated();
+        $this->postJson('/api/trust-reports', $payload)
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['subject_id']);
+    }
+
     public function test_admin_can_update_marketplace_settings(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
@@ -95,6 +116,19 @@ class TrustMoneyTest extends TestCase
         ])->assertOk()
             ->assertJsonPath('data.returnWindowDays', 21)
             ->assertJsonPath('data.maintenanceMode', true);
+    }
+
+    public function test_checkout_rejects_below_minimum_order_amount(): void
+    {
+        PlatformSetting::setValue('min_order_amount', '10000');
+        [$buyer, $address, $product] = $this->checkoutSetup();
+        Sanctum::actingAs($buyer);
+
+        $this->postJson('/api/checkout/quote', [
+            'address_id' => $address->id,
+            'items' => [['product_id' => $product->id, 'quantity' => 1]],
+        ])->assertStatus(422)
+            ->assertJsonValidationErrors(['items']);
     }
 
     /**

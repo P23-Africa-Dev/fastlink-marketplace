@@ -180,6 +180,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
             Route::post('/seller/products/{product}/images', [SellerProductController::class, 'images']);
             Route::patch('/seller/products/{product}/stock', [SellerProductController::class, 'stock']);
             Route::post('/seller/products/{product}/submit', [SellerProductController::class, 'submitForReview']);
+            Route::get('/seller/inventory/summary', [SellerInventoryController::class, 'summary']);
             Route::get('/seller/inventory/movements', [SellerInventoryController::class, 'index']);
         });
 
@@ -276,6 +277,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::post('/chargebacks', [AdminChargebackController::class, 'store']);
         Route::patch('/chargebacks/{chargeback}', [AdminChargebackController::class, 'update']);
         Route::get('/webhooks/paystack', [AdminWebhookController::class, 'index']);
+        Route::get('/webhooks/paystack/reconciliation', [AdminWebhookController::class, 'reconciliation']);
         Route::get('/delivery-zones', [AdminDeliveryZoneController::class, 'index']);
         Route::post('/delivery-zones', [AdminDeliveryZoneController::class, 'store']);
         Route::patch('/delivery-zones/{zone}', [AdminDeliveryZoneController::class, 'update']);
