@@ -90,8 +90,14 @@ class AdminStoreController extends Controller
                 $store->owner,
                 'store.approved',
                 'Your store was approved',
-                $store->name.' is now live on Fastlink. You can publish products.',
-                ['storeId' => (string) $store->id],
+                $store->name.' is now live on Fastlink. You can publish products and request payouts.',
+                [
+                    'storeId' => (string) $store->id,
+                    'storeName' => $store->name,
+                    'ctaUrl' => rtrim((string) config('app.frontend_url'), '/').'/all-products',
+                    'ctaLabel' => 'Publish products',
+                ],
+                forceEmail: true,
             );
         }
 
@@ -119,7 +125,13 @@ class AdminStoreController extends Controller
                 'store.rejected',
                 'Store application declined',
                 $validated['reason'] ?? 'Your store application was not approved at this time.',
-                ['storeId' => (string) $store->id],
+                [
+                    'storeId' => (string) $store->id,
+                    'reason' => $validated['reason'] ?? null,
+                    'ctaUrl' => rtrim((string) config('app.frontend_url'), '/').'/settings',
+                    'ctaLabel' => 'Review application',
+                ],
+                forceEmail: true,
             );
         }
 
@@ -129,10 +141,26 @@ class AdminStoreController extends Controller
         );
     }
 
-    public function suspend(Request $request, Store $store): JsonResponse
+    public function suspend(Request $request, Store $store, NotificationService $notifications): JsonResponse
     {
         $store->update(['status' => 'suspended']);
         AuditLog::record($request->user(), 'store.suspended', $store);
+
+        $store->loadMissing('owner');
+        if ($store->owner) {
+            $notifications->notify(
+                $store->owner,
+                'store.suspended',
+                'Your store was suspended',
+                $store->name.' has been suspended and is no longer visible in the marketplace catalog.',
+                [
+                    'storeId' => (string) $store->id,
+                    'ctaUrl' => rtrim((string) config('app.frontend_url'), '/').'/support',
+                    'ctaLabel' => 'Contact support',
+                ],
+                forceEmail: true,
+            );
+        }
 
         return ApiResponse::success(
             (new StoreResource($store->fresh(['mall', 'category'])))->resolve(),

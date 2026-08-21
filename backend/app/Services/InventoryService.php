@@ -78,7 +78,14 @@ class InventoryService
             'inventory.low_stock',
             'Low stock: '.$product->name,
             $product->name.' has '.$product->stock.' units left. Consider restocking.',
-            ['productId' => (string) $product->id, 'storeId' => (string) $product->store_id],
+            [
+                'productId' => (string) $product->id,
+                'storeId' => (string) $product->store_id,
+                'productName' => $product->name,
+                'stock' => (int) $product->stock,
+                'ctaUrl' => rtrim((string) config('app.frontend_url'), '/').'/inventory',
+                'ctaLabel' => 'Manage inventory',
+            ],
         );
     }
 }

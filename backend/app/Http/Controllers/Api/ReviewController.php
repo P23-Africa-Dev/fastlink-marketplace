@@ -7,6 +7,7 @@ use App\Http\Resources\ReviewResource;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\Review;
+use App\Services\NotificationService;
 use App\Support\PageViewRecorder;
 use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
@@ -74,6 +75,22 @@ class ReviewController extends Controller
         );
 
         $product->refreshRating();
+
+        $product->loadMissing('store.owner');
+        if ($product->store?->owner) {
+            app(NotificationService::class)->notify(
+                $product->store->owner,
+                'review.received',
+                'New review on your product',
+                $buyer->name.' left a '.$review->rating.'-star review on '.$product->name.'.',
+                [
+                    'productId' => (string) $product->id,
+                    'productName' => $product->name,
+                    'ctaUrl' => rtrim((string) config('app.frontend_url'), '/').'/reviews',
+                    'ctaLabel' => 'View reviews',
+                ],
+            );
+        }
 
         return ApiResponse::success(
             (new ReviewResource($review->load(['buyer', 'product'])))->resolve(),

@@ -647,6 +647,8 @@ Mark all read.
 |-------|--------|
 | `notifications` | required object with channel toggles |
 
+Transactional emails use branded Blade templates (`PlatformMail`). Channels: `order` (buyer orders, returns, disputes, riders, messages), `sale` (seller sales, store, products, payouts), `stock` (inventory). Welcome / KYC / password / suspend / staff-invite always email (`forceEmail`). Configure `MAIL_*` and `FRONTEND_URL` for links.
+
 ---
 
 ## 11. Buyer — reviews, trust, messages, wishlist

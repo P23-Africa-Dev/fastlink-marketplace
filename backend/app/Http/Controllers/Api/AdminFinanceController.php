@@ -10,6 +10,7 @@ use App\Models\Payment;
 use App\Models\Payout;
 use App\Models\PlatformSetting;
 use App\Services\LedgerService;
+use App\Services\NotificationService;
 use App\Support\ApiResponse;
 use App\Support\ProductQuery;
 use Illuminate\Http\JsonResponse;
@@ -85,6 +86,21 @@ class AdminFinanceController extends Controller
 
         app(LedgerService::class)->recordPayoutApproved($payout->fresh());
 
+        $payout->loadMissing('store.owner');
+        if ($payout->store?->owner) {
+            app(NotificationService::class)->notify(
+                $payout->store->owner,
+                'payout.approved',
+                'Payout approved',
+                'Your payout request of ₦'.number_format((float) $payout->amount, 2).' was approved.',
+                [
+                    'amount' => (float) $payout->amount,
+                    'ctaUrl' => rtrim((string) config('app.frontend_url'), '/').'/payouts',
+                    'ctaLabel' => 'View payouts',
+                ],
+            );
+        }
+
         return ApiResponse::success(
             (new PayoutResource($payout->fresh('store')))->resolve(),
             'Payout approved.',
@@ -110,6 +126,22 @@ class AdminFinanceController extends Controller
         AuditLog::record($request->user(), 'payout.rejected', $payout, [
             'reason' => $validated['reason'] ?? null,
         ]);
+
+        $payout->loadMissing('store.owner');
+        if ($payout->store?->owner) {
+            app(NotificationService::class)->notify(
+                $payout->store->owner,
+                'payout.rejected',
+                'Payout rejected',
+                $validated['reason'] ?? 'Your payout request was rejected.',
+                [
+                    'amount' => (float) $payout->amount,
+                    'reason' => $validated['reason'] ?? null,
+                    'ctaUrl' => rtrim((string) config('app.frontend_url'), '/').'/payouts',
+                    'ctaLabel' => 'View payouts',
+                ],
+            );
+        }
 
         return ApiResponse::success(
             (new PayoutResource($payout->fresh('store')))->resolve(),

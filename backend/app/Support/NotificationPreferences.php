@@ -12,7 +12,7 @@ class NotificationPreferences
         return [
             'sale' => ['email' => true, 'push' => true],
             'order' => ['email' => true, 'push' => true],
-            'stock' => ['email' => false, 'push' => true],
+            'stock' => ['email' => true, 'push' => true],
         ];
     }
 

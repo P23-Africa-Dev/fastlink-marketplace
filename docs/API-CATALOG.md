@@ -229,15 +229,25 @@ Commission: single platform `%` stored in config / `platform_settings`. Applied 
 
 ## 14. Notifications
 
-In-app list + email for: order placed, paid, shipped, delivered, cancelled.
+In-app list + **email** for transactional events.
 
 | Method | Path | Auth | Scope | Purpose |
 |--------|------|------|-------|---------|
 | `GET` | `/notifications` | auth | MVP | In-app inbox (`unread`, `page`) |
 | `PATCH` | `/notifications/{id}/read` | auth | MVP | Mark one read |
 | `POST` | `/notifications/read-all` | auth | MVP | Mark all read |
-| `GET` | `/notification-preferences` | auth | MVP | Email / in-app toggles (settings UI exists) |
+| `GET` | `/notification-preferences` | auth | MVP | Email / in-app toggles: `sale`, `order`, `stock` |
 | `PATCH` | `/notification-preferences` | auth | MVP | Update toggles |
+
+**Email (Laravel mailer, `MAIL_*` / default `log` locally):** branded `PlatformMail` templates under `resources/views/emails/`. Preferenced channels gate most mail; force-send for welcome, KYC, password, store/rider approval, staff invite.
+
+| Area | Events emailed |
+|------|----------------|
+| Auth | Welcome (buyer/seller), password reset link, password changed, account suspended/activated |
+| Seller | Onboard + KYC reminder/submitted, store approved/rejected/suspended, new paid order, low stock, product moderation, payout requested/approved/rejected, staff invite, reviews |
+| Buyer | Order placed/paid/confirmed/shipped/delivered/cancelled, returns, disputes, cart abandoned, review reply, messages |
+| Rider | Application received, approved/rejected, delivery assigned |
+| Admin | New seller/rider applications, support tickets |
 
 ---
 

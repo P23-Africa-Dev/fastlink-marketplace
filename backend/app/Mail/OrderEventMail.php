@@ -8,6 +8,9 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
+/**
+ * @deprecated Use PlatformMail with a typed template instead.
+ */
 class OrderEventMail extends Mailable
 {
     use Queueable, SerializesModels;
@@ -25,7 +28,14 @@ class OrderEventMail extends Mailable
     public function content(): Content
     {
         return new Content(
-            htmlString: '<p>'.e($this->mailBody).'</p>',
+            view: 'emails.generic',
+            with: [
+                'subject' => $this->mailSubject,
+                'heading' => $this->mailSubject,
+                'intro' => $this->mailBody,
+                'body' => $this->mailBody,
+                'frontendUrl' => rtrim((string) config('app.frontend_url'), '/'),
+            ],
         );
     }
 }

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\SupportTicketResource;
 use App\Models\AuditLog;
 use App\Models\SupportTicket;
+use App\Services\NotificationService;
 use App\Support\ApiResponse;
 use App\Support\ProductQuery;
 use App\Support\SellerContext;
@@ -70,6 +71,13 @@ class SupportTicketController extends Controller
             'body' => $validated['body'],
         ]);
 
+        app(NotificationService::class)->notifyAdmins(
+            'support.ticket_created',
+            'New support ticket',
+            $request->user()->name.' opened: '.$ticket->subject,
+            ['ticketId' => (string) $ticket->id],
+        );
+
         return ApiResponse::success(
             (new SupportTicketResource($ticket->fresh(['store', 'user', 'messages.sender'])))->resolve(),
             'Ticket created.',
@@ -100,6 +108,28 @@ class SupportTicketController extends Controller
 
         if ($request->user()->role === 'admin' && $ticket->status === 'open') {
             $ticket->update(['status' => 'in_progress', 'assigned_to' => $request->user()->id]);
+        }
+
+        $recipient = $request->user()->role === 'admin' ? $ticket->user : null;
+        if ($recipient) {
+            app(NotificationService::class)->notify(
+                $recipient,
+                'support.ticket_replied',
+                'New reply on your support ticket',
+                'Support replied to: '.$ticket->subject,
+                [
+                    'ticketId' => (string) $ticket->id,
+                    'ctaUrl' => rtrim((string) config('app.frontend_url'), '/').'/support',
+                    'ctaLabel' => 'View ticket',
+                ],
+            );
+        } elseif ($request->user()->role !== 'admin') {
+            app(NotificationService::class)->notifyAdmins(
+                'support.ticket_replied',
+                'Seller replied on support ticket',
+                $request->user()->name.' replied on: '.$ticket->subject,
+                ['ticketId' => (string) $ticket->id],
+            );
         }
 
         return ApiResponse::success(

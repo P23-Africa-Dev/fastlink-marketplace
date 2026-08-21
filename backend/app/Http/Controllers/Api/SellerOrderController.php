@@ -97,6 +97,7 @@ class SellerOrderController extends Controller
         $model->addEvent($next, $this->eventTitle($next));
 
         $type = match ($next) {
+            'confirmed' => 'order.confirmed',
             'shipped' => 'order.shipped',
             'delivered' => 'order.delivered',
             'cancelled' => 'order.cancelled',

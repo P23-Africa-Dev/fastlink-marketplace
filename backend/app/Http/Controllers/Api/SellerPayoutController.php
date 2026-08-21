@@ -7,6 +7,7 @@ use App\Http\Resources\PayoutResource;
 use App\Http\Resources\SellerStoreResource;
 use App\Models\Payment;
 use App\Models\Payout;
+use App\Services\NotificationService;
 use App\Support\ApiResponse;
 use App\Support\ProductQuery;
 use App\Support\SellerContext;
@@ -87,6 +88,18 @@ class SellerPayoutController extends Controller
                 'requested_by' => $request->user()->id,
             ]);
         });
+
+        app(NotificationService::class)->notify(
+            $request->user(),
+            'payout.requested',
+            'Payout request received',
+            'Your payout request of ₦'.number_format((float) $payout->amount, 2).' is pending admin approval.',
+            [
+                'amount' => (float) $payout->amount,
+                'ctaUrl' => rtrim((string) config('app.frontend_url'), '/').'/payouts',
+                'ctaLabel' => 'View payouts',
+            ],
+        );
 
         return ApiResponse::success(
             (new PayoutResource($payout->load('store')))->resolve(),

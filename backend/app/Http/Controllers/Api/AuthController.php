@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\UserResource;
 use App\Models\User;
 use App\Services\ReferralService;
+use App\Services\NotificationService;
 use App\Support\ApiResponse;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\JsonResponse;
@@ -45,6 +46,34 @@ class AuthController extends Controller
 
             return $user;
         });
+
+        $frontend = rtrim((string) config('app.frontend_url'), '/');
+        $notifications = app(NotificationService::class);
+        if (($user->role ?? 'buyer') === 'seller') {
+            $notifications->notify(
+                $user,
+                'account.welcome_seller',
+                'Welcome to Fastlink as a seller',
+                'Your seller account is ready. Complete store onboarding and KYC so you can publish products and receive payouts.',
+                [
+                    'ctaUrl' => $frontend.'/vendor/register',
+                    'ctaLabel' => 'Complete store setup',
+                ],
+                forceEmail: true,
+            );
+        } else {
+            $notifications->notify(
+                $user,
+                'account.welcome_buyer',
+                'Welcome to Fastlink Marketplace',
+                'Thanks for joining Fastlink, '.$user->name.'. Discover products from verified local and nationwide sellers.',
+                [
+                    'ctaUrl' => $frontend.'/products',
+                    'ctaLabel' => 'Start shopping',
+                ],
+                forceEmail: true,
+            );
+        }
 
         $token = $user->createToken('auth')->plainTextToken;
 
@@ -155,6 +184,17 @@ class AuthController extends Controller
                 $user->tokens()->delete();
 
                 event(new PasswordReset($user));
+
+                app(NotificationService::class)->emailOnly(
+                    $user,
+                    'account.password_changed',
+                    'Your password was changed',
+                    'The password for your Fastlink account was reset successfully. If this was not you, contact support immediately.',
+                    [
+                        'ctaUrl' => rtrim((string) config('app.frontend_url'), '/').'/login',
+                        'ctaLabel' => 'Sign in',
+                    ],
+                );
             }
         );
 

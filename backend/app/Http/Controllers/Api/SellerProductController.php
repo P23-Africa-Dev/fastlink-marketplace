@@ -9,6 +9,7 @@ use App\Models\Category;
 use App\Models\Product;
 use App\Models\Store;
 use App\Services\InventoryService;
+use App\Services\NotificationService;
 use App\Support\ApiResponse;
 use App\Support\ProductQuery;
 use App\Support\SellerGate;
@@ -244,6 +245,21 @@ class SellerProductController extends Controller
             'moderated_by' => null,
         ]);
         $product->load(['images', 'variants', 'store', 'brand', 'category']);
+
+        if ($product->store?->owner) {
+            app(NotificationService::class)->notify(
+                $product->store->owner,
+                'product.submitted',
+                'Listing submitted for review',
+                $product->name.' was submitted for admin moderation.',
+                [
+                    'productId' => (string) $product->id,
+                    'productName' => $product->name,
+                    'ctaUrl' => rtrim((string) config('app.frontend_url'), '/').'/all-products',
+                    'ctaLabel' => 'View products',
+                ],
+            );
+        }
 
         return ApiResponse::success(
             (new ProductResource($product))->resolve($request),

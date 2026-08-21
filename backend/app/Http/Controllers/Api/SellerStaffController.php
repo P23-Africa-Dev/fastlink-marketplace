@@ -89,7 +89,13 @@ class SellerStaffController extends Controller
             'staff.invited',
             'You were added to '.$store->name,
             'You can now access the '.$store->name.' seller dashboard as '.$validated['role'].' staff.',
-            ['storeId' => (string) $store->id, 'role' => $validated['role']],
+            [
+                'storeId' => (string) $store->id,
+                'role' => $validated['role'],
+                'ctaUrl' => rtrim((string) config('app.frontend_url'), '/').'/dashboard',
+                'ctaLabel' => 'Open dashboard',
+            ],
+            forceEmail: true,
         );
 
         return ApiResponse::success($this->serialize($member->load('user')), 'Team member added.', 201);

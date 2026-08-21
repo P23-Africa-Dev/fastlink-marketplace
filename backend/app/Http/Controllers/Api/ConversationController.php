@@ -7,6 +7,7 @@ use App\Http\Resources\ConversationResource;
 use App\Models\Conversation;
 use App\Models\Product;
 use App\Models\Store;
+use App\Services\NotificationService;
 use App\Support\ApiResponse;
 use App\Support\ProductQuery;
 use App\Support\SellerContext;
@@ -138,6 +139,26 @@ class ConversationController extends Controller
             'status' => $conversation->status === 'resolved' ? 'open' : $conversation->status,
             'last_message_at' => now(),
         ]);
+
+        $conversation->loadMissing(['buyer', 'store.owner']);
+        $recipient = $request->user()->id === $conversation->buyer_id
+            ? $conversation->store?->owner
+            : $conversation->buyer;
+        if ($recipient && $recipient->id !== $request->user()->id) {
+            app(NotificationService::class)->notify(
+                $recipient,
+                'message.received',
+                'New message on Fastlink',
+                $request->user()->name.' sent you a message'.($conversation->subject ? ': '.$conversation->subject : '.'),
+                [
+                    'conversationId' => (string) $conversation->id,
+                    'ctaUrl' => rtrim((string) config('app.frontend_url'), '/').(
+                        $recipient->role === 'seller' ? '/messages/'.$conversation->id : '/account/messages/'.$conversation->id
+                    ),
+                    'ctaLabel' => 'Open conversation',
+                ],
+            );
+        }
 
         return ApiResponse::success(
             (new ConversationResource($conversation->fresh($this->eager())))->resolve(),

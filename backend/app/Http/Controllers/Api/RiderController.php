@@ -44,6 +44,20 @@ class RiderController extends Controller
             'phone' => $validated['phone'],
         ])->save();
 
+        $frontend = rtrim((string) config('app.frontend_url'), '/');
+        $notifications->notify(
+            $user,
+            'rider.applied',
+            'Rider application received',
+            'Thanks for applying to deliver with Fastlink. Upload your ID card and wait for admin approval.',
+            [
+                'riderId' => (string) $rider->id,
+                'ctaUrl' => $frontend.'/rider/pending',
+                'ctaLabel' => 'View application status',
+            ],
+            forceEmail: true,
+        );
+
         if ($status === 'pending') {
             $notifications->notifyAdmins(
                 'application.rider_submitted',
@@ -130,7 +144,12 @@ class RiderController extends Controller
                 'rider.approved',
                 'Rider application approved',
                 'You can now view assigned deliveries on your rider dashboard.',
-                ['riderId' => (string) $rider->id],
+                [
+                    'riderId' => (string) $rider->id,
+                    'ctaUrl' => rtrim((string) config('app.frontend_url'), '/').'/rider',
+                    'ctaLabel' => 'Open rider dashboard',
+                ],
+                forceEmail: true,
             );
         }
 
@@ -154,7 +173,13 @@ class RiderController extends Controller
                 'rider.rejected',
                 'Rider application declined',
                 $validated['reason'] ?? 'Your rider application was not approved at this time.',
-                ['riderId' => (string) $rider->id],
+                [
+                    'riderId' => (string) $rider->id,
+                    'reason' => $validated['reason'] ?? null,
+                    'ctaUrl' => rtrim((string) config('app.frontend_url'), '/'),
+                    'ctaLabel' => 'Visit Fastlink',
+                ],
+                forceEmail: true,
             );
         }
 
@@ -177,6 +202,21 @@ class RiderController extends Controller
         AuditLog::record($request->user(), 'order.assigned_rider', $order, [
             'rider_id' => $rider->id,
         ]);
+
+        if ($rider->user) {
+            app(NotificationService::class)->notify(
+                $rider->user,
+                'rider.assigned',
+                'New delivery assignment',
+                'Order '.$order->reference.' was assigned to you. Open your rider dashboard for details.',
+                [
+                    'orderId' => (string) $order->id,
+                    'reference' => $order->reference,
+                    'ctaUrl' => rtrim((string) config('app.frontend_url'), '/').'/rider',
+                    'ctaLabel' => 'View assignment',
+                ],
+            );
+        }
 
         return ApiResponse::success(
             (new OrderResource($order->fresh(['items', 'store', 'events', 'rider.user'])))->resolve(),

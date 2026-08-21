@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ReviewResource;
 use App\Models\Review;
+use App\Services\NotificationService;
 use App\Support\ApiResponse;
 use App\Support\ProductQuery;
 use App\Support\SellerContext;
@@ -64,6 +65,21 @@ class SellerReviewController extends Controller
             'seller_replied_at' => now(),
             'status' => $review->status === 'pending' ? 'approved' : $review->status,
         ]);
+
+        $review->loadMissing(['buyer', 'product']);
+        if ($review->buyer) {
+            app(NotificationService::class)->notify(
+                $review->buyer,
+                'review.replied',
+                'Seller replied to your review',
+                'The seller replied to your review on '.($review->product?->name ?? 'a product').'.',
+                [
+                    'productName' => $review->product?->name,
+                    'ctaUrl' => rtrim((string) config('app.frontend_url'), '/').'/products/'.($review->product?->slug ?? $review->product_id),
+                    'ctaLabel' => 'View product',
+                ],
+            );
+        }
 
         return ApiResponse::success(
             (new ReviewResource($review->fresh(['buyer', 'product'])))->resolve(),

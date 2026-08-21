@@ -11,7 +11,10 @@ use Illuminate\Validation\ValidationException;
 
 class ChargebackService
 {
-    public function __construct(private LedgerService $ledger) {}
+    public function __construct(
+        private LedgerService $ledger,
+        private NotificationService $notifications,
+    ) {}
 
     public function record(
         User $admin,
@@ -58,7 +61,24 @@ class ChargebackService
                 'amount' => $amount,
             ]);
 
-            return $chargeback->fresh(['order', 'store', 'payment']);
+            $fresh = $chargeback->fresh(['order', 'store.owner', 'payment']);
+            if ($fresh->store?->owner) {
+                $this->notifications->notify(
+                    $fresh->store->owner,
+                    'chargeback.opened',
+                    'Chargeback opened',
+                    'A chargeback of ₦'.number_format($amount, 2).' was opened'.($fresh->order?->reference ? ' for order '.$fresh->order->reference : '').'.',
+                    [
+                        'amount' => $amount,
+                        'reference' => $fresh->order?->reference,
+                        'reason' => $reason,
+                        'ctaUrl' => rtrim((string) config('app.frontend_url'), '/').'/payments',
+                        'ctaLabel' => 'View payments',
+                    ],
+                );
+            }
+
+            return $fresh;
         });
     }
 
@@ -81,6 +101,23 @@ class ChargebackService
 
         AuditLog::record($admin, 'chargeback.resolved', $chargeback, ['status' => $status]);
 
-        return $chargeback->fresh(['order', 'store', 'payment']);
+        $fresh = $chargeback->fresh(['order', 'store.owner', 'payment']);
+        if ($fresh->store?->owner) {
+            $this->notifications->notify(
+                $fresh->store->owner,
+                'chargeback.updated',
+                'Chargeback update',
+                'Chargeback case was marked as '.strtoupper($status).'.',
+                [
+                    'amount' => (float) $fresh->amount,
+                    'status' => $status,
+                    'reference' => $fresh->order?->reference,
+                    'ctaUrl' => rtrim((string) config('app.frontend_url'), '/').'/payments',
+                    'ctaLabel' => 'View payments',
+                ],
+            );
+        }
+
+        return $fresh;
     }
 }

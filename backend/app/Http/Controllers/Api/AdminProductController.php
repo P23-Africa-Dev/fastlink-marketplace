@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\ProductResource;
 use App\Models\AuditLog;
 use App\Models\Product;
+use App\Services\NotificationService;
 use App\Support\ApiResponse;
 use App\Support\ProductQuery;
 use Illuminate\Http\JsonResponse;
@@ -53,6 +54,22 @@ class AdminProductController extends Controller
         $product->update(['status' => 'archived']);
         AuditLog::record($request->user(), 'product.unpublished', $product);
 
+        $product->loadMissing('store.owner');
+        if ($product->store?->owner) {
+            app(NotificationService::class)->notify(
+                $product->store->owner,
+                'product.unpublished',
+                'Your listing was unpublished',
+                $product->name.' was taken down from the marketplace catalog.',
+                [
+                    'productId' => (string) $product->id,
+                    'productName' => $product->name,
+                    'ctaUrl' => rtrim((string) config('app.frontend_url'), '/').'/all-products',
+                    'ctaLabel' => 'View products',
+                ],
+            );
+        }
+
         return ApiResponse::success(
             (new ProductResource($product->fresh(['store', 'category', 'brand', 'images'])))->resolve(),
             'Product unpublished.',
@@ -97,6 +114,22 @@ class AdminProductController extends Controller
         ]);
         AuditLog::record($request->user(), 'product.approved', $product, ['note' => $validated['note'] ?? null]);
 
+        $product->loadMissing('store.owner');
+        if ($product->store?->owner) {
+            app(NotificationService::class)->notify(
+                $product->store->owner,
+                'product.approved',
+                'Your listing was approved',
+                $product->name.' is now live on Fastlink.',
+                [
+                    'productId' => (string) $product->id,
+                    'productName' => $product->name,
+                    'ctaUrl' => rtrim((string) config('app.frontend_url'), '/').'/all-products',
+                    'ctaLabel' => 'View listing',
+                ],
+            );
+        }
+
         return ApiResponse::success(
             (new ProductResource($product->fresh(['store', 'category', 'brand', 'images'])))->resolve(),
             'Product approved and published.',
@@ -120,6 +153,23 @@ class AdminProductController extends Controller
             'moderated_by' => $request->user()->id,
         ]);
         AuditLog::record($request->user(), 'product.rejected', $product, ['note' => $validated['note'] ?? null]);
+
+        $product->loadMissing('store.owner');
+        if ($product->store?->owner) {
+            app(NotificationService::class)->notify(
+                $product->store->owner,
+                'product.rejected',
+                'Your listing was rejected',
+                $product->name.' was not approved.'.(! empty($validated['note']) ? ' Note: '.$validated['note'] : ''),
+                [
+                    'productId' => (string) $product->id,
+                    'productName' => $product->name,
+                    'reason' => $validated['note'] ?? null,
+                    'ctaUrl' => rtrim((string) config('app.frontend_url'), '/').'/all-products',
+                    'ctaLabel' => 'Edit listing',
+                ],
+            );
+        }
 
         return ApiResponse::success(
             (new ProductResource($product->fresh(['store', 'category', 'brand', 'images'])))->resolve(),

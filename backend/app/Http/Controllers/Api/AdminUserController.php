@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\UserResource;
 use App\Models\AuditLog;
 use App\Models\User;
+use App\Services\NotificationService;
 use App\Support\ApiResponse;
 use App\Support\ProductQuery;
 use Illuminate\Http\JsonResponse;
@@ -78,8 +79,30 @@ class AdminUserController extends Controller
         if (($validated['status'] ?? null) === 'suspended') {
             $user->tokens()->delete();
             AuditLog::record($request->user(), 'user.suspended', $user);
+            app(NotificationService::class)->notify(
+                $user,
+                'account.suspended',
+                'Your Fastlink account was suspended',
+                'Your account access has been suspended. Contact support if you believe this is a mistake.',
+                [
+                    'ctaUrl' => rtrim((string) config('app.frontend_url'), '/'),
+                    'ctaLabel' => 'Visit Fastlink',
+                ],
+                forceEmail: true,
+            );
         } elseif (($validated['status'] ?? null) === 'active') {
             AuditLog::record($request->user(), 'user.activated', $user);
+            app(NotificationService::class)->notify(
+                $user,
+                'account.activated',
+                'Your Fastlink account is active again',
+                'Your account has been restored. You can sign in and continue using Fastlink.',
+                [
+                    'ctaUrl' => rtrim((string) config('app.frontend_url'), '/').'/login',
+                    'ctaLabel' => 'Sign in',
+                ],
+                forceEmail: true,
+            );
         }
 
         return ApiResponse::success((new UserResource($user->fresh()))->resolve(), 'User updated.');

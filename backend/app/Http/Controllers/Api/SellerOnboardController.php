@@ -80,6 +80,39 @@ class SellerOnboardController extends Controller
             'phone' => $validated['phone'],
         ])->save();
 
+        $frontend = rtrim((string) config('app.frontend_url'), '/');
+        $notifications->notify(
+            $user,
+            'store.onboarded',
+            'Your store is set up on Fastlink',
+            $submitKyc
+                ? $store->name.' is under review. We will email you when verification is complete.'
+                : $store->name.' is ready. Complete KYC when you want to publish products and request payouts.',
+            [
+                'storeId' => (string) $store->id,
+                'storeName' => $store->name,
+                'ctaUrl' => $frontend.'/dashboard',
+                'ctaLabel' => 'Open seller dashboard',
+                'outro' => $submitKyc ? null : 'Until KYC is approved you can prepare draft products only.',
+            ],
+            forceEmail: true,
+        );
+
+        if (! $submitKyc) {
+            $notifications->notify(
+                $user,
+                'store.kyc_reminder',
+                'Complete your KYC to sell on Fastlink',
+                'Finish business verification so you can publish products and receive payouts for '.$store->name.'.',
+                [
+                    'storeId' => (string) $store->id,
+                    'ctaUrl' => $frontend.'/settings',
+                    'ctaLabel' => 'Complete KYC',
+                ],
+                forceEmail: true,
+            );
+        }
+
         if ($submitKyc && $status === 'pending') {
             $notifications->notifyAdmins(
                 'application.store_submitted',
@@ -151,10 +184,22 @@ class SellerOnboardController extends Controller
             return ApiResponse::error('Bank details are required to submit KYC for review.', 422);
         }
 
-        if (app()->environment('testing')) {
+        if (app()->environment('testing') || app()->runningUnitTests()) {
             $store->markKycApproved();
         } else {
             $store->markKycSubmitted();
+            $notifications->notify(
+                $user,
+                'store.kyc_submitted',
+                'KYC received — under review',
+                'We received your verification documents for '.$store->name.'. An admin will review them shortly.',
+                [
+                    'storeId' => (string) $store->id,
+                    'ctaUrl' => rtrim((string) config('app.frontend_url'), '/').'/dashboard',
+                    'ctaLabel' => 'View dashboard',
+                ],
+                forceEmail: true,
+            );
             $notifications->notifyAdmins(
                 'application.store_submitted',
                 'KYC submitted: '.$store->name,
@@ -172,7 +217,7 @@ class SellerOnboardController extends Controller
                 'kycStatus' => $store->kyc_status,
                 'canSell' => $store->canSell(),
             ],
-        ], app()->environment('testing')
+        ], (app()->environment('testing') || app()->runningUnitTests())
             ? 'KYC approved.'
             : 'KYC submitted for review.');
     }
