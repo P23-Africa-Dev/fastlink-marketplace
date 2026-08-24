@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ChevronLeft, Loader2 } from "lucide-react";
 import Image from "next/image";
 
-import loginFrame from "@/assets/login-frame.png";
+import loginFrame from "@/assets/login-frame.jpg";
 import logoSvg from "@/assets/logo.svg";
 import { authApi, apiErrorMessage } from "@/lib/api";
 

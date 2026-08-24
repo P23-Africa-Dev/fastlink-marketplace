@@ -6,7 +6,7 @@ import { ChevronLeft, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 
-import loginFrame from "@/assets/login-frame.png";
+import loginFrame from "@/assets/login-frame.jpg";
 import logoSvg from "@/assets/logo.svg";
 import { PasswordInput } from "@/components/ui/password-input";
 import { authApi, apiErrorMessage } from "@/lib/api";
