@@ -5,6 +5,10 @@ import Image from "next/image";
 import logoSvg from "@/assets/logo.svg";
 import { usePathname, useSearchParams, useRouter } from "next/navigation";
 import { useState, Suspense, useEffect } from "react";
+
+import { FastlinkLogo } from "@/components/brand/fastlink-logo";
+import { usePathname, useSearchParams } from "next/navigation";
+import { useState, Suspense } from "react";
 import {
   LayoutDashboard,
   ShoppingBag,
@@ -453,6 +457,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               priority
             />
           </Link>
+          <FastlinkLogo className="h-9 md:h-10" />
         </div>
 
         {/* Center: Title */}
