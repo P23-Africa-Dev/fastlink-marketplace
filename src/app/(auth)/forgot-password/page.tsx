@@ -6,7 +6,7 @@ import { ChevronLeft, Loader2 } from "lucide-react";
 import Image from "next/image";
 
 import loginFrame from "@/assets/login-frame.jpg";
-import logoSvg from "@/assets/logo.svg";
+import { FastlinkLogo } from "@/components/brand/fastlink-logo";
 import { authApi, apiErrorMessage } from "@/lib/api";
 
 export default function ForgotPasswordPage() {
@@ -33,7 +33,6 @@ export default function ForgotPasswordPage() {
   return (
     <div className="flex min-h-screen w-full flex-col font-sans">
       <div className="flex flex-1 flex-col md:flex-row">
-        
         {/* Left Side - Image */}
         <div className="hidden md:block md:w-[45%] lg:w-1/2 relative bg-slate-900 overflow-hidden">
           <Image
@@ -48,7 +47,6 @@ export default function ForgotPasswordPage() {
 
         {/* Right Side - Form Container */}
         <div className="flex flex-col w-full md:w-[55%] lg:w-1/2 relative bg-white">
-          
           {/* Back to Login */}
           <div className="absolute top-6 left-6 md:top-8 md:left-8 z-10">
             <Link
@@ -61,19 +59,9 @@ export default function ForgotPasswordPage() {
           </div>
 
           <div className="flex flex-1 items-center justify-center p-6 sm:p-12 md:p-16 mt-12 md:mt-0">
-            {/* The Form Content */}
             <div className="w-full max-w-[400px]">
-              
-              {/* Logo */}
               <div className="flex justify-center mb-10">
-                <Image
-                  src={logoSvg}
-                  alt="Fastlink Marketplace"
-                  width={180}
-                  height={40}
-                  className="h-10 w-auto object-contain"
-                  priority
-                />
+                <FastlinkLogo linked={false} className="h-10" />
               </div>
 
               <div className="text-center mb-8">

@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 
 import loginFrame from "@/assets/login-frame.jpg";
-import logoSvg from "@/assets/logo.svg";
+import { FastlinkLogo } from "@/components/brand/fastlink-logo";
 import { PasswordInput } from "@/components/ui/password-input";
 import { authApi, apiErrorMessage } from "@/lib/api";
 import { safePostLoginPath } from "@/lib/auth-session";
@@ -70,17 +70,8 @@ export default function LoginPage() {
           <div className="flex flex-1 items-center justify-center p-6 sm:p-12 md:p-16 mt-12 md:mt-0">
             {/* The Form Content (No Card Border) */}
             <div className="w-full max-w-[400px]">
-              
-              {/* Logo */}
               <div className="flex justify-center mb-10">
-                <Image
-                  src={logoSvg}
-                  alt="Fastlink Marketplace"
-                  width={180}
-                  height={40}
-                  className="h-10 w-auto object-contain"
-                  priority
-                />
+                <FastlinkLogo linked={false} className="h-10" />
               </div>
 
               <div className="text-center mb-8">

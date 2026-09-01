@@ -7,7 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 
 import signUpBg from "@/assets/sign-up-bg.png";
-import logoSvg from "@/assets/logo.svg";
+import { FastlinkLogo } from "@/components/brand/fastlink-logo";
 import { PasswordInput } from "@/components/ui/password-input";
 import { authApi, apiErrorMessage } from "@/lib/api";
 import { safePostLoginPath } from "@/lib/auth-session";
@@ -87,7 +87,6 @@ export default function RegisterPage() {
 
         {/* Right Side - Form Container */}
         <div className="flex flex-col w-full md:w-[55%] lg:w-1/2 relative bg-white">
-          
           {/* Back to Menu */}
           <div className="absolute top-6 left-6 md:top-8 md:left-8 z-10">
             <Link href="/" className="flex items-center text-[#7a3dbf] font-semibold text-sm hover:text-[#682fad] transition-colors bg-white/80 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-100 shadow-sm">
@@ -97,19 +96,9 @@ export default function RegisterPage() {
           </div>
 
           <div className="flex flex-1 items-center justify-center p-6 sm:p-12 md:p-16 mt-12 md:mt-0">
-            {/* The Form Content (No Card Border) */}
             <div className="w-full max-w-[440px]">
-              
-              {/* Logo */}
               <div className="flex justify-center mb-10">
-                <Image
-                  src={logoSvg}
-                  alt="Fastlink Marketplace"
-                  width={180}
-                  height={40}
-                  className="h-10 w-auto object-contain"
-                  priority
-                />
+                <FastlinkLogo linked={false} className="h-10" />
               </div>
 
               <div className="text-center mb-8">
