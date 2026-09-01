@@ -3,8 +3,8 @@
 import Link from "next/link";
 
 import { FastlinkLogo } from "@/components/brand/fastlink-logo";
-import { usePathname, useSearchParams } from "next/navigation";
-import { useState, Suspense } from "react";
+import { usePathname, useSearchParams, useRouter } from "next/navigation";
+import { useState, Suspense, useEffect } from "react";
 import {
   LayoutDashboard,
   ShoppingBag,
@@ -18,20 +18,37 @@ import {
   Star,
   Settings,
   HelpCircle,
+  RotateCcw,
+  Scale,
+  Boxes,
   LogOut,
   Menu,
   X,
+  ShoppingCart,
+  Tag,
+  Lightbulb,
+  UserCog,
+  Bell,
   type LucideIcon,
 } from "lucide-react";
 
 import { useAuthStore } from "@/store/auth-store";
+import { useCartStore } from "@/store/cart-store";
 import { cn } from "@/lib/utils";
-import { useMessagesStore } from "@/store/messages-store";
+import { canSeller } from "@/lib/seller-access";
+import { useConversations } from "@/hooks/use-conversations";
+import { authApi } from "@/lib/api";
+import { queryClient } from "@/lib/query-client";
+import { PendingStoreBanner } from "@/components/dashboard/pending-store-banner";
+import { NotificationBell } from "@/components/notifications/notification-bell";
+import { homeForRole } from "@/lib/auth-session";
+import type { SellerPermission } from "@/types/user";
 
 interface NavItem {
   href: string;
   label: string;
   icon: LucideIcon;
+  perm?: SellerPermission;
   showStar?: boolean;
   hasUnread?: boolean;
 }
@@ -46,27 +63,34 @@ const NAV_SECTIONS: NavSection[] = [
     title: "OVERVIEW",
     items: [
       { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-      { href: "/orders", label: "Order", icon: ShoppingBag },
-      { href: "/all-products", label: "Products", icon: Package },
-      { href: "/customers", label: "Customers", icon: Users },
-      { href: "/messages", label: "Messages", icon: MessageSquare, hasUnread: true },
+      { href: "/orders", label: "Order", icon: ShoppingBag, perm: "orders" },
+      { href: "/returns", label: "Returns", icon: RotateCcw, perm: "orders" },
+      { href: "/disputes", label: "Disputes", icon: Scale, perm: "orders" },
+      { href: "/all-products", label: "Products", icon: Package, perm: "inventory" },
+      { href: "/inventory", label: "Inventory", icon: Boxes, perm: "inventory" },
+      { href: "/customers", label: "Customers", icon: Users, perm: "orders" },
+      { href: "/messages", label: "Messages", icon: MessageSquare, hasUnread: true, perm: "support" },
+      { href: "/notifications", label: "Notifications", icon: Bell },
     ],
   },
   {
     title: "FINANCE & GROWTH",
     items: [
-      { href: "/payments", label: "Payments", icon: CreditCard, showStar: true },
-      { href: "/payouts", label: "Payouts", icon: Wallet },
-      { href: "/analytics", label: "Analytics", icon: BarChart3 },
-      { href: "/marketing", label: "Marketing", icon: Megaphone },
-      { href: "/reviews", label: "Reviews", icon: Star },
+      { href: "/payments", label: "Payments", icon: CreditCard, showStar: true, perm: "finance" },
+      { href: "/payouts", label: "Payouts", icon: Wallet, perm: "finance" },
+      { href: "/analytics", label: "Analytics", icon: BarChart3, perm: "finance" },
+      { href: "/growth", label: "Growth", icon: Lightbulb, perm: "manage" },
+      { href: "/promos", label: "Promos", icon: Tag, perm: "manage" },
+      { href: "/marketing", label: "Marketing", icon: Megaphone, perm: "manage" },
+      { href: "/reviews", label: "Reviews", icon: Star, perm: "support" },
     ],
   },
   {
     title: "SYSTEM",
     items: [
-      { href: "/settings", label: "Settings", icon: Settings },
-      { href: "/support", label: "Support", icon: HelpCircle },
+      { href: "/settings", label: "Settings", icon: Settings, perm: "manage" },
+      { href: "/team", label: "Team", icon: UserCog, perm: "manage" },
+      { href: "/support", label: "Support", icon: HelpCircle, perm: "support" },
     ],
   },
 ];
@@ -78,8 +102,13 @@ interface SidebarNavProps {
 }
 
 function SidebarNav({ pathname, onItemClick, onLogoutClick }: SidebarNavProps) {
-  const conversations = useMessagesStore((state) => state.conversations);
-  const unreadCount = conversations.filter((c) => c.status === "New").length;
+  const { data } = useConversations();
+  const user = useAuthStore((s) => s.user);
+  const unreadCount = (data?.data ?? []).reduce((sum, c) => sum + c.unreadCount, 0);
+  const sections = NAV_SECTIONS.map((section) => ({
+    ...section,
+    items: section.items.filter((item) => !item.perm || canSeller(user, item.perm)),
+  })).filter((section) => section.items.length > 0);
 
   const checkIsActive = (href: string) => {
     if (href === "/dashboard") {
@@ -94,7 +123,7 @@ function SidebarNav({ pathname, onItemClick, onLogoutClick }: SidebarNavProps) {
   return (
     <div className="flex flex-col h-full select-none justify-between">
       <nav className="flex-1 overflow-y-auto pr-1 space-y-5">
-        {NAV_SECTIONS.map((section) => (
+        {sections.map((section) => (
           <div key={section.title} className="space-y-1.5">
             <h3 className="px-3.5 text-[10px] font-black uppercase tracking-wider text-purple-900/50">
               {section.title}
@@ -171,8 +200,8 @@ function HeaderTitleContent() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { user } = useAuthStore();
-
-  const conversations = useMessagesStore((state) => state.conversations);
+  const { data } = useConversations();
+  const conversations = data?.data ?? [];
   const messagesMatch = pathname.match(/^\/messages\/([^/]+)$/);
   const activeConversationId = messagesMatch ? messagesMatch[1] : null;
   const activeMessage = activeConversationId
@@ -183,7 +212,7 @@ function HeaderTitleContent() {
     return (
       <>
         <h1 className="text-white font-bold text-xl md:text-2xl leading-tight">
-          Customer profile {activeMessage.senderName}
+          Customer profile {activeMessage.buyer?.name ?? ""}
         </h1>
         <p className="text-purple-200 text-xs md:text-sm font-medium">
           <Link href="/messages" className="hover:underline">
@@ -340,6 +369,17 @@ function HeaderTitleContent() {
     );
   }
 
+  if (pathname === "/team") {
+    return (
+      <>
+        <h1 className="text-white font-bold text-xl md:text-2xl leading-tight">Store Team</h1>
+        <p className="text-purple-200 text-[10px] md:text-xs font-semibold">
+          Dashboard &gt; Team &gt; Staff Roles
+        </p>
+      </>
+    );
+  }
+
   if (pathname === "/support") {
     return (
       <>
@@ -365,9 +405,30 @@ function HeaderTitleContent() {
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { logout } = useAuthStore();
+  const router = useRouter();
+  const { logout, user, isAuthenticated, hasHydrated, token } = useAuthStore();
+  const { itemCount } = useCartStore();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+
+  useEffect(() => {
+    if (!hasHydrated) return;
+    if (!token || !isAuthenticated) {
+      router.replace(`/login?next=${encodeURIComponent(pathname || "/dashboard")}`);
+      return;
+    }
+    if (user && user.role !== "seller") {
+      router.replace(homeForRole(user.role));
+    }
+  }, [hasHydrated, token, isAuthenticated, user, router, pathname]);
+
+  if (!hasHydrated || !token || !isAuthenticated || (user && user.role !== "seller")) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#faf6ff] text-[#6D349F] font-semibold text-sm">
+        Loading…
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen w-full flex-col bg-[#faf6ff] font-sans overflow-hidden">
@@ -397,27 +458,23 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </Suspense>
         </div>
 
-        {/* Center-Right: Search Input (desktop only) */}
-        <div className="hidden lg:flex flex-1 max-w-md mx-6">
-          <form className="w-full bg-[#fdfafb] rounded-full pl-6 pr-1 py-1 flex items-center shadow-inner">
-            <input
-              type="text"
-              placeholder="Search Products, Brand, Stores .."
-              className="w-full bg-transparent text-sm text-slate-800 placeholder:text-slate-400 outline-none pr-3"
-            />
-            <button
-              type="submit"
-              className="bg-[#7a3dbf] hover:bg-[#682fad] text-white font-bold text-sm rounded-full px-6 py-2 transition-all shrink-0"
-            >
-              Search
-            </button>
-          </form>
-        </div>
-
-        {/* Far Right: Cart Link */}
+        {/* Far Right: Alerts + Cart */}
         <div className="flex items-center gap-4">
-          <Link href="/cart" className="text-white font-bold text-base md:text-lg hover:underline">
-            View Cart
+          <NotificationBell viewAllHref="/notifications" />
+          <Link
+            href="/cart"
+            className="group flex items-center gap-2"
+            aria-label={`View Cart${itemCount > 0 ? `, ${itemCount} items` : ""}`}
+          >
+            <div className="relative">
+              <ShoppingCart
+                size={24}
+                className="stroke-[#F59E0B] stroke-[2.2] transition-transform group-hover:scale-110"
+              />
+              <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-[#F59E0B] text-[10px] font-bold text-white">
+                {itemCount}
+              </span>
+            </div>
           </Link>
         </div>
       </header>
@@ -477,6 +534,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         {/* Content Area */}
         <main className="flex-1 p-6 md:p-8 overflow-y-auto">
+          <PendingStoreBanner />
           {children}
         </main>
       </div>
@@ -506,9 +564,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               </button>
               <button
                 type="button"
-                onClick={() => {
+                onClick={async () => {
                   setShowLogoutConfirm(false);
+                  try {
+                    await authApi.logout();
+                  } catch {
+                    /* still clear local session */
+                  }
                   logout();
+                  queryClient.clear();
+                  window.location.href = "/login";
                 }}
                 className="flex-1 px-4 py-2.5 bg-[#7a3dbf] hover:bg-[#682fad] text-white font-bold text-xs rounded-xl transition-all"
               >

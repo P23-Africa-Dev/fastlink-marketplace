@@ -2,10 +2,11 @@ import { Suspense } from "react";
 import MallStoresPage from "./mall-stores-content";
 
 interface PageProps {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }
 
-export default function MallStoresRoute({ params }: PageProps) {
+export default async function MallStoresRoute(props: PageProps) {
+  const params = await props.params;
   return (
     <Suspense
       fallback={

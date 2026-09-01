@@ -14,6 +14,10 @@ import {
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { apiErrorMessage } from "@/lib/api";
+import { formatOrderDate } from "@/lib/order-map";
+import { useReplyToReview, useSellerReviews, useUpdateReviewStatus } from "@/hooks/use-dashboard";
+import type { ProductReview } from "@/types/seller";
 
 interface ReviewReply {
   author: string;
@@ -33,66 +37,31 @@ interface ReviewRecord {
   reply?: ReviewReply;
 }
 
-const INITIAL_REVIEWS: ReviewRecord[] = [
-  {
-    id: "#REV-7701",
-    reviewerName: "Ebuka Okafor",
-    avatarSeed: "Ebuka",
-    productName: "Highlander Men's Chronograph",
-    rating: 5,
-    date: "May 26, 2026",
-    comment: "Absolutely stunning watch! The weight feels very premium and the shipping was extremely fast. Highly recommended!",
-    status: "Approved"
-  },
-  {
-    id: "#REV-7702",
-    reviewerName: "Chidi Benson",
-    avatarSeed: "Chidi",
-    productName: "Premium Wireless Mouse",
-    rating: 4,
-    date: "May 24, 2026",
-    comment: "Great mouse, very silent click. Battery life has been outstanding so far. My only minor issue is the scroll wheel feels a bit stiff.",
-    status: "Pending"
-  },
-  {
-    id: "#REV-7703",
-    reviewerName: "Amina Yusuf",
-    avatarSeed: "Amina",
-    productName: "Highlander Men's Chronograph",
-    rating: 5,
-    date: "May 22, 2026",
-    comment: "Bought this as a gift for my husband and he absolutely loves it. Packaging was beautiful too.",
-    status: "Approved",
-    reply: {
-      author: "FastLink Stores (Merchant)",
-      date: "May 23, 2026",
-      comment: "Thank you so much Amina! We are thrilled to hear your husband loved the gift. Hope to serve you again soon!"
-    }
-  },
-  {
-    id: "#REV-7704",
-    reviewerName: "Emeka Obi",
-    avatarSeed: "Emeka",
-    productName: 'Samsung 65" 4K Smart TV',
-    rating: 2,
-    date: "May 18, 2026",
-    comment: "The screen quality is good but the speaker sound is metallic and scratchy. Customer support was slow to respond.",
-    status: "Pending"
-  },
-  {
-    id: "#REV-7705",
-    reviewerName: "Sarah Connor",
-    avatarSeed: "SarahC",
-    productName: "Noise Cancelling Headphones",
-    rating: 1,
-    date: "May 15, 2026",
-    comment: "DO NOT BUY! Total scam, this product stopped charging after only 2 days of use. Cheap plastic materials.",
-    status: "Flagged"
-  }
-];
+function toReviewRecord(review: ProductReview): ReviewRecord {
+  return {
+    id: review.id,
+    reviewerName: review.buyer.name,
+    avatarSeed: review.buyer.name,
+    productName: review.productName || "Product",
+    rating: review.rating,
+    date: formatOrderDate(review.createdAt),
+    comment: review.body || "",
+    status: (review.displayStatus as ReviewRecord["status"]) || "Approved",
+    reply: review.reply
+      ? {
+          author: "Store",
+          date: formatOrderDate(review.reply.createdAt),
+          comment: review.reply.body,
+        }
+      : undefined,
+  };
+}
 
 export default function ReviewsPage() {
-  const [reviews, setReviews] = useState<ReviewRecord[]>(INITIAL_REVIEWS);
+  const { data: reviewPage } = useSellerReviews();
+  const replyMutation = useReplyToReview();
+  const statusMutation = useUpdateReviewStatus();
+  const reviews = (reviewPage?.data ?? []).map(toReviewRecord);
   const [activeTab, setActiveTab] = useState<"all" | "pending" | "flagged">("all");
   const [search, setSearch] = useState("");
   const [toastMessage, setToastMessage] = useState("");
@@ -108,50 +77,38 @@ export default function ReviewsPage() {
     setTimeout(() => setToastMessage(""), 3000);
   };
 
-  const handleReplySubmit = (e: React.FormEvent) => {
+  const handleReplySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedReviewForReply || !replyText.trim()) return;
-
-    setReviews(prev =>
-      prev.map(rev =>
-        rev.id === selectedReviewForReply.id
-          ? {
-              ...rev,
-              status: "Approved",
-              reply: {
-                author: "FastLink Stores (Merchant)",
-                date: "Today (Just now)",
-                comment: replyText
-              }
-            }
-          : rev
-      )
-    );
-
-    setSelectedReviewForReply(null);
-    setReplyText("");
-    triggerToast("Reply posted successfully!");
+    try {
+      await replyMutation.mutateAsync({ id: selectedReviewForReply.id, body: replyText });
+      setSelectedReviewForReply(null);
+      setReplyText("");
+      triggerToast("Reply posted successfully!");
+    } catch (error) {
+      triggerToast(apiErrorMessage(error, "Could not post reply."));
+    }
   };
 
-  const handleFlagSubmit = (e: React.FormEvent) => {
+  const handleFlagSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedReviewForFlag) return;
-
-    setReviews(prev =>
-      prev.map(rev =>
-        rev.id === selectedReviewForFlag.id
-          ? { ...rev, status: "Flagged" }
-          : rev
-      )
-    );
-
-    setSelectedReviewForFlag(null);
-    triggerToast("Review flagged for moderator review.");
+    try {
+      await statusMutation.mutateAsync({ id: selectedReviewForFlag.id, status: "flagged" });
+      setSelectedReviewForFlag(null);
+      triggerToast("Review flagged for moderator review.");
+    } catch (error) {
+      triggerToast(apiErrorMessage(error, "Could not flag review."));
+    }
   };
 
-  const handleDeleteReview = (id: string) => {
-    setReviews(prev => prev.filter(rev => rev.id !== id));
-    triggerToast("Review removed from listings.");
+  const handleDeleteReview = async (id: string) => {
+    try {
+      await statusMutation.mutateAsync({ id, status: "hidden" });
+      triggerToast("Review hidden from the public listing.");
+    } catch (error) {
+      triggerToast(apiErrorMessage(error, "Could not hide review."));
+    }
   };
 
   // Filter reviews

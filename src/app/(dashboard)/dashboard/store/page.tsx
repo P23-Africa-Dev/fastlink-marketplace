@@ -1,16 +1,46 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-import { MOCK_SELLER } from "@/mocks/data";
+import { apiErrorMessage } from "@/lib/api";
+import { useSellerStore, useUpdateSellerStore } from "@/hooks/use-dashboard";
 
 export default function DashboardStorePage() {
+  const { data } = useSellerStore();
+  const updateStore = useUpdateSellerStore();
+  const store = data?.data;
+
   const [form, setForm] = useState({
-    storeName: MOCK_SELLER.storeName,
-    description: MOCK_SELLER.description,
-    instagram: "",
-    website: "",
+    storeName: "",
+    description: "",
+    location: "",
+    headline: "",
   });
+  const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    if (!store) return;
+    setForm({
+      storeName: store.name,
+      description: store.description || "",
+      location: store.location || "",
+      headline: store.headline || "",
+    });
+  }, [store]);
+
+  async function handleSave() {
+    try {
+      await updateStore.mutateAsync({
+        name: form.storeName,
+        description: form.description,
+        location: form.location,
+        headline: form.headline,
+      });
+      setMessage("Store details saved.");
+    } catch (error) {
+      setMessage(apiErrorMessage(error, "Could not save store."));
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -21,8 +51,8 @@ export default function DashboardStorePage() {
         <div className="space-y-5 max-w-lg">
           {[
             { field: "storeName", label: "Store Name" },
-            { field: "instagram", label: "Instagram Handle", placeholder: "@yourstudio" },
-            { field: "website", label: "Website URL", placeholder: "https://yourstudio.com" },
+            { field: "location", label: "Location", placeholder: "Kano Municipal" },
+            { field: "headline", label: "Headline", placeholder: "Same-day electronics" },
           ].map(({ field, label, placeholder }) => (
             <div key={field}>
               <label className="mb-1.5 block text-xs uppercase tracking-widest text-muted-foreground">
@@ -47,7 +77,15 @@ export default function DashboardStorePage() {
               className="w-full rounded border border-border bg-input px-4 py-3 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary transition-colors resize-none"
             />
           </div>
-          <button className="btn-gold px-8 py-3">Save Changes</button>
+          {message && <p className="text-xs font-semibold text-[#7a3dbf]">{message}</p>}
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={updateStore.isPending}
+            className="btn-gold px-8 py-3 disabled:opacity-60"
+          >
+            {updateStore.isPending ? "Saving…" : "Save Changes"}
+          </button>
         </div>
       </div>
     </div>

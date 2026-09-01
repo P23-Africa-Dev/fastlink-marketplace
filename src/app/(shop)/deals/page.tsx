@@ -1,9 +1,13 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft, Tag, ShoppingCart } from "lucide-react";
-import { ALL_DEALS } from "@/mocks/stores-data";
+import { useDeals } from "@/hooks/use-catalog";
 
 export default function DealsPage() {
+  const { data } = useDeals();
+  const deals = data?.data ?? [];
   return (
     <div className="bg-[#EADBF8] min-h-screen pb-16">
       {/* ── 1. Full-Width Hero Section ───────────────────────────────────── */}
@@ -40,7 +44,7 @@ export default function DealsPage() {
         </div>
 
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-          {ALL_DEALS.map((deal) => (
+          {deals.map((deal) => (
             <Link
               key={deal.id}
               href={deal.href}
@@ -49,13 +53,19 @@ export default function DealsPage() {
               <div>
                 {/* Product image */}
                 <div className="relative aspect-square w-full overflow-hidden bg-purple-100">
-                  <Image
-                    src={deal.image}
-                    alt={deal.name}
-                    fill
-                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                    className="object-cover transition-transform duration-500 group-hover:scale-105"
-                  />
+                  {deal.image ? (
+                    <Image
+                      src={deal.image}
+                      alt={deal.name}
+                      fill
+                      sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                      className="object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-[#6D349F]/40">
+                      <Tag size={32} />
+                    </div>
+                  )}
                   {/* Top Right Pill Tag */}
                   <div className="absolute right-2.5 top-2.5 rounded-full bg-white/90 backdrop-blur px-3 py-1 text-[10px] font-bold text-[#6D349F] shadow-sm">
                     {deal.category}

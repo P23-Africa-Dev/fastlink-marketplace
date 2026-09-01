@@ -34,6 +34,10 @@ import {
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { apiErrorCode, apiErrorMessage } from "@/lib/api";
+import { useCreateSellerProduct } from "@/hooks/use-seller-products";
+import { useSellerStore } from "@/hooks/use-dashboard";
+import Link from "next/link";
 
 interface VariantType {
   name: string;
@@ -68,6 +72,10 @@ export default function AddNewProductPage() {
   const router = useRouter();
   const params = useParams();
   const id = params?.id as string;
+  const createProduct = useCreateSellerProduct();
+  const { data: storeRes } = useSellerStore();
+  const canSell = Boolean(storeRes?.data?.canSell);
+  const [kycBlocked, setKycBlocked] = useState(false);
 
   const [activeSection, setActiveSection] = useState("basic-info");
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("saved");
@@ -76,58 +84,39 @@ export default function AddNewProductPage() {
   const [zoomImage, setZoomImage] = useState<string | null>(null);
   const [lastSaved, setLastSaved] = useState<string>("");
 
-  const [categoryPath, setCategoryPath] = useState<string[]>(["Electronics", "Smartphones"]);
+  const [categoryPath, setCategoryPath] = useState<string[]>([]);
   const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
 
   const [productName, setProductName] = useState("");
   const [brand, setBrand] = useState("");
   const [condition, setCondition] = useState("New");
   const [description, setDescription] = useState("");
-  const [tags, setTags] = useState<string[]>(["Apple", "Premium", "iOS"]);
+  const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
 
-  const [uploadedImages, setUploadedImages] = useState<ImageFile[]>([
-    {
-      id: "img-1",
-      url: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=300&auto=format",
-      name: "iphone_main.jpg",
-      size: "142 KB"
-    },
-    {
-      id: "img-2",
-      url: "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=300&auto=format",
-      name: "display_spec.jpg",
-      size: "205 KB"
-    }
-  ]);
+  const [uploadedImages, setUploadedImages] = useState<ImageFile[]>([]);
   const [dragActive, setDragActive] = useState(false);
   const [videoFile, setVideoFile] = useState<{ name: string; size: string } | null>(null);
 
-  const [basePrice, setBasePrice] = useState<number>(1100000);
-  const [comparePrice, setComparePrice] = useState<number>(1250000);
-  const [costPrice, setCostPrice] = useState<number>(750000);
-  const [baseStock, setBaseStock] = useState<number>(50);
+  const [basePrice, setBasePrice] = useState<number>(0);
+  const [comparePrice, setComparePrice] = useState<number>(0);
+  const [costPrice, setCostPrice] = useState<number>(0);
+  const [baseStock, setBaseStock] = useState<number>(0);
   const [barcode, setBarcode] = useState("");
   const [alertThreshold, setAlertThreshold] = useState<number>(5);
   const [currency, setCurrency] = useState("NGN (₦)");
 
   const [hasVariants, setHasVariants] = useState(false);
-  const [variantTypes, setVariantTypes] = useState<VariantType[]>([
-    { name: "Color", values: ["Midnight Blue", "Titanium Gray"] },
-    { name: "Size", values: ["128GB", "256GB"] }
-  ]);
+  const [variantTypes, setVariantTypes] = useState<VariantType[]>([]);
   const [newTypeName, setNewTypeName] = useState("");
   const [variantCombinations, setVariantCombinations] = useState<VariantCombination[]>([]);
 
-  const [colorSwatches, setColorSwatches] = useState<{ [colorName: string]: string }>({
-    "Midnight Blue": "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=100&auto=format",
-    "Titanium Gray": "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=100&auto=format"
-  });
+  const [colorSwatches, setColorSwatches] = useState<{ [colorName: string]: string }>({});
 
-  const [weight, setWeight] = useState<number>(0.2);
-  const [length, setLength] = useState<number>(15);
-  const [width, setWidth] = useState<number>(7.5);
-  const [height, setHeight] = useState<number>(0.8);
+  const [weight, setWeight] = useState<number>(0);
+  const [length, setLength] = useState<number>(0);
+  const [width, setWidth] = useState<number>(0);
+  const [height, setHeight] = useState<number>(0);
   const [shippingClass, setShippingClass] = useState("Standard");
   const [specialHandling, setSpecialHandling] = useState(false);
 
@@ -344,15 +333,65 @@ export default function AddNewProductPage() {
     setTimeout(() => setToast(""), 3000);
   };
 
-  const handleSaveDraft = () => triggerToast("Draft saved successfully to dashboard index!");
+  const handleSaveDraft = async () => {
+    if (!productName.trim()) {
+      triggerToast("Add a product name before saving a draft.");
+      return;
+    }
+    try {
+      await createProduct.mutateAsync({
+        name: productName,
+        description,
+        price: basePrice,
+        compare_at_price: comparePrice || null,
+        cost_price: costPrice || null,
+        stock: hasVariants ? variantCombinations.reduce((sum, item) => sum + (item.stock || 0), 0) : baseStock,
+        category: categoryPath[0],
+        subcategory: categoryPath[1],
+        brand: brand || undefined,
+        tags,
+        status: "draft",
+        image_urls: uploadedImages.map((img) => img.url).filter(Boolean),
+      });
+      triggerToast("Draft saved. You can publish after KYC is approved.");
+    } catch (error) {
+      triggerToast(apiErrorMessage(error, "Could not save draft."));
+    }
+  };
 
-  const handlePublish = () => {
+  const handlePublish = async () => {
+    if (!canSell) {
+      setKycBlocked(true);
+      return;
+    }
     if (completionPercentage < 100) {
       triggerToast("Please fill all required basic fields before publishing!");
       return;
     }
-    triggerToast("Listing published successfully! Redirecting...");
-    setTimeout(() => router.push("/all-products"), 1500);
+    try {
+      await createProduct.mutateAsync({
+        name: productName,
+        description,
+        price: basePrice,
+        compare_at_price: comparePrice || null,
+        cost_price: costPrice || null,
+        stock: hasVariants ? variantCombinations.reduce((sum, item) => sum + (item.stock || 0), 0) : baseStock,
+        category: categoryPath[0],
+        subcategory: categoryPath[1],
+        brand: brand || undefined,
+        tags,
+        status: "active",
+        image_urls: uploadedImages.map((img) => img.url).filter(Boolean),
+      });
+      triggerToast("Listing published successfully! Redirecting...");
+      setTimeout(() => router.push("/all-products"), 1200);
+    } catch (error) {
+      if (apiErrorCode(error) === "KYC_REQUIRED") {
+        setKycBlocked(true);
+        return;
+      }
+      triggerToast(apiErrorMessage(error, "Could not publish listing."));
+    }
   };
 
   useEffect(() => {
@@ -402,6 +441,43 @@ export default function AddNewProductPage() {
         </div>
       )}
 
+      {kycBlocked && (
+        <div className="fixed inset-0 z-[70] bg-black/40 flex items-center justify-center p-4">
+          <div className="max-w-md w-full rounded-3xl bg-white border border-[#ebd7fa] p-6 space-y-4 shadow-xl">
+            <p className="text-lg font-extrabold text-[#3B1C5A]">KYC verification required</p>
+            <p className="text-sm text-[#8A79A5]">
+              Complete your business verification before you can add and publish products on the marketplace.
+              You can still save this listing as a draft.
+            </p>
+            <div className="flex flex-wrap gap-2 justify-end">
+              <button
+                type="button"
+                onClick={() => setKycBlocked(false)}
+                className="rounded-xl border border-[#ebd7fa] px-4 py-2 text-xs font-bold text-[#6D349F]"
+              >
+                Close
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setKycBlocked(false);
+                  void handleSaveDraft();
+                }}
+                className="rounded-xl border border-[#ebd7fa] px-4 py-2 text-xs font-bold text-[#6D349F]"
+              >
+                Save draft
+              </button>
+              <Link
+                href="/vendor/register"
+                className="rounded-xl bg-[#7a3dbf] px-4 py-2 text-xs font-bold text-white"
+              >
+                Complete KYC
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── Sticky Top Action Bar ── */}
       <div className="sticky top-0 z-40 bg-white border border-[#ebd7fa] rounded-2xl px-5 py-3.5 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
 
@@ -429,16 +505,16 @@ export default function AddNewProductPage() {
                 style={{ transition: "stroke-dashoffset 0.6s ease" }}
               />
             </svg>
-            <span className="absolute inset-0 flex items-center justify-center text-[11px] font-black text-[#7a3dbf]">
+            <span className="absolute inset-0 flex items-center justify-center text-[11px] font-semibold text-[#7a3dbf]">
               {completionPercentage}%
             </span>
           </div>
 
           <div>
             <div className="flex items-center gap-2.5">
-              <h2 className="text-slate-900 text-base font-black tracking-tight">New Product Listing</h2>
+              <h2 className="text-slate-900 text-base font-semibold tracking-tight">New Product Listing</h2>
               <span className={cn(
-                "text-[9px] font-bold px-2.5 py-1 rounded-full border flex items-center gap-1",
+                "text-[9px] font-semibold px-2.5 py-1 rounded-full border flex items-center gap-1",
                 saveStatus === "saving" && "bg-amber-50 text-amber-600 border-amber-200",
                 saveStatus === "saved" && "bg-emerald-50 text-emerald-700 border-emerald-200",
                 saveStatus === "idle" && "bg-slate-50 text-slate-500 border-slate-200"
@@ -465,7 +541,7 @@ export default function AddNewProductPage() {
             Preview
           </button>
           <button onClick={handlePublish}
-            className="bg-[#7a3dbf] hover:bg-[#682fad] text-white font-bold text-xs px-6 py-2.5 rounded-xl transition-all shadow-md active:scale-95 flex items-center gap-1.5">
+            className="bg-[#7a3dbf] hover:bg-[#682fad] text-white font-semibold text-xs px-6 py-2.5 rounded-xl transition-all shadow-md active:scale-95 flex items-center gap-1.5">
             <Sparkles size={13} />
             Publish Product
           </button>
@@ -493,8 +569,8 @@ export default function AddNewProductPage() {
                   />
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="text-2xl font-black text-[#7a3dbf] leading-none">{completionPercentage}%</span>
-                  <span className="text-[9px] font-bold text-slate-400 leading-none mt-0.5">complete</span>
+                  <span className="text-2xl font-semibold text-[#7a3dbf] leading-none">{completionPercentage}%</span>
+                  <span className="text-[9px] font-semibold text-slate-400 leading-none mt-0.5">complete</span>
                 </div>
               </div>
               <p className="text-[10px] font-semibold text-slate-400 text-center">
@@ -529,7 +605,7 @@ export default function AddNewProductPage() {
 
                     {/* Number circle */}
                     <div className={cn(
-                      "h-7 w-7 rounded-full flex items-center justify-center text-[10px] font-black shrink-0 border-2 transition-all",
+                      "h-7 w-7 rounded-full flex items-center justify-center text-[10px] font-semibold shrink-0 border-2 transition-all",
                       isCompleted
                         ? "bg-emerald-500 border-emerald-500 text-white"
                         : isActive
@@ -540,7 +616,7 @@ export default function AddNewProductPage() {
                     </div>
 
                     <div className="flex-1 min-w-0">
-                      <span className={cn("text-xs font-bold block truncate", isActive ? "text-[#7a3dbf]" : "text-slate-600 group-hover:text-slate-800")}>
+                      <span className={cn("text-xs font-semibold block truncate", isActive ? "text-[#7a3dbf]" : "text-slate-600 group-hover:text-slate-800")}>
                         {label}
                       </span>
                     </div>
@@ -553,7 +629,7 @@ export default function AddNewProductPage() {
 
             {/* Tip */}
             <div className="bg-[#faf6ff] border border-[#ebd7fa] rounded-2xl p-3 space-y-1">
-              <div className="flex items-center gap-1.5 text-[#7a3dbf] font-bold text-[10px]">
+              <div className="flex items-center gap-1.5 text-[#7a3dbf] font-semibold text-[10px]">
                 <Sparkles size={11} />
                 <span>Smart Form</span>
               </div>
@@ -575,20 +651,20 @@ export default function AddNewProductPage() {
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="text-slate-900 text-sm font-black tracking-tight">Basic Product Information</h3>
-                    <span className="text-[9px] bg-[#7a3dbf] text-white px-2 py-0.5 rounded-full font-bold">01</span>
+                    <h3 className="text-slate-900 text-sm font-semibold tracking-tight">Basic Product Information</h3>
+                    <span className="text-[9px] bg-[#7a3dbf] text-white px-2 py-0.5 rounded-full font-semibold">01</span>
                   </div>
                   <p className="text-[10px] text-slate-400 font-medium">Name, category, brand & description</p>
                 </div>
               </div>
-              <span className="text-[9px] text-[#7a3dbf] font-black uppercase tracking-widest border border-[#7a3dbf]/20 bg-[#7a3dbf]/5 px-2 py-1 rounded-lg">Required</span>
+              <span className="text-[9px] text-[#7a3dbf] font-semibold uppercase tracking-widest border border-[#7a3dbf]/20 bg-[#7a3dbf]/5 px-2 py-1 rounded-lg">Required</span>
             </div>
 
             <div className="p-6 space-y-5">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Product Name */}
                 <div className="md:col-span-2 space-y-1.5">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Product Name / Title *</label>
+                  <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest block">Product Name / Title *</label>
                   <input type="text" required
                     placeholder="e.g. Apple iPhone 15 Pro, Dual SIM, 256GB - Titanium Blue"
                     value={productName} onChange={(e) => setProductName(e.target.value)}
@@ -597,7 +673,7 @@ export default function AddNewProductPage() {
 
                 {/* Category */}
                 <div className="relative space-y-1.5">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Multi-Level Category *</label>
+                  <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest block">Multi-Level Category *</label>
                   <button type="button" onClick={() => setIsCategoryDropdownOpen(!isCategoryDropdownOpen)}
                     className="w-full bg-white border border-[#ebd7fa] rounded-xl px-4 py-3 text-sm font-semibold text-slate-700 flex items-center justify-between shadow-sm hover:border-[#7a3dbf] transition-all focus:outline-none focus:ring-2 focus:ring-[#7a3dbf]/30">
                     <div className="flex items-center gap-2">
@@ -608,7 +684,7 @@ export default function AddNewProductPage() {
                   </button>
                   {isCategoryDropdownOpen && (
                     <div className="absolute top-full left-0 right-0 mt-1 z-30 bg-white border border-[#ebd7fa] rounded-2xl shadow-xl shadow-purple-100/40 p-2">
-                      <p className="text-[9px] font-black text-[#7a3dbf] uppercase tracking-widest px-2 py-1.5">Select Catalog Class</p>
+                      <p className="text-[9px] font-semibold text-[#7a3dbf] uppercase tracking-widest px-2 py-1.5">Select Catalog Class</p>
                       {[
                         ["Electronics", "Smartphones"],
                         ["Electronics", "Monitors"],
@@ -628,7 +704,7 @@ export default function AddNewProductPage() {
 
                 {/* Brand */}
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Brand Name</label>
+                  <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest block">Brand Name</label>
                   <input type="text" placeholder="e.g. Apple, Samsung, Nike"
                     value={brand} onChange={(e) => setBrand(e.target.value)}
                     className={inputCls} />
@@ -636,12 +712,12 @@ export default function AddNewProductPage() {
 
                 {/* Condition */}
                 <div className="md:col-span-2 space-y-1.5">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Product Condition</label>
+                  <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest block">Product Condition</label>
                   <div className="grid grid-cols-3 gap-2">
                     {["New", "Refurbished", "Used"].map((cond) => (
                       <button key={cond} type="button" onClick={() => setCondition(cond)}
                         className={cn(
-                          "py-2.5 text-xs font-bold rounded-xl border transition-all active:scale-95",
+                          "py-2.5 text-xs font-semibold rounded-xl border transition-all active:scale-95",
                           condition === cond
                             ? "bg-[#7a3dbf] border-transparent text-white shadow-sm"
                             : "bg-white border-slate-200 text-slate-600 hover:border-[#7a3dbf]/40"
@@ -655,7 +731,7 @@ export default function AddNewProductPage() {
 
               {/* Rich Text Editor */}
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Detailed Product Description</label>
+                <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest block">Detailed Product Description</label>
                 <div className="border border-[#ebd7fa] rounded-2xl overflow-hidden shadow-sm">
                   {/* Toolbar */}
                   <div className="bg-[#faf6ff] border-b border-[#ebd7fa] px-3 py-2 flex items-center gap-1 flex-wrap">
@@ -693,13 +769,13 @@ export default function AddNewProductPage() {
 
               {/* Tags */}
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">
+                <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest block">
                   Tags / Keywords <span className="normal-case text-slate-300 font-medium">(Press Enter)</span>
                 </label>
                 <div className="bg-[#faf6ff] border border-[#ebd7fa] rounded-2xl p-3 flex flex-wrap gap-2 items-center min-h-[50px]">
                   {tags.map((tag, i) => (
                     <span key={tag}
-                      className={cn("text-[11px] font-bold pl-3 pr-2 py-1.5 rounded-full border flex items-center gap-1.5", TAG_COLORS[i % TAG_COLORS.length])}>
+                      className={cn("text-[11px] font-semibold pl-3 pr-2 py-1.5 rounded-full border flex items-center gap-1.5", TAG_COLORS[i % TAG_COLORS.length])}>
                       <span>{tag}</span>
                       <button type="button" onClick={() => setTags((prev) => prev.filter((t) => t !== tag))}
                         className="opacity-60 hover:opacity-100 transition-opacity">
@@ -725,13 +801,13 @@ export default function AddNewProductPage() {
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="text-slate-900 text-sm font-black tracking-tight">Product Media Upload</h3>
-                    <span className="text-[9px] bg-[#5FD0C8] text-white px-2 py-0.5 rounded-full font-bold">02</span>
+                    <h3 className="text-slate-900 text-sm font-semibold tracking-tight">Product Media Upload</h3>
+                    <span className="text-[9px] bg-[#5FD0C8] text-white px-2 py-0.5 rounded-full font-semibold">02</span>
                   </div>
                   <p className="text-[10px] text-slate-400 font-medium">Photos, gallery & video demo</p>
                 </div>
               </div>
-              <span className="text-[10px] text-slate-500 font-bold">{uploadedImages.length}/8</span>
+              <span className="text-[10px] text-slate-500 font-semibold">{uploadedImages.length}/8</span>
             </div>
 
             <div className="p-6 space-y-5">
@@ -757,7 +833,7 @@ export default function AddNewProductPage() {
                     <UploadCloud size={28} />
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-slate-700">
+                    <p className="text-sm font-semibold text-slate-700">
                       {dragActive ? "Drop images here" : "Drag & drop product images"}
                     </p>
                     <p className="text-[11px] text-slate-400 font-medium mt-1">or click to browse • JPEG, PNG, WEBP • Max 2MB each</p>
@@ -769,8 +845,8 @@ export default function AddNewProductPage() {
               {uploadedImages.length > 0 && (
                 <div className="space-y-2.5">
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Gallery</span>
-                    <span className="text-[9px] text-[#7a3dbf] font-bold bg-[#7a3dbf]/5 px-2 py-0.5 rounded-full">Drag to reorder • First = Cover</span>
+                    <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Gallery</span>
+                    <span className="text-[9px] text-[#7a3dbf] font-semibold bg-[#7a3dbf]/5 px-2 py-0.5 rounded-full">Drag to reorder • First = Cover</span>
                   </div>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     {uploadedImages.map((img, index) => (
@@ -789,7 +865,7 @@ export default function AddNewProductPage() {
 
                         {/* Number badge */}
                         <div className={cn(
-                          "absolute top-2 left-2 h-5 w-5 rounded-full flex items-center justify-center text-[9px] font-black shadow-sm",
+                          "absolute top-2 left-2 h-5 w-5 rounded-full flex items-center justify-center text-[9px] font-semibold shadow-sm",
                           index === 0 ? "bg-amber-400 text-white" : "bg-white/90 text-slate-700"
                         )}>
                           {index === 0 ? "★" : index + 1}
@@ -821,14 +897,14 @@ export default function AddNewProductPage() {
               {/* Video */}
               <div className="border-t border-[#ebd7fa]/60 pt-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <div>
-                  <span className="text-sm font-bold text-slate-700 block">Product Demo Video</span>
+                  <span className="text-sm font-semibold text-slate-700 block">Product Demo Video</span>
                   <span className="text-[11px] text-slate-400 font-medium">MP4 format, max 20MB</span>
                 </div>
                 {videoFile ? (
                   <div className="flex items-center gap-2 border border-[#ebd7fa] rounded-xl px-3 py-2 bg-[#faf6ff]">
                     <Tv size={14} className="text-[#7a3dbf]" />
                     <div>
-                      <span className="text-[10px] font-bold text-slate-700 block truncate max-w-[120px]">{videoFile.name}</span>
+                      <span className="text-[10px] font-semibold text-slate-700 block truncate max-w-[120px]">{videoFile.name}</span>
                       <span className="text-[9px] font-semibold text-[#7a3dbf]">{videoFile.size}</span>
                     </div>
                     <button type="button" onClick={() => setVideoFile(null)}
@@ -861,13 +937,13 @@ export default function AddNewProductPage() {
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="text-slate-900 text-sm font-black tracking-tight">Pricing & Inventory</h3>
-                    <span className="text-[9px] bg-[#5FD0C8] text-white px-2 py-0.5 rounded-full font-bold">03</span>
+                    <h3 className="text-slate-900 text-sm font-semibold tracking-tight">Pricing & Inventory</h3>
+                    <span className="text-[9px] bg-[#5FD0C8] text-white px-2 py-0.5 rounded-full font-semibold">03</span>
                   </div>
                   <p className="text-[10px] text-slate-400 font-medium">Set prices, stock levels & margins</p>
                 </div>
               </div>
-              <span className="text-[9px] text-[#7a3dbf] font-black uppercase tracking-widest border border-[#ebd7fa] bg-[#faf6ff] px-2 py-1 rounded-lg">Required</span>
+              <span className="text-[9px] text-[#7a3dbf] font-semibold uppercase tracking-widest border border-[#ebd7fa] bg-[#faf6ff] px-2 py-1 rounded-lg">Required</span>
             </div>
 
             <div className="p-6 space-y-5">
@@ -878,7 +954,7 @@ export default function AddNewProductPage() {
                   Display Currency
                 </div>
                 <select value={currency} onChange={(e) => setCurrency(e.target.value)}
-                  className="bg-white border border-[#ebd7fa] rounded-xl px-3 py-1.5 text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#7a3dbf]/20">
+                  className="bg-white border border-[#ebd7fa] rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#7a3dbf]/20">
                   <option value="NGN (₦)">NGN (₦) — Naira</option>
                   <option value="USD ($)">USD ($) — Dollar</option>
                   <option value="EUR (€)">EUR (€) — Euro</option>
@@ -893,13 +969,13 @@ export default function AddNewProductPage() {
                   { label: "Compare-At Price", value: comparePrice, setter: setComparePrice, symbol: "₦", subtle: true },
                 ].map(({ label, value, setter, symbol, subtle }) => (
                   <div key={label} className="space-y-1.5">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">{label}</label>
+                    <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest block">{label}</label>
                     <div className={cn(
                       "flex items-center rounded-xl border overflow-hidden shadow-sm transition-all focus-within:ring-2 focus-within:ring-[#7a3dbf]/30 focus-within:border-[#7a3dbf]",
                       subtle ? "border-[#ebd7fa]" : "border-[#7a3dbf]/40"
                     )}>
                       <div className={cn(
-                        "px-3 py-3 text-xs font-black border-r",
+                        "px-3 py-3 text-xs font-semibold border-r",
                         subtle ? "bg-slate-50 text-slate-500 border-slate-100" : "bg-[#7a3dbf]/5 text-[#7a3dbf] border-[#7a3dbf]/20"
                       )}>
                         {symbol}
@@ -914,7 +990,7 @@ export default function AddNewProductPage() {
               {/* Profit flow card */}
               {basePrice > 0 && costPrice > 0 && (
                 <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4 space-y-3">
-                  <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                  <div className="flex items-center gap-2 text-[10px] font-semibold text-slate-400 uppercase tracking-widest">
                     <Sparkles size={11} className="text-[#7a3dbf]" />
                     Margin Analysis
                   </div>
@@ -922,20 +998,20 @@ export default function AddNewProductPage() {
                   {/* Flow */}
                   <div className="flex items-center gap-2 flex-wrap">
                     <div className="bg-white rounded-xl border border-slate-200 px-3 py-2 text-center">
-                      <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Cost</p>
-                      <p className="text-sm font-black text-slate-700">₦{costPrice.toLocaleString()}</p>
+                      <p className="text-[9px] text-slate-400 font-semibold uppercase tracking-wider">Cost</p>
+                      <p className="text-sm font-semibold text-slate-700">₦{costPrice.toLocaleString()}</p>
                     </div>
                     <ArrowRight size={14} className="text-slate-300 shrink-0" />
                     <div className="bg-white rounded-xl border border-[#7a3dbf]/30 px-3 py-2 text-center">
-                      <p className="text-[9px] text-[#7a3dbf] font-bold uppercase tracking-wider">Sale Price</p>
-                      <p className="text-sm font-black text-[#7a3dbf]">₦{basePrice.toLocaleString()}</p>
+                      <p className="text-[9px] text-[#7a3dbf] font-semibold uppercase tracking-wider">Sale Price</p>
+                      <p className="text-sm font-semibold text-[#7a3dbf]">₦{basePrice.toLocaleString()}</p>
                     </div>
                     <ArrowRight size={14} className="text-slate-300 shrink-0" />
                     <div className={cn("bg-white rounded-xl border px-3 py-2 text-center", profitMargin >= 30 ? "border-[#5FD0C8]/40" : profitMargin > 0 ? "border-[#ebd7fa]" : "border-red-200")}>
-                      <p className={cn("text-[9px] font-bold uppercase tracking-wider", profitMargin >= 30 ? "text-[#5FD0C8]" : profitMargin > 0 ? "text-[#7a3dbf]" : "text-red-500")}>
+                      <p className={cn("text-[9px] font-semibold uppercase tracking-wider", profitMargin >= 30 ? "text-[#5FD0C8]" : profitMargin > 0 ? "text-[#7a3dbf]" : "text-red-500")}>
                         Profit
                       </p>
-                      <p className={cn("text-sm font-black", profitMargin >= 30 ? "text-[#5FD0C8]" : profitMargin > 0 ? "text-[#7a3dbf]" : "text-red-500")}>
+                      <p className={cn("text-sm font-semibold", profitMargin >= 30 ? "text-[#5FD0C8]" : profitMargin > 0 ? "text-[#7a3dbf]" : "text-red-500")}>
                         ₦{(basePrice - costPrice).toLocaleString()}
                       </p>
                     </div>
@@ -943,9 +1019,9 @@ export default function AddNewProductPage() {
 
                   {/* Margin meter */}
                   <div className="space-y-1">
-                    <div className="flex justify-between text-[9px] font-bold text-slate-400">
+                    <div className="flex justify-between text-[9px] font-semibold text-slate-400">
                       <span>0%</span>
-                      <span className={cn("font-black", profitMargin >= 30 ? "text-[#5FD0C8]" : profitMargin > 0 ? "text-[#7a3dbf]" : "text-red-500")}>
+                      <span className={cn("font-semibold", profitMargin >= 30 ? "text-[#5FD0C8]" : profitMargin > 0 ? "text-[#7a3dbf]" : "text-red-500")}>
                         {profitMargin.toFixed(1)}% margin
                       </span>
                       <span>100%</span>
@@ -969,7 +1045,7 @@ export default function AddNewProductPage() {
                     { label: "Low Stock Alert", value: alertThreshold, setter: setAlertThreshold, type: "number", placeholder: "e.g. 5" },
                   ].map(({ label, value, setter, type, placeholder }) => (
                     <div key={label} className="space-y-1.5">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">{label}</label>
+                      <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest block">{label}</label>
                       <input type={type} min={0} placeholder={placeholder}
                         value={value} onChange={(e) => (setter as (v: string | number) => void)(type === "number" ? Number(e.target.value) : e.target.value)}
                         className={inputCls} />
@@ -999,14 +1075,14 @@ export default function AddNewProductPage() {
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="text-slate-900 text-sm font-black tracking-tight">Attributes & Variants</h3>
-                    <span className="text-[9px] bg-[#7a3dbf] text-white px-2 py-0.5 rounded-full font-bold">04</span>
+                    <h3 className="text-slate-900 text-sm font-semibold tracking-tight">Attributes & Variants</h3>
+                    <span className="text-[9px] bg-[#7a3dbf] text-white px-2 py-0.5 rounded-full font-semibold">04</span>
                   </div>
                   <p className="text-[10px] text-slate-400 font-medium">Colors, sizes & SKU matrix</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-xs text-slate-500 font-bold">Enable</span>
+                <span className="text-xs text-slate-500 font-semibold">Enable</span>
                 <button type="button" onClick={() => setHasVariants(!hasVariants)}
                   className={cn(
                     "w-11 h-6 rounded-full p-0.5 transition-colors relative flex items-center cursor-pointer shadow-inner",
@@ -1028,7 +1104,7 @@ export default function AddNewProductPage() {
                     value={newTypeName} onChange={(e) => setNewTypeName(e.target.value)}
                     className={cn(inputCls, "flex-1")} />
                   <button type="button" onClick={handleAddVariantType}
-                    className="bg-white border border-[#ebd7fa] hover:border-[#7a3dbf] hover:text-[#7a3dbf] text-slate-600 font-bold text-xs px-4 py-3 rounded-xl transition-all shadow-sm flex items-center gap-1.5 shrink-0">
+                    className="bg-white border border-[#ebd7fa] hover:border-[#7a3dbf] hover:text-[#7a3dbf] text-slate-600 font-semibold text-xs px-4 py-3 rounded-xl transition-all shadow-sm flex items-center gap-1.5 shrink-0">
                     <Plus size={13} />
                     Add Type
                   </button>
@@ -1042,7 +1118,7 @@ export default function AddNewProductPage() {
                       <div key={type.name}
                         className={cn("border border-[#ebd7fa] border-l-4 rounded-2xl p-4 space-y-3 bg-[#faf6ff]/30", BORDER_COLORS[typeIdx % BORDER_COLORS.length])}>
                         <div className="flex items-center justify-between">
-                          <span className="text-sm font-black text-slate-800">{type.name}</span>
+                          <span className="text-sm font-semibold text-slate-800">{type.name}</span>
                           <button type="button"
                             onClick={() => setVariantTypes((prev) => prev.filter((t) => t.name !== type.name))}
                             className="text-slate-300 hover:text-red-400 transition-colors p-1 rounded-lg hover:bg-red-50">
@@ -1053,7 +1129,7 @@ export default function AddNewProductPage() {
                         <div className="flex flex-wrap gap-2 items-center">
                           {type.values.map((v) => (
                             <span key={v}
-                              className="bg-white text-slate-700 text-xs font-bold pl-3 pr-2 py-1.5 rounded-full border border-[#ebd7fa] flex items-center gap-1.5 shadow-sm">
+                              className="bg-white text-slate-700 text-xs font-semibold pl-3 pr-2 py-1.5 rounded-full border border-[#ebd7fa] flex items-center gap-1.5 shadow-sm">
                               {type.name.toLowerCase() === "color" && (
                                 <span className="h-2.5 w-2.5 rounded-full border border-slate-200 inline-block shrink-0"
                                   style={{ backgroundColor: v.toLowerCase().replace(/\s+/g, "") }} />
@@ -1075,17 +1151,17 @@ export default function AddNewProductPage() {
                               onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleAddOptionValue(type.name); } }}
                               className="bg-white border border-[#ebd7fa] rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-700 outline-none focus:ring-2 focus:ring-[#7a3dbf]/20 focus:border-[#7a3dbf] w-28 transition-all" />
                             <button type="button" onClick={() => handleAddOptionValue(type.name)}
-                              className="text-[10px] font-black text-[#7a3dbf] hover:underline">+ Add</button>
+                              className="text-[10px] font-semibold text-[#7a3dbf] hover:underline">+ Add</button>
                           </div>
                         </div>
 
                         {type.name.toLowerCase() === "color" && type.values.length > 0 && (
                           <div className="border-t border-slate-100 pt-3 space-y-2">
-                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Link Gallery Photos to Colors</span>
+                            <span className="text-[9px] font-semibold text-slate-400 uppercase tracking-widest block">Link Gallery Photos to Colors</span>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                               {type.values.map((colName) => (
                                 <div key={colName} className="flex items-center justify-between bg-white p-2.5 rounded-xl border border-slate-100 gap-2">
-                                  <span className="text-xs font-bold text-slate-600 flex items-center gap-1.5 shrink-0">
+                                  <span className="text-xs font-semibold text-slate-600 flex items-center gap-1.5 shrink-0">
                                     <span className="h-3 w-3 rounded-full border border-slate-200"
                                       style={{ backgroundColor: colName.toLowerCase().replace(/\s+/g, "") }} />
                                     {colName}
@@ -1112,13 +1188,13 @@ export default function AddNewProductPage() {
                 {variantCombinations.length > 0 && (
                   <div className="space-y-2.5">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-black text-slate-800">Variant Matrix</span>
-                      <span className="text-[9px] bg-[#faf6ff] text-[#7a3dbf] border border-[#ebd7fa] px-2 py-0.5 rounded-full font-bold">{variantCombinations.length} combinations</span>
+                      <span className="text-xs font-semibold text-slate-800">Variant Matrix</span>
+                      <span className="text-[9px] bg-[#faf6ff] text-[#7a3dbf] border border-[#ebd7fa] px-2 py-0.5 rounded-full font-semibold">{variantCombinations.length} combinations</span>
                     </div>
                     <div className="overflow-x-auto rounded-2xl border border-[#ebd7fa] shadow-inner">
                       <table className="w-full text-left border-collapse min-w-[700px]">
                         <thead>
-                          <tr className="bg-[#faf6ff] text-[9px] font-black text-slate-500 uppercase tracking-widest border-b border-[#ebd7fa]">
+                          <tr className="bg-[#faf6ff] text-[9px] font-semibold text-slate-500 uppercase tracking-widest border-b border-[#ebd7fa]">
                             <th className="py-3 px-4">Variant</th>
                             <th className="py-3 px-4 w-40">SKU</th>
                             <th className="py-3 px-4 w-32">Price (₦)</th>
@@ -1129,7 +1205,7 @@ export default function AddNewProductPage() {
                         <tbody className="divide-y divide-slate-50">
                           {variantCombinations.map((comb, index) => (
                             <tr key={index} className={index % 2 === 0 ? "bg-white" : "bg-[#faf6ff]/30"}>
-                              <td className="py-3 px-4 text-xs font-bold text-slate-800">
+                              <td className="py-3 px-4 text-xs font-semibold text-slate-800">
                                 {Object.entries(comb.options).map(([k, v]) => `${k}: ${v}`).join(" · ")}
                               </td>
                               <td className="py-2.5 px-4">
@@ -1187,8 +1263,8 @@ export default function AddNewProductPage() {
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="text-slate-900 text-sm font-black tracking-tight">Shipping & Logistics</h3>
-                    <span className="text-[9px] bg-[#5FD0C8] text-white px-2 py-0.5 rounded-full font-bold">05</span>
+                    <h3 className="text-slate-900 text-sm font-semibold tracking-tight">Shipping & Logistics</h3>
+                    <span className="text-[9px] bg-[#5FD0C8] text-white px-2 py-0.5 rounded-full font-semibold">05</span>
                   </div>
                   <p className="text-[10px] text-slate-400 font-medium">Weight, dimensions & handling</p>
                 </div>
@@ -1205,7 +1281,7 @@ export default function AddNewProductPage() {
                   { label: "Height (cm)", value: height, setter: setHeight },
                 ].map(({ label, value, setter, step }) => (
                   <div key={label} className="space-y-1.5">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">{label}</label>
+                    <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest block">{label}</label>
                     <input type="number" step={step || "1"} min={0}
                       value={value || ""} onChange={(e) => setter(Number(e.target.value))}
                       className={inputCls} />
@@ -1216,7 +1292,7 @@ export default function AddNewProductPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* Shipping class */}
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Shipping Class</label>
+                  <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest block">Shipping Class</label>
                   <select value={shippingClass} onChange={(e) => setShippingClass(e.target.value)}
                     className={inputCls}>
                     <option value="Standard">Standard Delivery (3–5 days)</option>
@@ -1228,7 +1304,7 @@ export default function AddNewProductPage() {
                 {/* Special handling */}
                 <div className="flex items-center justify-between border border-[#ebd7fa]/60 rounded-2xl px-4 py-3 bg-[#faf6ff]/40">
                   <div>
-                    <span className="text-sm font-bold text-slate-700 block">Fragile Handling</span>
+                    <span className="text-sm font-semibold text-slate-700 block">Fragile Handling</span>
                     <span className="text-[10px] text-slate-400 font-medium">Requires shock pads or crating.</span>
                   </div>
                   <button type="button" onClick={() => setSpecialHandling(!specialHandling)}
@@ -1255,13 +1331,13 @@ export default function AddNewProductPage() {
                 <div className="h-6 w-6 rounded-lg bg-[#7a3dbf] flex items-center justify-center">
                   <Eye size={12} className="text-white" />
                 </div>
-                <span className="text-xs font-black text-slate-800">Live Preview</span>
+                <span className="text-xs font-semibold text-slate-800">Live Preview</span>
               </div>
               <div className="flex items-center gap-0.5 bg-slate-100 p-0.5 rounded-lg">
                 {(["desktop", "mobile"] as const).map((mode) => (
                   <button key={mode} type="button" onClick={() => setPreviewMode(mode)}
                     className={cn(
-                      "px-2.5 py-1 rounded-md text-[9px] font-bold transition-all capitalize",
+                      "px-2.5 py-1 rounded-md text-[9px] font-semibold transition-all capitalize",
                       previewMode === mode ? "bg-white text-[#7a3dbf] shadow-sm" : "text-slate-500 hover:text-slate-700"
                     )}>
                     {mode}
@@ -1380,29 +1456,39 @@ function PreviewCard({
   return (
     <div className="w-full">
       <div className="relative aspect-[4/3] bg-slate-100 overflow-hidden">
-        <Image
-          src={uploadedImages[0]?.url || "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=300&auto=format"}
-          alt="preview" fill className="object-cover" sizes="300px" />
-        <span className="absolute top-2 left-2 bg-[#7a3dbf] text-white text-[8px] font-black px-2 py-0.5 rounded-full uppercase">
+        {uploadedImages[0]?.url ? (
+          <Image
+            src={uploadedImages[0].url}
+            alt="preview"
+            fill
+            className="object-cover"
+            sizes="300px"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center text-slate-300">
+            <Package size={40} />
+          </div>
+        )}
+        <span className="absolute top-2 left-2 bg-[#7a3dbf] text-white text-[8px] font-semibold px-2 py-0.5 rounded-full uppercase">
           {categoryPath[1] || "Product"}
         </span>
-        <span className="absolute top-2 right-2 bg-black/60 backdrop-blur-sm text-white text-[7px] font-bold px-2 py-0.5 rounded-full">
+        <span className="absolute top-2 right-2 bg-black/60 backdrop-blur-sm text-white text-[7px] font-semibold px-2 py-0.5 rounded-full">
           {condition}
         </span>
       </div>
       <div className="p-4 space-y-2.5">
         <div>
-          <span className="text-[8px] font-black text-[#5FD0C8] uppercase tracking-widest block">{brand || "BRAND"}</span>
-          <h4 className="text-slate-900 text-xs font-black leading-tight mt-0.5 line-clamp-2">
+          <span className="text-[8px] font-semibold text-[#5FD0C8] uppercase tracking-widest block">{brand || "BRAND"}</span>
+          <h4 className="text-slate-900 text-xs font-semibold leading-tight mt-0.5 line-clamp-2">
             {productName || "Product Title Placeholder"}
           </h4>
         </div>
         <div className="flex items-center gap-1">
           <div className="flex text-amber-400 text-[10px] leading-none">{"★".repeat(5)}</div>
-          <span className="text-[8px] text-slate-400 font-bold">(0)</span>
+          <span className="text-[8px] text-slate-400 font-semibold">(0)</span>
         </div>
         <div className="flex items-baseline gap-2">
-          <span className="text-base font-black text-slate-900">
+          <span className="text-base font-semibold text-slate-900">
             {currency.split(" ")[0]} {basePrice.toLocaleString()}
           </span>
           {comparePrice > basePrice && (
@@ -1415,16 +1501,16 @@ function PreviewCard({
           <div className="space-y-1.5 border-t border-slate-100 pt-2">
             {variantTypes.map((type) => (
               <div key={type.name} className="space-y-1">
-                <span className="text-[8px] font-bold text-slate-400 uppercase tracking-wide">{type.name}:</span>
+                <span className="text-[8px] font-semibold text-slate-400 uppercase tracking-wide">{type.name}:</span>
                 <div className="flex flex-wrap gap-1">
                   {type.values.slice(0, 3).map((val) => (
                     <span key={val}
-                      className="border border-slate-200 text-slate-600 text-[8px] font-bold px-2 py-0.5 rounded-md bg-white">
+                      className="border border-slate-200 text-slate-600 text-[8px] font-semibold px-2 py-0.5 rounded-md bg-white">
                       {val}
                     </span>
                   ))}
                   {type.values.length > 3 && (
-                    <span className="text-[8px] text-[#7a3dbf] font-bold self-center">+{type.values.length - 3}</span>
+                    <span className="text-[8px] text-[#7a3dbf] font-semibold self-center">+{type.values.length - 3}</span>
                   )}
                 </div>
               </div>
@@ -1435,7 +1521,7 @@ function PreviewCard({
           ⚡ {shippingClass} · Fragile: {specialHandling ? "Yes" : "No"}
         </div>
         <button type="button"
-          className="w-full bg-[#7a3dbf] text-white text-[9px] font-black py-2 rounded-xl shadow-sm flex items-center justify-center gap-1 pointer-events-none">
+          className="w-full bg-[#7a3dbf] text-white text-[9px] font-semibold py-2 rounded-xl shadow-sm flex items-center justify-center gap-1 pointer-events-none">
           <ShoppingCart size={10} />
           Add to Cart
         </button>

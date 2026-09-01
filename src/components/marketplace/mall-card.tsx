@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import type { Mall } from "@/mocks/stores-data";
+import type { Mall } from "@/types/catalog";
 import { TargetIcon } from "@/components/marketplace/target-icon";
 
 interface MallCardProps {

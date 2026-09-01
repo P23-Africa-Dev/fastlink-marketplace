@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Image from "next/image";
 import {
   Search,
@@ -33,124 +33,22 @@ import {
 } from "recharts";
 
 import { cn } from "@/lib/utils";
+import { useDashboardStats, useSellerCustomers, useSellerCustomer } from "@/hooks/use-dashboard";
+import { useCampaigns, useCreateCampaign } from "@/hooks/use-inbox";
+import { apiErrorMessage } from "@/lib/api";
+import { formatOrderDate } from "@/lib/order-map";
+import type { SellerCustomer } from "@/types/seller";
 
-const ACQUISITION_DATA = [
-  { month: "Jan", count: 45 },
-  { month: "Feb", count: 65 },
-  { month: "Mar", count: 80 },
-  { month: "Apr", count: 120 },
-  { month: "May", count: 142 }
-];
+function percentChange(current: number, previous: number): number {
+  if (previous === 0) return current > 0 ? 100 : 0;
+  return ((current - previous) / previous) * 100;
+}
 
-const SEGMENTS_DATA = [
-  { name: "Active", value: 65, color: "#7a3dbf" },
-  { name: "New", value: 15, color: "#10b981" },
-  { name: "Dormant", value: 12, color: "#f59e0b" },
-  { name: "VIP", value: 8, color: "#3b82f6" }
-];
-
-const INITIAL_CUSTOMERS = [
-  {
-    id: "#C-2001",
-    name: "David Miller",
-    email: "david.m@example.com",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=David",
-    orders: 15,
-    spent: 780000,
-    status: "Active",
-    joinDate: "Jan 12, 2024",
-    tier: "VIP",
-    phone: "+234 809 123 4567",
-    address: "Lagos, Nigeria",
-    notes: "High spending client. Prefers premium accessories and electronics.",
-    preferredCategory: "Electronics"
-  },
-  {
-    id: "#C-2002",
-    name: "Sophia Martinez",
-    email: "sophia.m@example.com",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Sophia",
-    orders: 12,
-    spent: 620000,
-    status: "Active",
-    joinDate: "Feb 05, 2024",
-    tier: "Gold",
-    phone: "+234 812 345 6789",
-    address: "Abuja, Nigeria",
-    notes: "Frequently orders watches. Responds well to holiday promotions.",
-    preferredCategory: "Watches"
-  },
-  {
-    id: "#C-2003",
-    name: "James Wilson",
-    email: "james.w@example.com",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=James",
-    orders: 8,
-    spent: 290000,
-    status: "Inactive",
-    joinDate: "Feb 28, 2024",
-    tier: "Silver",
-    phone: "+234 701 987 6543",
-    address: "Port Harcourt, Nigeria",
-    notes: "Inactive for the last 30 days. Needs re-engagement discount.",
-    preferredCategory: "Footwear"
-  },
-  {
-    id: "#C-2004",
-    name: "Olivia Thompson",
-    email: "olivia.t@example.com",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Olivia",
-    orders: 22,
-    spent: 1450000,
-    status: "Active",
-    joinDate: "Mar 10, 2024",
-    tier: "VIP",
-    phone: "+234 905 444 3322",
-    address: "Ibadan, Nigeria",
-    notes: "Top VIP shopper. Orders luxury smart TVs and screens.",
-    preferredCategory: "Monitors"
-  },
-  {
-    id: "#C-2005",
-    name: "Liam Johnson",
-    email: "liam.j@example.com",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Liam",
-    orders: 4,
-    spent: 120000,
-    status: "Active",
-    joinDate: "Mar 22, 2024",
-    tier: "Bronze",
-    phone: "+234 803 222 1100",
-    address: "Kano, Nigeria",
-    notes: "New account. Primarily buys essentials.",
-    preferredCategory: "Essentials"
-  }
-];
-
-const INITIAL_CAMPAIGNS = [
-  {
-    id: "camp-1",
-    title: "VIP Weekend Spotlight",
-    description: "Enjoy exclusive early access to the Highlander Men's Chronograph watch collection and 15% off base prices.",
-    ctaText: "Shop VIP Collection",
-    targetTier: "VIP",
-    bgColor: "#7a3dbf",
-    status: "Active",
-    clicks: 128,
-    conversions: 32
-  },
-  {
-    id: "camp-2",
-    title: "Welcome Aboard Promo",
-    description: "Get ₦5,000 flat discount on your first order of electronics or devices of ₦50,000 and above.",
-    ctaText: "Claim Welcome Coupon",
-    targetTier: "Bronze",
-    bgColor: "#10b981",
-    status: "Active",
-    clicks: 94,
-    conversions: 18
-  }
-];
+function formatChange(value: number): string {
+  if (value === 0) return "0%";
+  const sign = value > 0 ? "+" : "";
+  return `${sign}${value.toFixed(1)}%`;
+}
 
 const TIER_COLORS: Record<string, string> = {
   VIP: "text-blue-600 bg-blue-50 border-blue-200",
@@ -168,16 +66,71 @@ const BG_COLORS = [
   { name: "Dark Slate", hex: "#1e293b" }
 ];
 
+function toDirectoryCustomer(row: SellerCustomer) {
+  return {
+    id: `#C-${row.id}`,
+    rawId: row.id,
+    name: row.name,
+    email: row.email,
+    avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(row.name)}`,
+    orders: row.orders,
+    spent: row.spent,
+    status: row.status,
+    joinDate: formatOrderDate(row.joinDate),
+    tier: row.tier,
+    phone: row.phone || "—",
+    address: row.address || "—",
+    notes: "Customer from store orders.",
+    preferredCategory: row.preferredCategory || "—",
+  };
+}
+
 export default function CustomersPage() {
-  const [customers, setCustomers] = useState(INITIAL_CUSTOMERS);
+  const { data: statsRes } = useDashboardStats("30d");
+  const stats = statsRes?.data;
+  const { data: customerPage } = useSellerCustomers();
+  const rawCustomers = customerPage?.data ?? [];
+  const customers = rawCustomers.map(toDirectoryCustomer);
+  const { data: apiCampaigns = [] } = useCampaigns();
+  const createCampaign = useCreateCampaign();
+
+  const acquisitionData = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const c of rawCustomers) {
+      const month = new Date(c.joinDate).toLocaleString("en", { month: "short" });
+      counts[month] = (counts[month] ?? 0) + 1;
+    }
+    return Object.entries(counts).map(([month, count]) => ({ month, count }));
+  }, [rawCustomers]);
+
+  const segmentsData = useMemo(() => {
+    const tiers = [
+      { name: "VIP", color: "#7a3dbf" },
+      { name: "Gold", color: "#10b981" },
+      { name: "Silver", color: "#f59e0b" },
+      { name: "Bronze", color: "#3b82f6" },
+    ];
+    const total = rawCustomers.length;
+    return tiers.map((tier) => {
+      const count = rawCustomers.filter((c) => c.tier === tier.name).length;
+      return {
+        name: tier.name,
+        count,
+        value: total > 0 ? Math.round((count / total) * 100) : 0,
+        color: tier.color,
+      };
+    });
+  }, [rawCustomers]);
+
   const [activeTab, setActiveTab] = useState<"directory" | "campaigns">("directory");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [tierFilter, setTierFilter] = useState("All");
   
   // Modals / Detail drawer states
-  const [selectedCustomer, setSelectedCustomer] = useState<typeof INITIAL_CUSTOMERS[0] | null>(null);
-  const [drawerCustomer, setDrawerCustomer] = useState<typeof INITIAL_CUSTOMERS[0] | null>(null);
+  const [selectedCustomer, setSelectedCustomer] = useState<ReturnType<typeof toDirectoryCustomer> | null>(null);
+  const [drawerCustomer, setDrawerCustomer] = useState<ReturnType<typeof toDirectoryCustomer> | null>(null);
+  const { data: drawerDetail } = useSellerCustomer(drawerCustomer?.rawId);
   const [emailSubject, setEmailSubject] = useState("");
   const [emailBody, setEmailBody] = useState("");
   const [toastMessage, setToastMessage] = useState("");
@@ -190,7 +143,6 @@ export default function CustomersPage() {
   const [newTier, setNewTier] = useState("Bronze");
 
   // Campaigns states
-  const [campaigns, setCampaigns] = useState(INITIAL_CAMPAIGNS);
   const [campaignHeadline, setCampaignHeadline] = useState("");
   const [campaignDescription, setCampaignDescription] = useState("");
   const [campaignCta, setCampaignCta] = useState("Shop Now");
@@ -213,22 +165,18 @@ export default function CustomersPage() {
     return matchesSearch && matchesStatus && matchesTier;
   });
 
-  const handleDelete = (id: string) => {
-    setCustomers((prev) => prev.filter((c) => c.id !== id));
-    if (drawerCustomer?.id === id) {
-      setDrawerCustomer(null);
-    }
+  const handleDelete = () => {
+    setToastMessage("Customers come from orders and cannot be deleted.");
+    setTimeout(() => setToastMessage(""), 4000);
   };
 
   const handleSendEmail = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedCustomer) return;
-    
-    // Trigger mock success toast
-    setToastMessage(`Email successfully sent to ${selectedCustomer.name}!`);
+
+    setToastMessage("Customer email sending is not available yet.");
     setTimeout(() => setToastMessage(""), 4000);
 
-    // Reset composer
     setSelectedCustomer(null);
     setEmailSubject("");
     setEmailBody("");
@@ -236,88 +184,74 @@ export default function CustomersPage() {
 
   const handleAddCustomer = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newName || !newEmail) return;
-
-    const newCust = {
-      id: `#C-${2000 + customers.length + 1}`,
-      name: newName,
-      email: newEmail,
-      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${newName}`,
-      orders: 0,
-      spent: 0,
-      status: "Active",
-      joinDate: new Date().toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" }),
-      tier: newTier,
-      phone: "+234 800 000 0000",
-      address: "Lekki, Lagos",
-      notes: "Newly onboarded shopper.",
-      preferredCategory: "General"
-    };
-
-    setCustomers((prev) => [newCust, ...prev]);
     setIsAdding(false);
-    setNewName("");
-    setNewEmail("");
-    setNewTier("Bronze");
+    setToastMessage("Customers appear automatically after they place an order.");
+    setTimeout(() => setToastMessage(""), 4000);
   };
 
-  // Launch Campaign Creative
-  const handleLaunchCampaign = (e: React.FormEvent) => {
+  const handleLaunchCampaign = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!campaignHeadline || !campaignDescription) return;
 
-    const newCamp = {
-      id: `camp-${campaigns.length + 1}`,
-      title: campaignHeadline,
-      description: campaignDescription,
-      ctaText: campaignCta,
-      targetTier: campaignTarget,
-      bgColor: campaignBg,
-      status: "Active",
-      clicks: 0,
-      conversions: 0
-    };
-
-    setCampaigns((prev) => [newCamp, ...prev]);
-    setCampaignHeadline("");
-    setCampaignDescription("");
-    setCampaignCta("Shop Now");
-    setCampaignBg("#7a3dbf");
-    setCampaignTarget("All");
-
-    setToastMessage("Loyalty Campaign Creative Launched!");
-    setTimeout(() => setToastMessage(""), 4000);
+    try {
+      await createCampaign.mutateAsync({
+        name: campaignHeadline,
+        channel: campaignTarget === "All" ? "Email" : campaignTarget,
+        spend: 0,
+        conversions: 0,
+      });
+      setCampaignHeadline("");
+      setCampaignDescription("");
+      setCampaignCta("Shop Now");
+      setCampaignBg("#7a3dbf");
+      setCampaignTarget("All");
+      setToastMessage("Loyalty Campaign Creative Launched!");
+      setTimeout(() => setToastMessage(""), 4000);
+    } catch (error) {
+      setToastMessage(apiErrorMessage(error, "Could not launch campaign."));
+      setTimeout(() => setToastMessage(""), 4000);
+    }
   };
 
   const handleSaveNotes = () => {
     if (!drawerCustomer) return;
-    setCustomers(prev =>
-      prev.map(c => c.id === drawerCustomer.id ? { ...c, notes: customerNotes } : c)
-    );
-    setDrawerCustomer(prev => prev ? { ...prev, notes: customerNotes } : null);
+    setDrawerCustomer((prev) => (prev ? { ...prev, notes: customerNotes } : null));
     setToastMessage("Customer internal notes updated.");
     setTimeout(() => setToastMessage(""), 3000);
   };
 
-  const handleOpenDrawer = (customer: typeof INITIAL_CUSTOMERS[0]) => {
+  const handleOpenDrawer = (customer: ReturnType<typeof toDirectoryCustomer>) => {
     setDrawerCustomer(customer);
     setCustomerNotes(customer.notes);
   };
 
-  const handleToggleCampaign = (id: string) => {
-    setCampaigns(prev =>
-      prev.map(c => c.id === id ? { ...c, status: c.status === "Active" ? "Paused" : "Active" } : c)
-    );
+  const handleToggleCampaign = () => {
+    setToastMessage("Campaign status updates are managed from Marketing.");
+    setTimeout(() => setToastMessage(""), 4000);
   };
 
-  const handleDeleteCampaign = (id: string) => {
-    setCampaigns(prev => prev.filter(c => c.id !== id));
+  const handleDeleteCampaign = () => {
+    setToastMessage("Delete campaigns from the Marketing page.");
+    setTimeout(() => setToastMessage(""), 4000);
   };
 
-  // Metrics calculations
+  // Metrics calculations (from API customer list + dashboard revenue trend)
   const totalSpend = customers.reduce((sum, c) => sum + c.spent, 0);
   const activeCount = customers.filter((c) => c.status === "Active").length;
   const vipCount = customers.filter((c) => c.tier === "VIP").length;
+
+  const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
+  const nowMs = Date.now();
+  const newCustomersLast30 = rawCustomers.filter((c) => {
+    const t = new Date(c.joinDate).getTime();
+    return !Number.isNaN(t) && nowMs - t <= thirtyDaysMs;
+  }).length;
+  const newCustomersPrev30 = rawCustomers.filter((c) => {
+    const t = new Date(c.joinDate).getTime();
+    return !Number.isNaN(t) && nowMs - t > thirtyDaysMs && nowMs - t <= 2 * thirtyDaysMs;
+  }).length;
+  const customersChange = percentChange(newCustomersLast30, newCustomersPrev30);
+  const revenueChange = stats?.revenueChange ?? 0;
 
   return (
     <div className="space-y-8 max-w-[1600px] mx-auto font-sans relative">
@@ -356,8 +290,15 @@ export default function CustomersPage() {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-[10px] sm:text-xs font-bold text-[#7a3dbf] uppercase tracking-wider truncate">Total Customers</p>
-            <p className="text-xl sm:text-2xl font-extrabold text-slate-800 mt-0.5">{customers.length + 1243}</p>
-            <span className="text-[10px] font-bold text-green-500 mt-0.5 block">+ 18.6% vs last month</span>
+            <p className="text-xl sm:text-2xl font-extrabold text-slate-800 mt-0.5">{customers.length}</p>
+            <span
+              className={cn(
+                "text-[10px] font-bold mt-0.5 block",
+                customersChange >= 0 ? "text-green-500" : "text-rose-500",
+              )}
+            >
+              {formatChange(customersChange)} vs prior 30 days
+            </span>
           </div>
         </div>
 
@@ -368,8 +309,8 @@ export default function CustomersPage() {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-[10px] sm:text-xs font-bold text-[#7a3dbf] uppercase tracking-wider truncate">Active Customers</p>
-            <p className="text-xl sm:text-2xl font-extrabold text-slate-800 mt-0.5">{activeCount + 951}</p>
-            <span className="text-[10px] font-bold text-green-500 mt-0.5 block">+ 12.3% vs last month</span>
+            <p className="text-xl sm:text-2xl font-extrabold text-slate-800 mt-0.5">{activeCount}</p>
+            <span className="text-[10px] font-bold text-slate-400 mt-0.5 block">Ordered in last 30 days</span>
           </div>
         </div>
 
@@ -380,20 +321,27 @@ export default function CustomersPage() {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-[10px] sm:text-xs font-bold text-[#7a3dbf] uppercase tracking-wider truncate">VIP Customers</p>
-            <p className="text-xl sm:text-2xl font-extrabold text-slate-800 mt-0.5">{vipCount + 82}</p>
-            <span className="text-[10px] font-bold text-green-500 mt-0.5 block">+ 5.7% vs last month</span>
+            <p className="text-xl sm:text-2xl font-extrabold text-slate-800 mt-0.5">{vipCount}</p>
+            <span className="text-[10px] font-bold text-slate-400 mt-0.5 block">₦500k+ lifetime spend</span>
           </div>
         </div>
 
         {/* Total Value Contributed */}
         <div className="bg-white rounded-[1.5rem] p-4 sm:p-5 shadow-sm border border-[#ebd7fa] flex items-center gap-3 sm:gap-4 hover:shadow-md transition-all duration-200">
           <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-[#fff3e0] flex items-center justify-center shrink-0">
-            <Users className="text-[#e65100]" size={20} />
+            <TrendingUp className="text-[#e65100]" size={20} />
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-[10px] sm:text-xs font-bold text-[#7a3dbf] uppercase tracking-wider truncate">Value Contributed</p>
-            <p className="text-xl sm:text-2xl font-extrabold text-slate-800 mt-0.5">₦{(totalSpend + 3260000).toLocaleString()}</p>
-            <span className="text-[10px] font-bold text-green-500 mt-0.5 block">+ 24.8% vs last month</span>
+            <p className="text-xl sm:text-2xl font-extrabold text-slate-800 mt-0.5">₦{Math.round(totalSpend).toLocaleString()}</p>
+            <span
+              className={cn(
+                "text-[10px] font-bold mt-0.5 block",
+                revenueChange >= 0 ? "text-green-500" : "text-rose-500",
+              )}
+            >
+              {formatChange(revenueChange)} store revenue (30d)
+            </span>
           </div>
         </div>
 
@@ -435,13 +383,16 @@ export default function CustomersPage() {
             {/* Left Card: Customer Acquisition (BarChart) */}
             <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-[#ebd7fa] lg:col-span-2 flex flex-col justify-between">
               <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
-                <h2 className="text-slate-800 text-lg font-bold">Acquisition Traffic</h2>
-                <span className="text-[#7a3dbf] text-xs font-bold bg-[#f3eafb] px-3 py-1 rounded-lg">Monthly Cohort</span>
+                <h2 className="text-slate-800 text-lg font-bold">New Customers by Month</h2>
+                <span className="text-[#7a3dbf] text-xs font-bold bg-[#f3eafb] px-3 py-1 rounded-lg">From orders</span>
               </div>
 
               <div className="w-full h-[200px] select-none mt-2">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={ACQUISITION_DATA} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
+                  <BarChart
+                    data={acquisitionData.length ? acquisitionData : [{ month: "—", count: 0 }]}
+                    margin={{ top: 10, right: 10, left: -25, bottom: 0 }}
+                  >
                     <CartesianGrid strokeDasharray="3 3" stroke="#f1eafc" vertical={false} />
                     <XAxis
                       dataKey="month"
@@ -489,7 +440,11 @@ export default function CustomersPage() {
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
-                        data={SEGMENTS_DATA}
+                        data={
+                          rawCustomers.length > 0
+                            ? segmentsData
+                            : [{ name: "No customers", value: 1, color: "#e2e8f0", count: 0 }]
+                        }
                         cx="50%"
                         cy="50%"
                         innerRadius={36}
@@ -497,23 +452,34 @@ export default function CustomersPage() {
                         paddingAngle={3}
                         dataKey="value"
                       >
-                        {SEGMENTS_DATA.map((entry, index) => (
+                        {(rawCustomers.length > 0
+                          ? segmentsData
+                          : [{ name: "No customers", value: 1, color: "#e2e8f0", count: 0 }]
+                        ).map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={entry.color} />
                         ))}
                       </Pie>
                     </PieChart>
                   </ResponsiveContainer>
+                  {rawCustomers.length === 0 && (
+                    <div className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-slate-400">
+                      No data
+                    </div>
+                  )}
                 </div>
 
                 {/* Solid Color Legend List */}
                 <div className="flex-1 w-full space-y-2">
-                  {SEGMENTS_DATA.map((item) => (
+                  {segmentsData.map((item) => (
                     <div key={item.name} className="flex items-center justify-between text-xs font-semibold text-slate-700">
                       <div className="flex items-center gap-2">
                         <span className="h-3 w-3 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
                         <span>{item.name}</span>
                       </div>
-                      <span>{item.value}%</span>
+                      <span>
+                        {item.count}
+                        {rawCustomers.length > 0 ? ` · ${item.value}%` : ""}
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -675,7 +641,7 @@ export default function CustomersPage() {
                               <Mail size={13} />
                             </button>
                             <button
-                              onClick={() => handleDelete(c.id)}
+                              onClick={() => handleDelete()}
                               className="p-2 border border-slate-200 hover:border-red-500 rounded-lg text-slate-400 hover:text-red-500 transition-all bg-white shadow-sm active:scale-90"
                               title="Delete Customer"
                             >
@@ -872,71 +838,66 @@ export default function CustomersPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {campaigns.map((camp) => (
+              {apiCampaigns.map((camp, index) => (
                 <div
                   key={camp.id}
                   className="bg-[#faf6ff] border border-[#ebd7fa] rounded-2xl p-5 flex flex-col justify-between gap-6"
                 >
                   <div className="flex items-start justify-between gap-4">
-                    {/* Compact Creative Preview Thumbnail */}
                     <div
                       className="h-20 w-24 rounded-xl shrink-0 flex flex-col justify-center items-center p-2 text-center text-white relative overflow-hidden"
-                      style={{ backgroundColor: camp.bgColor }}
+                      style={{ backgroundColor: BG_COLORS[index % BG_COLORS.length].hex }}
                     >
                       <Sparkles size={16} className="text-white/80 mb-1" />
                       <span className="text-[8px] font-black tracking-wider leading-none uppercase max-w-full truncate px-1">
-                        {camp.title}
+                        {camp.name}
                       </span>
                     </div>
 
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <h4 className="text-slate-800 font-bold text-sm truncate">{camp.title}</h4>
+                        <h4 className="text-slate-800 font-bold text-sm truncate">{camp.name}</h4>
                         <span className="text-[10px] font-semibold bg-slate-100 text-slate-500 border border-slate-200 px-2 py-0.5 rounded">
-                          {camp.targetTier}
+                          {camp.channel}
                         </span>
                       </div>
                       <p className="text-slate-400 text-xs font-medium mt-1 line-clamp-2 leading-relaxed">
-                        {camp.description}
+                        {camp.displayStatus} · {camp.platform}
                       </p>
                     </div>
                   </div>
 
-                  {/* Campaign Metrics & Actions */}
                   <div className="flex items-center justify-between border-t border-slate-100 pt-4 mt-2">
                     <div className="flex gap-4">
                       <div>
-                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Clicks</span>
-                        <span className="text-xs font-extrabold text-slate-800">{camp.clicks}</span>
+                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Spend</span>
+                        <span className="text-xs font-extrabold text-slate-800">₦{camp.spend.toLocaleString()}</span>
                       </div>
                       <div className="border-l border-slate-200 pl-4">
                         <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Conversions</span>
                         <span className="text-xs font-extrabold text-slate-800">{camp.conversions}</span>
                       </div>
                       <div className="border-l border-slate-200 pl-4">
-                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">CR</span>
-                        <span className="text-xs font-extrabold text-[#7a3dbf]">
-                          {camp.clicks > 0 ? `${((camp.conversions / camp.clicks) * 100).toFixed(1)}%` : "0%"}
-                        </span>
+                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">ROI</span>
+                        <span className="text-xs font-extrabold text-[#7a3dbf]">{camp.roi}%</span>
                       </div>
                     </div>
 
                     <div className="flex items-center gap-3">
-                      {/* Active Status Toggle */}
                       <button
-                        onClick={() => handleToggleCampaign(camp.id)}
+                        onClick={() => handleToggleCampaign()}
                         className={cn(
                           "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border",
-                          camp.status === "Active"
+                          camp.status === "active" || camp.displayStatus === "Active"
                             ? "bg-green-50 text-green-700 border-green-200"
                             : "bg-slate-100 text-slate-400 border-slate-200"
                         )}
                       >
-                        {camp.status}
+                        {camp.displayStatus || camp.status}
                       </button>
 
                       <button
-                        onClick={() => handleDeleteCampaign(camp.id)}
+                        onClick={() => handleDeleteCampaign()}
                         className="p-1.5 border border-slate-200 hover:border-red-500 text-slate-400 hover:text-red-500 transition-colors bg-white rounded-lg active:scale-90"
                         title="Delete Campaign"
                       >
@@ -1075,29 +1036,28 @@ export default function CustomersPage() {
                   </button>
                 </div>
 
-                {/* Mock Purchase History List */}
                 <div className="space-y-3">
                   <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
                     <TrendingUp size={14} />
                     <span>Recent Sales Logs</span>
                   </h4>
-                  
+
                   <div className="divide-y divide-slate-100">
-                    <div className="py-2.5 flex justify-between text-xs font-semibold items-center">
-                      <div>
-                        <p className="text-slate-800 font-bold">₦120,000 (1 Item)</p>
-                        <p className="text-slate-400 text-[10px] mt-0.5">Order #FL-ORD-3304 • Completed</p>
-                      </div>
-                      <span className="text-slate-500 font-medium">May 14, 2026</span>
-                    </div>
-                    {drawerCustomer.orders > 1 && (
-                      <div className="py-2.5 flex justify-between text-xs font-semibold items-center">
+                    {(drawerDetail?.orders ?? []).slice(0, 5).map((order) => (
+                      <div key={order.id} className="py-2.5 flex justify-between text-xs font-semibold items-center">
                         <div>
-                          <p className="text-slate-800 font-bold">₦185,000 (2 Items)</p>
-                          <p className="text-slate-400 text-[10px] mt-0.5">Order #FL-ORD-2911 • Completed</p>
+                          <p className="text-slate-800 font-bold">
+                            ₦{order.total.toLocaleString()} ({order.items?.length ?? 0} items)
+                          </p>
+                          <p className="text-slate-400 text-[10px] mt-0.5">
+                            Order #{order.reference} · {order.status}
+                          </p>
                         </div>
-                        <span className="text-slate-500 font-medium">Apr 28, 2026</span>
+                        <span className="text-slate-500 font-medium">{formatOrderDate(order.createdAt)}</span>
                       </div>
+                    ))}
+                    {(drawerDetail?.orders ?? []).length === 0 && (
+                      <p className="text-xs text-slate-400 py-2">No orders yet for this customer.</p>
                     )}
                   </div>
                 </div>
@@ -1119,7 +1079,7 @@ export default function CustomersPage() {
                 <button
                   onClick={() => {
                     if (confirm(`Delete customer account ${drawerCustomer.name}?`)) {
-                      handleDelete(drawerCustomer.id);
+                      handleDelete();
                     }
                   }}
                   className="px-4 py-2.5 bg-red-50 hover:bg-red-100 border border-red-200 text-red-600 font-bold text-xs rounded-xl transition-all flex items-center justify-center active:scale-95"

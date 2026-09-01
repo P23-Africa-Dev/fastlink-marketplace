@@ -7,11 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, RotateCcw, Search, Store as StoreIcon } from "lucide-react";
 import { CategoryTabs } from "@/components/marketplace/category-tabs";
 import { StoreCard } from "@/components/marketplace/store-card";
-import {
-  getCategoriesForMall,
-  getMallBySlug,
-  getStoresByMallId,
-} from "@/lib/marketplace";
+import { useCategories, useMall, useMallStores } from "@/hooks/use-catalog";
 import { DynamicHero } from "@/components/marketplace/dynamic-hero";
 
 interface MallStoresPageProps {
@@ -21,33 +17,36 @@ interface MallStoresPageProps {
 export default function MallStoresPage({ params }: MallStoresPageProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const mall = getMallBySlug(params.slug);
+  const { data: mallRes, isLoading: mallLoading } = useMall(params.slug);
+  const mall = mallRes?.data;
   const categoryFromUrl = searchParams.get("category") ?? "all";
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState(categoryFromUrl);
-
-  const categories = mall ? getCategoriesForMall(mall.id) : [];
+  const { data: categoriesRes } = useCategories();
+  const { data: storesRes } = useMallStores(params.slug, "all");
+  const categories = categoriesRes?.data ?? [];
+  const allStores = storesRes?.data ?? [];
 
   useEffect(() => {
     setActiveCategory(categoryFromUrl);
   }, [categoryFromUrl]);
 
   const categoryTabs = useMemo(() => {
-    if (!mall) return [];
-    const allStores = getStoresByMallId(mall.id);
     return [
       { slug: "all", label: "All", count: allStores.length },
       ...categories.map((cat) => ({
         slug: cat.slug,
         label: cat.name,
-        count: getStoresByMallId(mall.id, cat.slug).length,
+        count: allStores.filter((store) => store.categorySlug === cat.slug).length,
       })),
     ];
-  }, [mall, categories]);
+  }, [allStores, categories]);
 
   const filteredStores = useMemo(() => {
-    if (!mall) return [];
-    const stores = getStoresByMallId(mall.id, activeCategory);
+    const stores =
+      activeCategory === "all"
+        ? allStores
+        : allStores.filter((store) => store.categorySlug === activeCategory);
     const q = searchQuery.toLowerCase().trim();
     if (!q) return stores;
     return stores.filter(
@@ -56,7 +55,7 @@ export default function MallStoresPage({ params }: MallStoresPageProps) {
         store.category.toLowerCase().includes(q) ||
         store.location.toLowerCase().includes(q)
     );
-  }, [mall, activeCategory, searchQuery]);
+  }, [allStores, activeCategory, searchQuery]);
 
   const handleCategoryChange = (slug: string) => {
     setActiveCategory(slug);
@@ -66,6 +65,14 @@ export default function MallStoresPage({ params }: MallStoresPageProps) {
         : `/malls/${params.slug}?category=${encodeURIComponent(slug)}`;
     router.replace(url, { scroll: false });
   };
+
+  if (mallLoading) {
+    return (
+      <div className="bg-[#EADBF8] min-h-screen flex items-center justify-center">
+        <p className="text-[#6D349F] font-bold font-montserrat">Loading stores...</p>
+      </div>
+    );
+  }
 
   if (!mall) {
     return (

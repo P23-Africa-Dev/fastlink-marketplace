@@ -1,12 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import axios from "axios";
 import Link from "next/link";
 import Image from "next/image";
-import { Check, ChevronRight, Lock, ArrowLeft, ShieldCheck } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Check, ChevronRight, Lock, ArrowLeft, ShieldCheck, Loader2 } from "lucide-react";
 
 import { useCartStore } from "@/store/cart-store";
+import { useAuthStore } from "@/store/auth-store";
 import { formatPrice, cn } from "@/lib/utils";
+import { COUNTRIES, DEFAULT_COUNTRY } from "@/lib/countries";
+import { apiErrorMessage, checkoutApi } from "@/lib/api";
+import { useMe } from "@/hooks/use-auth";
+import { useCheckout, useCreateAddress, useCheckoutQuote, useInitializeCheckout } from "@/hooks/use-orders";
+import { useCartSync } from "@/hooks/use-growth";
+import type { ApiOrder, CheckoutQuote } from "@/types/order";
 
 type Step = "contact" | "shipping" | "payment" | "review";
 
@@ -18,22 +27,83 @@ const STEPS: { id: Step; label: string }[] = [
 ];
 
 export default function CheckoutPage() {
+  const router = useRouter();
+  const token = useAuthStore((s) => s.token);
+  const { data: me } = useMe();
+  const createAddress = useCreateAddress();
+  const checkout = useCheckout();
+  const checkoutQuote = useCheckoutQuote();
+  const initializeCheckout = useInitializeCheckout();
+
   const [currentStep, setCurrentStep] = useState<Step>("contact");
   const [orderPlaced, setOrderPlaced] = useState(false);
-  const { items, subtotal, shipping, tax, total, clearCart } = useCartStore();
+  const [orderRef, setOrderRef] = useState("");
+  const [placedOrders, setPlacedOrders] = useState<ApiOrder[]>([]);
+  const [trackingNumber, setTrackingNumber] = useState("");
+  const [submitError, setSubmitError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [pendingGroupId, setPendingGroupId] = useState<string | null>(null);
+  const [shippingAddressId, setShippingAddressId] = useState<number | null>(null);
+  const [quote, setQuote] = useState<CheckoutQuote | null>(null);
+  const [usePoints, setUsePoints] = useState(false);
+  const { items, subtotal, shipping, tax, total, clearCart, couponCode, discount } = useCartStore();
+  useCartSync();
+
+  const storeGroups = useMemo(() => {
+    const map = new Map<string, { storeName: string; items: typeof items }>();
+    for (const item of items) {
+      const storeId = item.product.store?.id ?? item.product.seller?.id ?? "unknown";
+      const storeName = item.product.store?.name ?? item.product.seller?.name ?? "Seller";
+      const existing = map.get(storeId);
+      if (existing) existing.items.push(item);
+      else map.set(storeId, { storeName, items: [item] });
+    }
+    return Array.from(map.entries()).map(([storeId, group]) => ({ storeId, ...group }));
+  }, [items]);
+
+  const displaySubtotal = quote?.subtotal ?? subtotal;
+  const displayShipping = quote?.shipping ?? shipping;
+  const displayTax = quote?.tax ?? tax;
+  const displayDiscount = quote?.discount ?? discount;
+  const displayPromo = quote?.promoCode ?? (displayDiscount > 0 ? couponCode : "");
+  const displayLoyalty = quote?.loyaltyDiscount ?? 0;
+  const displayTotal = quote?.total ?? total;
+  const availablePoints = quote?.availablePoints ?? me?.loyaltyPoints ?? 0;
 
   const [form, setForm] = useState({
     email: "",
     name: "",
+    phone: "",
     street: "",
     city: "",
     state: "",
     postalCode: "",
-    country: "Nigeria",
+    country: DEFAULT_COUNTRY,
     cardNumber: "",
     cardExpiry: "",
     cardCvc: "",
   });
+
+  useEffect(() => {
+    if (!token) {
+      router.replace("/login?next=/checkout");
+    }
+  }, [token, router]);
+
+  useEffect(() => {
+    const stored = sessionStorage.getItem("fastlink_checkout_group");
+    if (stored) setPendingGroupId(stored);
+  }, []);
+
+  useEffect(() => {
+    if (!me) return;
+    setForm((prev) => ({
+      ...prev,
+      email: prev.email || me.email,
+      name: prev.name || me.name,
+      phone: prev.phone || me.phone || "",
+    }));
+  }, [me]);
 
   function update(field: string, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -44,12 +114,129 @@ export default function CheckoutPage() {
     if (idx < STEPS.length - 1) setCurrentStep(STEPS[idx + 1].id);
   }
 
-  function placeOrder() {
-    clearCart();
-    setOrderPlaced(true);
+  async function ensureAddressAndQuote() {
+    let addressId = shippingAddressId;
+    if (!addressId) {
+      const address = await createAddress.mutateAsync({
+        label: "Shipping",
+        street: form.street,
+        city: form.city,
+        state: form.state,
+        postalCode: form.postalCode,
+        country: form.country,
+        phone: form.phone,
+        isDefault: true,
+      });
+      addressId = Number(address.data.id);
+      setShippingAddressId(addressId);
+    }
+
+    const quoted = await checkoutQuote.mutateAsync({
+      address_id: addressId,
+      coupon_code: couponCode || undefined,
+      redeem_points: usePoints ? 999999 : 0,
+      items: items.map((item) => ({
+        product_id: item.productId,
+        quantity: item.quantity,
+        variants: item.selectedVariants,
+      })),
+    });
+    setQuote(quoted);
+    return addressId;
+  }
+
+  async function continueFromShipping() {
+    setSubmitError("");
+    try {
+      await ensureAddressAndQuote();
+      setCurrentStep("payment");
+    } catch (error) {
+      setSubmitError(apiErrorMessage(error, "Could not calculate delivery for your address."));
+    }
+  }
+
+  async function placeOrder() {
+    setSubmitError("");
+    setIsSubmitting(true);
+
+    try {
+      const createOrderGroup = async () => {
+        const addressId = shippingAddressId ?? (await ensureAddressAndQuote());
+
+        const placed = await checkout.mutateAsync({
+          address_id: addressId,
+          delivery_method: "standard",
+          payment_method: "paystack",
+          coupon_code: couponCode || undefined,
+          redeem_points: usePoints ? 999999 : 0,
+          items: items.map((item) => ({
+            product_id: item.productId,
+            quantity: item.quantity,
+            variants: item.selectedVariants,
+          })),
+        });
+
+        return placed.data.groupId;
+      };
+
+      let groupId = pendingGroupId;
+      if (!groupId) {
+        groupId = await createOrderGroup();
+        setPendingGroupId(groupId);
+        sessionStorage.setItem("fastlink_checkout_group", groupId);
+      }
+
+      let initialized;
+      try {
+        initialized = await initializeCheckout.mutateAsync(groupId);
+      } catch (error) {
+        // Stale group IDs can survive refresh/reload in sessionStorage.
+        if (axios.isAxiosError(error) && error.response?.status === 404 && pendingGroupId) {
+          sessionStorage.removeItem("fastlink_checkout_group");
+          setPendingGroupId(null);
+          groupId = await createOrderGroup();
+          setPendingGroupId(groupId);
+          sessionStorage.setItem("fastlink_checkout_group", groupId);
+          initialized = await initializeCheckout.mutateAsync(groupId);
+        } else {
+          throw error;
+        }
+      }
+
+      if (initialized.data.alreadyPaid) {
+        sessionStorage.removeItem("fastlink_checkout_group");
+        setPendingGroupId(null);
+        clearCart();
+        if (initialized.data.reference) {
+          const verified = await checkoutApi.verify(initialized.data.reference);
+          const orders = verified.data.orders;
+          setPlacedOrders(orders);
+          setOrderRef(orders[0]?.reference ?? "");
+          setTrackingNumber(orders[0]?.trackingNumber ?? "");
+        }
+        setOrderPlaced(true);
+        return;
+      }
+
+      if (!initialized.data.authorizationUrl) {
+        throw new Error("Payment could not be started.");
+      }
+
+      sessionStorage.setItem("fastlink_checkout_group", groupId);
+      window.location.href = initialized.data.authorizationUrl;
+    } catch (error) {
+      setSubmitError(apiErrorMessage(error, "Could not place your order. Please try again."));
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   if (orderPlaced) {
+    const displayRef = orderRef.startsWith("#") ? orderRef : `#${orderRef}`;
+    const trackHref = trackingNumber
+      ? `/order-tracking/${encodeURIComponent(trackingNumber)}?email=${encodeURIComponent(form.email)}`
+      : `/account/orders`;
+
     return (
       <div className="bg-[#EADBF8] min-h-screen py-16 font-montserrat">
         <div className="container-narrow text-center py-12">
@@ -60,26 +247,58 @@ export default function CheckoutPage() {
             Order Confirmed!
           </h1>
           <p className="mb-2 text-[#8A79A5] font-medium">
-            Thank you for your purchase. We&apos;ve received your order and sent a receipt to your email.
+            Payment received.
+            {placedOrders.length > 1
+              ? ` ${placedOrders.length} separate orders were created — one per seller.`
+              : " Your order is confirmed and the seller can fulfil it."}
           </p>
-          <p className="mb-8 text-xs font-bold text-[#6D349F] bg-white/60 inline-block px-4 py-2 rounded-xl border border-white/80">
-            Order Reference: #FLK-{Math.random().toString(36).slice(2, 8).toUpperCase()}
-          </p>
+          {placedOrders.length > 1 ? (
+            <ul className="mb-6 space-y-2 text-left max-w-md mx-auto">
+              {placedOrders.map((order) => (
+                <li key={order.id} className="rounded-xl bg-white/70 border border-white/80 px-4 py-2 text-sm">
+                  <span className="font-bold text-[#6D349F]">{order.store?.name ?? "Store"}</span>
+                  <span className="text-[#8A79A5]"> · #{order.reference.replace(/^#/, "")}</span>
+                  <span className="block text-xs font-semibold text-[#3B1C5A]">{formatPrice(order.total)}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mb-8 text-xs font-bold text-[#6D349F] bg-white/60 inline-block px-4 py-2 rounded-xl border border-white/80">
+              Order Reference: {displayRef}
+            </p>
+          )}
 
           <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
             <Link
-              href="/products"
+              href="/account/orders"
               className="w-full sm:w-auto rounded-xl bg-[#7E37C9] hover:bg-[#6C2CB5] text-white font-bold px-8 py-3.5 shadow-md transition-all"
             >
-              Continue Shopping
+              View My Orders
             </Link>
             <Link
-              href="/"
+              href={trackHref}
               className="w-full sm:w-auto rounded-xl border border-[#6D349F] text-[#6D349F] font-bold px-8 py-3.5 hover:bg-purple-100/50 transition-colors"
             >
-              Return Home
+              Track Order
             </Link>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (items.length === 0) {
+    return (
+      <div className="bg-[#EADBF8] min-h-screen py-16 font-montserrat">
+        <div className="container-narrow text-center py-12">
+          <h1 className="text-2xl font-extrabold text-[#6D349F] mb-3">Your cart is empty</h1>
+          <p className="text-[#8A79A5] mb-8">Add products before checking out.</p>
+          <Link
+            href="/products"
+            className="inline-flex rounded-xl bg-[#7E37C9] hover:bg-[#6C2CB5] text-white font-bold px-8 py-3.5 shadow-md"
+          >
+            Browse Products
+          </Link>
         </div>
       </div>
     );
@@ -181,9 +400,16 @@ export default function CheckoutPage() {
                   onChange={(v) => update("email", v)}
                   placeholder="amina@example.com"
                 />
+                <FormField
+                  label="Phone"
+                  value={form.phone}
+                  onChange={(v) => update("phone", v)}
+                  placeholder="+234 800 000 0000"
+                />
                 <button
                   onClick={nextStep}
-                  className="flex items-center justify-center gap-2 w-full rounded-xl bg-[#7E37C9] hover:bg-[#6C2CB5] text-white font-bold py-3.5 px-6 shadow-md transition-all mt-4"
+                  disabled={!form.name.trim() || !form.email.trim()}
+                  className="flex items-center justify-center gap-2 w-full rounded-xl bg-[#7E37C9] hover:bg-[#6C2CB5] disabled:opacity-50 text-white font-bold py-3.5 px-6 shadow-md transition-all mt-4"
                 >
                   <span>Continue to Shipping</span>
                   <ChevronRight size={16} />
@@ -223,18 +449,30 @@ export default function CheckoutPage() {
                     onChange={(v) => update("postalCode", v)}
                     placeholder="700213"
                   />
-                  <FormField
-                    label="Country"
-                    value={form.country}
-                    onChange={(v) => update("country", v)}
-                    placeholder="Nigeria"
-                  />
+                  <div>
+                    <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#8A79A5]">
+                      Country
+                    </label>
+                    <select
+                      value={form.country}
+                      onChange={(e) => update("country", e.target.value)}
+                      required
+                      className="w-full rounded-xl border border-[#D8C2EF] bg-white px-4 py-3 text-xs text-[#3B1C5A] focus:border-[#7E37C9] focus:outline-none transition-colors font-montserrat"
+                    >
+                      {COUNTRIES.map((country) => (
+                        <option key={country} value={country}>
+                          {country}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
                 <button
-                  onClick={nextStep}
-                  className="flex items-center justify-center gap-2 w-full rounded-xl bg-[#7E37C9] hover:bg-[#6C2CB5] text-white font-bold py-3.5 px-6 shadow-md transition-all mt-4"
+                  onClick={continueFromShipping}
+                  disabled={!form.street.trim() || !form.city.trim() || !form.state.trim() || checkoutQuote.isPending}
+                  className="flex items-center justify-center gap-2 w-full rounded-xl bg-[#7E37C9] hover:bg-[#6C2CB5] disabled:opacity-50 text-white font-bold py-3.5 px-6 shadow-md transition-all mt-4"
                 >
-                  <span>Continue to Payment</span>
+                  <span>{checkoutQuote.isPending ? "Calculating delivery…" : "Continue to Payment"}</span>
                   <ChevronRight size={16} />
                 </button>
               </div>
@@ -247,27 +485,21 @@ export default function CheckoutPage() {
                 </h2>
                 <p className="flex items-center gap-2 text-xs text-[#8A79A5] bg-white/70 p-3 rounded-xl border border-white/80 font-medium">
                   <ShieldCheck size={16} className="text-[#6D349F] shrink-0" />
-                  <span>Encrypted 256-bit secure transaction via Fastlink Pay.</span>
+                  <span>
+                    You will be redirected to Paystack to pay by card, bank, or USSD. Fastlink never stores card details.
+                  </span>
                 </p>
-                <FormField
-                  label="Card Number"
-                  value={form.cardNumber}
-                  onChange={(v) => update("cardNumber", v)}
-                  placeholder="5399 4242 4242 4242"
-                />
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    label="Expiry Date"
-                    value={form.cardExpiry}
-                    onChange={(v) => update("cardExpiry", v)}
-                    placeholder="MM / YY"
-                  />
-                  <FormField
-                    label="CVC"
-                    value={form.cardCvc}
-                    onChange={(v) => update("cardCvc", v)}
-                    placeholder="•••"
-                  />
+                <div className="rounded-xl border border-[#D8C2EF] bg-white p-4 space-y-2">
+                  <p className="text-sm font-bold text-[#3B1C5A]">Paystack checkout</p>
+                  <p className="text-xs text-[#8A79A5] font-medium">
+                    Amount due: <span className="font-extrabold text-[#6D349F]">{formatPrice(displayTotal)}</span>
+                  </p>
+                  {quote?.deliveryZone && (
+                    <p className="text-[10px] text-[#8A79A5]">
+                      Delivery zone: {quote.deliveryZone.name}
+                      {quote.deliveryEstimate?.label ? ` · ETA ${quote.deliveryEstimate.label}` : ""}
+                    </p>
+                  )}
                 </div>
                 <button
                   onClick={nextStep}
@@ -301,18 +533,23 @@ export default function CheckoutPage() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-[#8A79A5] font-semibold">Payment</span>
-                    <span className="text-[#3B1C5A] font-bold">
-                      {form.cardNumber ? `•••• ${form.cardNumber.slice(-4)}` : "—"}
-                    </span>
+                    <span className="text-[#3B1C5A] font-bold">Paystack</span>
                   </div>
                 </div>
 
+                {submitError && (
+                  <p className="text-xs font-semibold text-rose-600 bg-rose-50 border border-rose-200 rounded-xl px-4 py-3">
+                    {submitError}
+                  </p>
+                )}
+
                 <button
                   onClick={placeOrder}
-                  className="flex items-center justify-center gap-2 w-full rounded-xl bg-[#6D349F] hover:bg-[#52237A] text-white font-extrabold py-4 px-6 shadow-lg transition-all mt-4 font-montserrat text-base"
+                  disabled={isSubmitting}
+                  className="flex items-center justify-center gap-2 w-full rounded-xl bg-[#6D349F] hover:bg-[#52237A] disabled:opacity-60 text-white font-extrabold py-4 px-6 shadow-lg transition-all mt-4 font-montserrat text-base"
                 >
-                  <Lock size={16} />
-                  <span>Place Order · {formatPrice(total)}</span>
+                  {isSubmitting ? <Loader2 size={16} className="animate-spin" /> : <Lock size={16} />}
+                  <span>{isSubmitting ? "Redirecting to Paystack…" : `Pay · ${formatPrice(displayTotal)}`}</span>
                 </button>
               </div>
             )}
@@ -323,55 +560,116 @@ export default function CheckoutPage() {
             <h3 className="text-xl font-bold text-[#6D349F] font-montserrat border-b border-[#D8C2EF] pb-3">
               Order Summary
             </h3>
-            <ul className="divide-y divide-[#E4D1F7]/60">
-              {items.map((item) => (
-                <li key={item.productId} className="flex items-center gap-3 py-3">
-                  <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-lg bg-purple-100">
-                    <Image
-                      src={item.product.images[0]?.url ?? ""}
-                      alt={item.product.name}
-                      fill
-                      className="object-cover"
-                    />
-                    <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#6D349F] text-[10px] font-bold text-white">
-                      {item.quantity}
-                    </span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-bold text-[#6D349F] truncate">
-                      {item.product.name}
-                    </p>
-                    <p className="text-[10px] text-[#8A79A5] truncate">
-                      {item.product.seller.name}
-                    </p>
-                  </div>
-                  <p className="text-xs font-bold text-[#6D349F]">
-                    {formatPrice(item.product.price * item.quantity)}
-                  </p>
-                </li>
-              ))}
-            </ul>
+
+            {(quote?.groupPreview || storeGroups.length > 1) && (
+              <p className="text-xs font-semibold text-[#6D349F] bg-white/70 rounded-xl px-3 py-2 border border-[#D8C2EF]/80">
+                You&apos;ll receive {quote?.orderCount ?? storeGroups.length} separate orders — one per seller — after payment.
+              </p>
+            )}
+
+            {storeGroups.map((group) => {
+              const quoted = quote?.stores.find((s) => s.storeName === group.storeName);
+              return (
+                <div key={group.storeId} className="space-y-2">
+                  <p className="text-[10px] font-black uppercase tracking-wider text-[#8A79A5]">{group.storeName}</p>
+                  <ul className="divide-y divide-[#E4D1F7]/60">
+                    {group.items.map((item) => (
+                      <li key={item.productId} className="flex items-center gap-3 py-3">
+                        <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-lg bg-purple-100">
+                          <Image
+                            src={item.product.images[0]?.url ?? ""}
+                            alt={item.product.name}
+                            fill
+                            className="object-cover"
+                          />
+                          <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#6D349F] text-[10px] font-bold text-white">
+                            {item.quantity}
+                          </span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-bold text-[#6D349F] truncate">{item.product.name}</p>
+                        </div>
+                        <p className="text-xs font-bold text-[#6D349F]">
+                          {formatPrice(item.product.price * item.quantity)}
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                  {quoted && (
+                    <div className="text-right space-y-0.5">
+                      <p className="text-[10px] font-bold text-[#8A79A5]">
+                        Store total (incl. shipping): {formatPrice(quoted.total)}
+                      </p>
+                      {quoted.deliveryEstimate?.label && (
+                        <p className="text-[10px] font-semibold text-[#8A79A5]">ETA: {quoted.deliveryEstimate.label}</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
 
             <div className="space-y-2 text-xs pt-2 border-t border-[#D8C2EF]">
               <div className="flex justify-between text-[#8A79A5] font-medium">
                 <span>Subtotal</span>
-                <span className="font-bold text-[#6D349F]">{formatPrice(subtotal)}</span>
+                <span className="font-bold text-[#6D349F]">{formatPrice(displaySubtotal)}</span>
               </div>
               <div className="flex justify-between text-[#8A79A5] font-medium">
                 <span>Shipping</span>
                 <span className="font-bold text-emerald-600">
-                  {shipping === 0 ? "Free" : formatPrice(shipping)}
+                  {displayShipping === 0 ? "Free" : formatPrice(displayShipping)}
                 </span>
               </div>
               <div className="flex justify-between text-[#8A79A5] font-medium">
                 <span>Estimated Tax</span>
-                <span className="font-bold text-[#6D349F]">{formatPrice(tax)}</span>
+                <span className="font-bold text-[#6D349F]">{formatPrice(displayTax)}</span>
               </div>
+              {displayDiscount > 0 && (
+                <div className="flex justify-between text-emerald-700 font-medium">
+                  <span>Discount{displayPromo ? ` (${displayPromo})` : ""}</span>
+                  <span className="font-bold">-{formatPrice(displayDiscount)}</span>
+                </div>
+              )}
+              {displayLoyalty > 0 && (
+                <div className="flex justify-between text-emerald-700 font-medium">
+                  <span>Rewards</span>
+                  <span className="font-bold">-{formatPrice(displayLoyalty)}</span>
+                </div>
+              )}
+              {availablePoints > 0 && (
+                <label className="flex items-center gap-2 text-xs font-semibold text-[#6D349F] pt-1">
+                  <input
+                    type="checkbox"
+                    checked={usePoints}
+                    onChange={async (e) => {
+                      const next = e.target.checked;
+                      setUsePoints(next);
+                      if (!shippingAddressId) return;
+                      try {
+                        const quoted = await checkoutQuote.mutateAsync({
+                          address_id: shippingAddressId,
+                          coupon_code: couponCode || undefined,
+                          redeem_points: next ? 999999 : 0,
+                          items: items.map((item) => ({
+                            product_id: item.productId,
+                            quantity: item.quantity,
+                            variants: item.selectedVariants,
+                          })),
+                        });
+                        setQuote(quoted);
+                      } catch {
+                        /* quote errors surface on place */
+                      }
+                    }}
+                  />
+                  Use {availablePoints} pts ({formatPrice(availablePoints)} max 50% of cart)
+                </label>
+              )}
 
               <div className="border-t border-[#D8C2EF] my-2 pt-3 flex justify-between items-center">
                 <span className="text-sm font-bold text-[#6D349F]">Total</span>
                 <span className="text-xl font-extrabold text-[#6D349F] font-montserrat">
-                  {formatPrice(total)}
+                  {formatPrice(displayTotal)}
                 </span>
               </div>
             </div>

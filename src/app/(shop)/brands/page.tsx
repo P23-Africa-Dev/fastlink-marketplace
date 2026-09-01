@@ -1,7 +1,10 @@
+"use client";
+
 import Link from "next/link";
-import { ArrowLeft, Store } from "lucide-react";
-import { ALL_BRAND_PARTNERS, BrandPartner, ALL_SHOP_CATEGORIES } from "@/mocks/stores-data";
+import { Store } from "lucide-react";
+import type { BrandPartner } from "@/types/catalog";
 import { DynamicHero } from "@/components/marketplace/dynamic-hero";
+import { useBrands, useCategories } from "@/hooks/use-catalog";
 
 function BrandWordmark({ brand }: { brand: BrandPartner }) {
   const colorMap: Record<NonNullable<BrandPartner["style"]>, string> = {
@@ -46,13 +49,17 @@ function BrandWordmark({ brand }: { brand: BrandPartner }) {
 }
 
 export default function BrandsPage() {
+  const { data: brandsRes } = useBrands();
+  const { data: categoriesRes } = useCategories();
+  const brands = brandsRes?.data ?? [];
+  const categories = categoriesRes?.data ?? [];
   return (
     <div className="bg-[#EADBF8] min-h-screen pb-16">
       {/* ── 1. Full-Width Hero Section ───────────────────────────────────── */}
       <DynamicHero
         title="Official Retail & Brand Partners"
         subtitle="Shop authentic products directly from verified global and national brand partners."
-        backgroundImage={ALL_SHOP_CATEGORIES[2]?.image || "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1600&auto=format&fit=crop"}
+        backgroundImage={categories[2]?.image || categories[0]?.image || undefined}
         backLink="/"
         backLabel="Back to Homepage"
       />
@@ -67,7 +74,7 @@ export default function BrandsPage() {
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          {ALL_BRAND_PARTNERS.map((brand) => (
+          {brands.map((brand) => (
             <Link
               key={brand.id}
               href={brand.href}

@@ -3,19 +3,42 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Trash2, Minus, Plus, ShoppingBag, ArrowRight, Tag, ArrowLeft } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import { useCartStore } from "@/store/cart-store";
 import { formatPrice } from "@/lib/utils";
+import { apiErrorMessage } from "@/lib/api";
 import { ShopProductCard } from "@/components/product/shop-product-card";
-import { MOCK_PRODUCTS } from "@/mocks/data";
-
-const SUGGESTED = MOCK_PRODUCTS.filter((p) => p.isBestseller).slice(0, 4);
+import { useRecommendations } from "@/hooks/use-products";
+import { useCartSync, usePromoPreview } from "@/hooks/use-growth";
+import { useAuthStore } from "@/store/auth-store";
 
 export default function CartPage() {
-  const { items, removeItem, updateQuantity, clearCart, subtotal, shipping, tax, total } =
+  const { data: recommendations } = useRecommendations();
+  const suggested = recommendations?.forYou?.slice(0, 4) ?? [];
+  const { items, removeItem, updateQuantity, clearCart, subtotal, shipping, tax, total, couponCode, discount, setCoupon, clearCoupon } =
     useCartStore();
-  const [couponCode, setCouponCode] = useState("");
+  const [codeInput, setCodeInput] = useState(couponCode);
+  const [couponError, setCouponError] = useState("");
+  const preview = usePromoPreview();
+  const token = useAuthStore((s) => s.token);
+  useCartSync();
+  const storeGroups = useMemo(() => {
+    const map = new Map<string, { storeName: string; items: typeof items; subtotal: number }>();
+    for (const item of items) {
+      const storeId = item.product.store?.id ?? item.product.seller.id;
+      const storeName = item.product.store?.name ?? item.product.seller.name;
+      const existing = map.get(storeId);
+      const line = item.product.price * item.quantity;
+      if (existing) {
+        existing.items.push(item);
+        existing.subtotal += line;
+      } else {
+        map.set(storeId, { storeName, items: [item], subtotal: line });
+      }
+    }
+    return Array.from(map.entries()).map(([storeId, row]) => ({ storeId, ...row }));
+  }, [items]);
 
   if (items.length === 0) {
     return (
@@ -45,7 +68,7 @@ export default function CartPage() {
               </h2>
             </div>
             <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
-              {SUGGESTED.map((p) => (
+              {suggested.map((p) => (
                 <ShopProductCard key={p.id} product={p} />
               ))}
             </div>
@@ -87,11 +110,17 @@ export default function CartPage() {
         <div className="grid gap-8 lg:grid-cols-3">
           {/* Cart Items List */}
           <div className="lg:col-span-2 space-y-4">
-            {items.map((item) => (
-              <div
-                key={item.productId}
-                className="flex flex-col sm:flex-row gap-4 p-4 rounded-2xl bg-[#F6EFFD] border border-white/60 shadow-sm transition-all hover:shadow-md"
-              >
+            {storeGroups.map((group) => (
+              <div key={group.storeId} className="space-y-3">
+                <div className="flex items-center justify-between rounded-xl bg-white/70 border border-[#E4D1F7] px-4 py-2">
+                  <p className="text-[11px] font-black uppercase tracking-wider text-[#8A79A5]">{group.storeName}</p>
+                  <p className="text-xs font-bold text-[#6D349F]">Subtotal: {formatPrice(group.subtotal)}</p>
+                </div>
+                {group.items.map((item) => (
+                  <div
+                    key={item.productId}
+                    className="flex flex-col sm:flex-row gap-4 p-4 rounded-2xl bg-[#F6EFFD] border border-white/60 shadow-sm transition-all hover:shadow-md"
+                  >
                 <Link
                   href={`/products/${item.product.slug}`}
                   className="relative aspect-square sm:w-28 sm:h-28 flex-shrink-0 overflow-hidden rounded-xl bg-purple-100"
@@ -158,6 +187,8 @@ export default function CartPage() {
                     </p>
                   </div>
                 </div>
+                  </div>
+                ))}
               </div>
             ))}
           </div>
@@ -181,16 +212,43 @@ export default function CartPage() {
                   />
                   <input
                     type="text"
-                    value={couponCode}
-                    onChange={(e) => setCouponCode(e.target.value)}
+                    value={codeInput}
+                    onChange={(e) => setCodeInput(e.target.value.toUpperCase())}
                     placeholder="FASTLINK10"
                     className="w-full rounded-xl border border-[#D8C2EF] bg-white py-2.5 pl-9 pr-3 text-xs text-[#3B1C5A] placeholder:text-[#8A79A5] focus:border-[#7E37C9] focus:outline-none font-montserrat"
                   />
                 </div>
-                <button className="rounded-xl border border-[#6D349F] text-[#6D349F] font-bold text-xs px-4 py-2 hover:bg-purple-100/50 transition-colors">
-                  Apply
+                <button
+                  type="button"
+                  disabled={preview.isPending || !codeInput.trim()}
+                  onClick={async () => {
+                    setCouponError("");
+                    if (!token) {
+                      setCouponError("Sign in to apply a promo code.");
+                      return;
+                    }
+                    try {
+                      const result = await preview.mutateAsync({
+                        coupon_code: codeInput.trim(),
+                        items: items.map((item) => ({ product_id: item.productId, quantity: item.quantity })),
+                      });
+                      setCoupon(result.code, result.discount);
+                    } catch (err) {
+                      clearCoupon();
+                      setCouponError(apiErrorMessage(err, "This promo code could not be applied."));
+                    }
+                  }}
+                  className="rounded-xl border border-[#6D349F] text-[#6D349F] font-bold text-xs px-4 py-2 hover:bg-purple-100/50 transition-colors disabled:opacity-50"
+                >
+                  {preview.isPending ? "…" : "Apply"}
                 </button>
               </div>
+              {couponError && <p className="mt-2 text-[11px] font-semibold text-rose-600">{couponError}</p>}
+              {discount > 0 && couponCode && (
+                <p className="mt-2 text-[11px] font-semibold text-emerald-700">
+                  {couponCode} applied — {formatPrice(discount)} off
+                </p>
+              )}
             </div>
 
             <div className="space-y-3 text-sm pt-2">
@@ -212,6 +270,12 @@ export default function CartPage() {
                 <span>Estimated Tax</span>
                 <span className="font-bold text-[#6D349F]">{formatPrice(tax)}</span>
               </div>
+              {discount > 0 && (
+                <div className="flex justify-between text-emerald-700 font-medium">
+                  <span>Discount{couponCode ? ` (${couponCode})` : ""}</span>
+                  <span className="font-bold">-{formatPrice(discount)}</span>
+                </div>
+              )}
 
               <div className="border-t border-[#D8C2EF] my-3 pt-3 flex justify-between items-center">
                 <span className="text-base font-bold text-[#6D349F]">Total</span>
@@ -228,6 +292,11 @@ export default function CartPage() {
               <span>Proceed to Checkout</span>
               <ArrowRight size={16} />
             </Link>
+            {storeGroups.length > 1 && (
+              <p className="text-[11px] text-[#8A79A5] font-semibold text-center">
+                Checkout will split this cart into {storeGroups.length} seller orders with separate shipping calculations.
+              </p>
+            )}
           </div>
         </div>
       </div>

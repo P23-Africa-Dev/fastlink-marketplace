@@ -83,9 +83,9 @@ export default function OrderTrackingPage() {
     }
 
     if (valid) {
-      // Clean order ID format and redirect to tracking details page
       const formattedId = orderId.trim().replace(/^#/, "");
-      router.push(`/order-tracking/${encodeURIComponent(formattedId)}`);
+      const email = encodeURIComponent(billingEmail.trim());
+      router.push(`/order-tracking/${encodeURIComponent(formattedId)}?email=${email}`);
     }
   }
 

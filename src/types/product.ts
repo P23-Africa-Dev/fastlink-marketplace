@@ -1,3 +1,5 @@
+import type { StoreReputation } from "@/types/admin";
+
 export interface ProductImage {
   id: string;
   url: string;
@@ -35,6 +37,11 @@ export interface Product {
     rating: number;
     totalSales: number;
   };
+  store?: {
+    id: string;
+    name: string;
+    slug: string;
+  } | null;
   rating: number;
   reviewCount: number;
   stock: number;
@@ -48,6 +55,13 @@ export interface Product {
   isFeatured: boolean;
   isNew: boolean;
   isBestseller: boolean;
+  status?: string;
+  submittedAt?: string | null;
+  moderatedAt?: string | null;
+  moderatedBy?: string | null;
+  moderationNote?: string | null;
+  storeReputation?: StoreReputation;
+  costPrice?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -62,4 +76,7 @@ export interface ProductFilter {
   sortBy?: "price_asc" | "price_desc" | "rating" | "newest" | "bestseller";
   inStock?: boolean;
   featured?: boolean;
+  store?: string;
+  brand?: string;
+  q?: string;
 }

@@ -14,8 +14,8 @@ import {
   HeartPulse,
   ShoppingBag,
 } from "lucide-react";
-import { KANO_MALLS, ALL_SHOP_CATEGORIES } from "@/mocks/stores-data";
 import { MallCard } from "@/components/marketplace/mall-card";
+import { useCategories, useMalls } from "@/hooks/use-catalog";
 
 const CATEGORY_ICONS: Record<string, typeof Smartphone> = {
   electronics: Smartphone,
@@ -54,7 +54,10 @@ function SectionHeader({
 
 export function LocalStoresSection() {
   const [location, setLocation] = useState("");
-  const featuredMalls = KANO_MALLS.slice(0, 4);
+  const { data: mallsPage } = useMalls({ limit: 4 });
+  const { data: categoriesRes } = useCategories();
+  const featuredMalls = mallsPage?.data ?? [];
+  const categories = (categoriesRes?.data ?? []).filter((cat) => cat.slug !== "books");
 
   return (
     <div className="bg-[#EADBF8] py-10">
@@ -112,7 +115,7 @@ export function LocalStoresSection() {
           />
 
           <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-3 md:grid-cols-5">
-            {ALL_SHOP_CATEGORIES.map((cat) => {
+            {categories.map((cat) => {
               const Icon = CATEGORY_ICONS[cat.slug] ?? LayoutGrid;
               return (
                 <Link

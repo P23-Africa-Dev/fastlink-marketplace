@@ -3,14 +3,19 @@
 import { useState } from "react";
 import Link from "next/link";
 import { ChevronLeft, Loader2 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 
-import loginFrame from "@/assets/login-frame.png";
+import loginFrame from "@/assets/login-frame.jpg";
 import { FastlinkLogo } from "@/components/brand/fastlink-logo";
+import { PasswordInput } from "@/components/ui/password-input";
+import { authApi, apiErrorMessage } from "@/lib/api";
 
 export default function SetNewPasswordPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const token = searchParams.get("token") ?? "";
+  const email = searchParams.get("email") ?? "";
 
   const [form, setForm] = useState({ password: "", confirmPassword: "" });
   const [isLoading, setIsLoading] = useState(false);
@@ -19,6 +24,11 @@ export default function SetNewPasswordPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+
+    if (!token || !email) {
+      setError("This reset link is missing a token. Request a new one.");
+      return;
+    }
 
     if (form.password.length < 8) {
       setError("Password must be at least 8 characters.");
@@ -31,9 +41,19 @@ export default function SetNewPasswordPage() {
     }
 
     setIsLoading(true);
-    await new Promise((r) => setTimeout(r, 1000));
-    setIsLoading(false);
-    router.push("/login");
+    try {
+      await authApi.resetPassword({
+        email,
+        token,
+        password: form.password,
+        passwordConfirmation: form.confirmPassword,
+      });
+      router.push("/login");
+    } catch (err) {
+      setError(apiErrorMessage(err, "Could not reset password. Request a new link."));
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
@@ -84,24 +104,26 @@ export default function SetNewPasswordPage() {
                 )}
 
                 <div>
-                  <input
-                    type="password"
+                  <PasswordInput
                     value={form.password}
                     onChange={(e) => setForm((p) => ({ ...p, password: e.target.value }))}
                     placeholder="New Password"
                     required
+                    autoComplete="new-password"
                     className="w-full bg-transparent border border-white/90 rounded font-medium text-white placeholder:text-white px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-white/50 transition-all text-center"
+                    toggleClassName="text-white/80 hover:text-white"
                   />
                 </div>
 
                 <div>
-                  <input
-                    type="password"
+                  <PasswordInput
                     value={form.confirmPassword}
                     onChange={(e) => setForm((p) => ({ ...p, confirmPassword: e.target.value }))}
                     placeholder="Confirm Password"
                     required
+                    autoComplete="new-password"
                     className="w-full bg-transparent border border-white/90 rounded font-medium text-white placeholder:text-white px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-white/50 transition-all text-center"
+                    toggleClassName="text-white/80 hover:text-white"
                   />
                 </div>
 

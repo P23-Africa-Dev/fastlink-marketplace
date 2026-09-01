@@ -58,3 +58,128 @@ export interface Order {
   updatedAt: string;
   estimatedDelivery?: string;
 }
+
+export type ApiOrderStatus = "pending" | "confirmed" | "shipped" | "delivered" | "cancelled";
+
+export type SellerDisplayStatus = "Successful" | "Pending" | "Shipped" | "Delivered" | "Refunded";
+
+export interface ApiOrderItem {
+  id: string;
+  productId: string | null;
+  productName: string;
+  productImage: string | null;
+  sku: string | null;
+  quantity: number;
+  price: number;
+  variants?: Record<string, unknown> | null;
+}
+
+export interface ApiOrderEvent {
+  id: string;
+  status: string;
+  title: string;
+  createdAt: string;
+}
+
+export interface ApiOrder {
+  id: string;
+  reference: string;
+  groupId: string;
+  status: ApiOrderStatus;
+  displayStatus: SellerDisplayStatus | string;
+  paymentStatus: string;
+  paymentMethod: string | null;
+  deliveryMethod: string;
+  trackingNumber: string | null;
+  subtotal: number;
+  shipping: number;
+  tax: number;
+  discount?: number;
+  promoCode?: string | null;
+  loyaltyPoints?: number;
+  loyaltyDiscount?: number;
+  total: number;
+  buyer: {
+    id: string;
+    name: string;
+    email: string;
+    phone: string | null;
+  };
+  store?: {
+    id: string;
+    name: string;
+    slug: string;
+  } | null;
+  rider?: {
+    id: string;
+    name?: string | null;
+    phone?: string | null;
+    status?: string;
+  } | null;
+  shippingAddress: {
+    street: string;
+    city: string;
+    state: string;
+    postalCode: string | null;
+    country: string;
+    phone: string | null;
+  };
+  items: ApiOrderItem[];
+  events?: ApiOrderEvent[];
+  createdAt: string;
+  updatedAt: string;
+  paidAt: string | null;
+  estimatedDelivery?: string;
+  deliveryEstimate?: { minDays: number; maxDays: number; label: string } | null;
+}
+
+export interface CheckoutResult {
+  groupId: string;
+  orders: ApiOrder[];
+}
+
+export interface CheckoutQuoteStore {
+  storeId: string;
+  storeName: string;
+  items: Array<{
+    productId: string;
+    name: string;
+    quantity: number;
+    unitPrice: number;
+    lineTotal: number;
+  }>;
+  subtotal: number;
+  shipping: number;
+  tax: number;
+  discount?: number;
+  total: number;
+  deliveryEstimate?: { minDays: number; maxDays: number; label: string } | null;
+}
+
+export interface CheckoutQuote {
+  groupPreview: boolean;
+  orderCount: number;
+  stores: CheckoutQuoteStore[];
+  subtotal: number;
+  shipping: number;
+  tax: number;
+  discount?: number;
+  promoCode?: string | null;
+  loyaltyPoints?: number;
+  loyaltyDiscount?: number;
+  availablePoints?: number;
+  total: number;
+  deliveryZone?: { id: string; name: string; fee: number } | null;
+  deliveryEstimate?: { minDays: number; maxDays: number; label: string } | null;
+}
+
+export interface AddressPayload {
+  label?: string;
+  street: string;
+  city: string;
+  state: string;
+  postalCode?: string;
+  country?: string;
+  phone?: string;
+  isDefault?: boolean;
+}

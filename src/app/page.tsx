@@ -2,6 +2,7 @@ import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { CartDrawer } from "@/components/cart/cart-drawer";
 import { HeroBanner } from "@/features/home/hero-banner";
+import { ForYouSection } from "@/features/home/for-you-section";
 import { LocalStoresSection } from "@/features/home/local-stores-section";
 import { BrandsDealsSection } from "@/features/home/brands-deals-section";
 import { HotDealBanner } from "@/features/home/hot-deal-banner";
@@ -18,6 +19,10 @@ export default function HomePage() {
         {/* Hero Section with fade-in */}
         <div className="animate-fade-in">
           <HeroBanner />
+        </div>
+
+        <div className="animate-fade-up transition-all duration-700">
+          <ForYouSection />
         </div>
 
         {/* Local Stores with fade-up */}

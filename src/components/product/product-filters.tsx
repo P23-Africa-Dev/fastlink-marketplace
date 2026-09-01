@@ -5,7 +5,7 @@ import { ChevronDown, ChevronUp, MonitorPlay, Folder } from "lucide-react";
 import Link from "next/link";
 
 import type { ProductFilter } from "@/types/product";
-import { MOCK_CATEGORIES } from "@/mocks/data";
+import { useCategories, useBrands } from "@/hooks/use-catalog";
 import { cn } from "@/lib/utils";
 
 interface ProductFiltersProps {
@@ -14,15 +14,7 @@ interface ProductFiltersProps {
   className?: string;
 }
 
-const BRANDS_BY_CATEGORY: Record<string, string[]> = {
-  Electronics: ["Samsung", "Xiaomi", "Sony", "LG", "HP"],
-  Fashion: ["Nike", "Zara", "H&M", "Adidas", "Gucci"],
-  "Home & Kitchen": ["IKEA", "KitchenAid", "OXO", "Cuisinart", "Lodge"],
-  Stationery: ["Moleskine", "Leuchtturm", "Pilot", "Rhodia", "Staedtler"],
-  "Art & Prints": ["Winsor & Newton", "Canson", "Faber-Castell", "Daler", "Arteza"],
-  Jewelry: ["Pandora", "Tiffany", "Swarovski", "Alex Ani", "Mejuri"],
-  "Food & Pantry": ["Heinz", "Nestlé", "Knorr", "Maggi", "Dangote"],
-};
+const BRANDS_BY_CATEGORY: Record<string, string[]> = {};
 
 const PRICE_MIN = 30000;
 const PRICE_MAX = 380000;
@@ -96,6 +88,11 @@ function Section({
 }
 
 export function ProductFilters({ filters, onFiltersChange, className }: ProductFiltersProps) {
+  const { data: categoriesRes } = useCategories();
+  const { data: brandsRes } = useBrands();
+  const categories = categoriesRes?.data ?? [];
+  const brandNames = (brandsRes?.data ?? []).map((b) => b.name);
+
   const [deliveryLocal, setDeliveryLocal] = useState(true);
   const [deliveryNationwide, setDeliveryNationwide] = useState(true);
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
@@ -113,7 +110,10 @@ export function ProductFilters({ filters, onFiltersChange, className }: ProductF
     setPriceMax(PRICE_MAX);
   }
 
-  const brands = BRANDS_BY_CATEGORY[filters.category ?? ""] ?? ["Nike", "Samsung", "Sony", "IKEA", "Zara"];
+  const brands =
+    BRANDS_BY_CATEGORY[filters.category ?? ""]?.length
+      ? BRANDS_BY_CATEGORY[filters.category ?? ""]
+      : brandNames;
 
   function toggleBrand(brand: string) {
     setSelectedBrands((prev) =>
@@ -148,7 +148,7 @@ export function ProductFilters({ filters, onFiltersChange, className }: ProductF
               <span className="text-sm font-medium text-[#4A2574]">All Categories</span>
             </div>
           </label>
-          {MOCK_CATEGORIES.map((cat) => (
+          {categories.map((cat) => (
             <label key={cat.id} className="flex cursor-pointer items-center justify-between gap-2">
               <div className="flex items-center gap-2.5">
                 <input
@@ -160,7 +160,9 @@ export function ProductFilters({ filters, onFiltersChange, className }: ProductF
                 />
                 <span className="text-sm font-medium text-[#4A2574]">{cat.name}</span>
               </div>
-              <span className="text-xs font-semibold text-[#8A79A5]">{cat.count}</span>
+              {cat.itemCount && (
+                <span className="text-xs font-semibold text-[#8A79A5]">{cat.itemCount}</span>
+              )}
             </label>
           ))}
         </div>

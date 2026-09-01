@@ -3,9 +3,33 @@ export interface User {
   email: string;
   name: string;
   avatar?: string;
-  role: "buyer" | "seller" | "admin";
+  role: "buyer" | "seller" | "admin" | "rider";
+  status?: "active" | "pending" | "suspended";
+  phone?: string | null;
+  loyaltyPoints?: number;
+  sellerAccess?: SellerAccess | null;
+  storeStatus?: string | null;
+  kycStatus?: KycStatus | null;
+  kycRejectionReason?: string | null;
+  canSell?: boolean;
   createdAt: string;
   addresses?: Address[];
+}
+
+export type KycStatus =
+  | "not_started"
+  | "in_progress"
+  | "submitted"
+  | "under_review"
+  | "approved"
+  | "rejected";
+
+export type SellerPermission = "inventory" | "orders" | "finance" | "support" | "manage";
+
+export interface SellerAccess {
+  isOwner: boolean;
+  staffRole: string | null;
+  permissions: SellerPermission[];
 }
 
 export interface Address {
@@ -16,6 +40,7 @@ export interface Address {
   state: string;
   postalCode: string;
   country: string;
+  phone?: string | null;
   isDefault: boolean;
 }
 
