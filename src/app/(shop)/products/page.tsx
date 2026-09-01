@@ -62,9 +62,11 @@ function ProductsContent() {
   );
 
   const heroTitle = activeCategory?.name ?? (showFeatured ? "Featured Products" : "All Products");
-  const heroSubtitle =
-    activeCategory?.description ??
-    "Discover products from verified local and nationwide sellers";
+  const heroSubtitle = activeCategory
+    ? `Browse ${activeCategory.name} from verified local and nationwide sellers`
+    : showFeatured
+      ? "Handpicked products from verified local and nationwide sellers"
+      : "Discover products from verified local and nationwide sellers";
   const heroImage = products[0]?.images?.[0]?.url || activeCategory?.image || undefined;
 
   function handleFiltersChange(next: ProductFilter) {

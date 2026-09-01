@@ -241,15 +241,18 @@ export default function CustomersPage() {
   const vipCount = customers.filter((c) => c.tier === "VIP").length;
 
   const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
-  const nowMs = Date.now();
-  const newCustomersLast30 = rawCustomers.filter((c) => {
-    const t = new Date(c.joinDate).getTime();
-    return !Number.isNaN(t) && nowMs - t <= thirtyDaysMs;
-  }).length;
-  const newCustomersPrev30 = rawCustomers.filter((c) => {
-    const t = new Date(c.joinDate).getTime();
-    return !Number.isNaN(t) && nowMs - t > thirtyDaysMs && nowMs - t <= 2 * thirtyDaysMs;
-  }).length;
+  const [metricsNowMs] = useState(() => Date.now());
+  const { newCustomersLast30, newCustomersPrev30 } = useMemo(() => {
+    const last30 = rawCustomers.filter((c) => {
+      const t = new Date(c.joinDate).getTime();
+      return !Number.isNaN(t) && metricsNowMs - t <= thirtyDaysMs;
+    }).length;
+    const prev30 = rawCustomers.filter((c) => {
+      const t = new Date(c.joinDate).getTime();
+      return !Number.isNaN(t) && metricsNowMs - t > thirtyDaysMs && metricsNowMs - t <= 2 * thirtyDaysMs;
+    }).length;
+    return { newCustomersLast30: last30, newCustomersPrev30: prev30 };
+  }, [rawCustomers, metricsNowMs, thirtyDaysMs]);
   const customersChange = percentChange(newCustomersLast30, newCustomersPrev30);
   const revenueChange = stats?.revenueChange ?? 0;
 

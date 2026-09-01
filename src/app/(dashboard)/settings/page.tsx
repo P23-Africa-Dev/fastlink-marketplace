@@ -83,6 +83,22 @@ function SettingsPageContent() {
   const [genPhone, setGenPhone] = useState("");
   const [avatarSeed, setAvatarSeed] = useState(user?.name || "user");
 
+  // --- PROFILE DASHBOARD STATES (View 2) ---
+  const [profFirstName, setProfFirstName] = useState("");
+  const [profSecondName, setProfSecondName] = useState("");
+  const [profLastName, setProfLastName] = useState("");
+  const [profPhone, setProfPhone] = useState("");
+  const [address1, setAddress1] = useState("");
+  const [address2, setAddress2] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // Notifications State
+  const [notifications, setNotifications] = useState<NotificationRule[]>([
+    { id: "sale", label: "New Sale", email: true, push: true },
+    { id: "order", label: "Order Update", email: true, push: false },
+    { id: "stock", label: "Low Stock Alert", email: false, push: true },
+  ]);
+
   // Load defaults or store values
   useEffect(() => {
     if (view === "general") {
@@ -116,13 +132,6 @@ function SettingsPageContent() {
   const [language, setLanguage] = useState("English");
   const [timezone, setTimezone] = useState("GMT-08");
 
-  // Notifications State
-  const [notifications, setNotifications] = useState<NotificationRule[]>([
-    { id: "sale", label: "New Sale", email: true, push: true },
-    { id: "order", label: "Order Update", email: true, push: false },
-    { id: "stock", label: "Low Stock Alert", email: false, push: true },
-  ]);
-
   // Connected Apps State
   const [connectedApps, setConnectedApps] = useState<ConnectedApp[]>([]);
 
@@ -131,15 +140,6 @@ function SettingsPageContent() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [is2faEnabled, setIs2faEnabled] = useState(false);
-
-  // --- PROFILE DASHBOARD STATES (View 2) ---
-  const [profFirstName, setProfFirstName] = useState("");
-  const [profSecondName, setProfSecondName] = useState("");
-  const [profLastName, setProfLastName] = useState("");
-  const [profPhone, setProfPhone] = useState("");
-  const [address1, setAddress1] = useState("");
-  const [address2, setAddress2] = useState("");
-  const [searchQuery, setSearchQuery] = useState("");
 
   // Simulated alert triggers
   const [isDeviceVerified, setIsDeviceVerified] = useState(false);

@@ -337,7 +337,7 @@ export function useAdminProductModerationActions() {
   const queryClient = useQueryClient();
   return {
     approve: useMutation({
-      mutationFn: adminApi.approveProduct,
+      mutationFn: (id: string) => adminApi.approveProduct(id),
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: QUERY_KEYS.admin.moderation() });
         queryClient.invalidateQueries({ queryKey: QUERY_KEYS.admin.products() });
