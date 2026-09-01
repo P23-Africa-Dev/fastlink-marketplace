@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
-import logoSvg from "@/assets/logo.svg";
+
+import { FastlinkLogo } from "@/components/brand/fastlink-logo";
 import { usePathname, useSearchParams, useRouter } from "next/navigation";
 import { useState, Suspense, useEffect } from "react";
 import {
@@ -443,16 +443,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <Menu size={24} />
           </button>
           
-          <Link href="/" className="flex shrink-0 items-center select-none" aria-label="Fastlink Marketplace">
-            <Image
-              src={logoSvg}
-              alt="Fastlink Marketplace"
-              width={190}
-              height={42}
-              className="h-10 w-auto object-contain"
-              priority
-            />
-          </Link>
+          <FastlinkLogo className="h-9 md:h-10" />
         </div>
 
         {/* Center: Title */}
