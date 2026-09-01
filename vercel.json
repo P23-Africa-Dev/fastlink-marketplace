@@ -1,0 +1,10 @@
+{
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "www.fastlinkmarketplace.com" }],
+      "destination": "https://fastlinkmarketplace.com/:path*",
+      "permanent": true
+    }
+  ]
+}

@@ -106,6 +106,14 @@ apiClient.interceptors.response.use(
 
 export function apiErrorMessage(error: unknown, fallback: string): string {
   if (axios.isAxiosError(error)) {
+    if (!error.response) {
+      if (error.code === "ERR_NETWORK") {
+        return "Unable to reach the API server. Please check your connection and try again.";
+      }
+      if (error.code === "ECONNABORTED") {
+        return "The request timed out. Please try again.";
+      }
+    }
     const message = error.response?.data?.message;
     if (typeof message === "string" && message.trim()) return message;
     const errors = error.response?.data?.errors;
