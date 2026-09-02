@@ -17,7 +17,11 @@ return [
     'allowed_methods' => ['*'],
 
     'allowed_origins' => array_values(array_unique(array_filter(array_merge(
-        [env('FRONTEND_URL', 'http://localhost:3000')],
+        [
+            'http://localhost:3000',
+            'http://127.0.0.1:3000',
+            env('FRONTEND_URL', 'http://localhost:3000'),
+        ],
         array_map('trim', explode(',', (string) env('FRONTEND_URLS', ''))),
         (function (): array {
             $frontend = (string) env('FRONTEND_URL', '');
@@ -43,7 +47,9 @@ return [
     )))),
 
     'allowed_origins_patterns' => array_values(array_filter([
-        env('APP_ENV') === 'local' ? '#^http://(localhost|127\.0\.0\.1)(:\d+)?$#' : null,
+        in_array(env('APP_ENV'), ['local', 'testing'], true)
+            ? '#^https?://(localhost|127\.0\.0\.1)(:\d+)?$#'
+            : null,
     ])),
 
     'allowed_headers' => ['*'],
